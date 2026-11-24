@@ -313,15 +313,14 @@ function JerseyCardInner() {
         alt="เสื้อคณะสีชมพู อยุธยา 2569"
         className="w-full h-[84%] object-cover object-top drop-shadow-[10px_19px_10px_rgba(0,0,0,0.35)] transition-transform duration-500 group-hover:scale-[1.03]"
       />
-      <div
-        className="absolute inset-x-0 bottom-0 h-[112px] flex items-end px-7 pb-5"
-        style={{
-          backgroundImage: "url('/images/figma/torn-stone.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'top center',
-        }}
-      >
-        <div className="w-full flex items-center justify-between gap-3">
+      <div className="absolute inset-x-0 bottom-0 h-[114px] flex items-end px-7 pb-5">
+        <img
+          src="/images/figma/torn-menu-paper.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute -bottom-4 -left-[6%] w-[112%] max-w-none h-[126px] object-cover object-top pointer-events-none"
+        />
+        <div className="relative z-10 w-full flex items-center justify-between gap-3">
           <div>
             <span className="font-display font-extrabold text-4xl sm:text-[42px] leading-none text-white figma-text-shadow">
               สั่งจองเสื้อ

@@ -56,9 +56,16 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
 
   return (
     <div className="min-h-dvh flex flex-col">
-      {/* Desktop Top Editorial Navbar */}
-      <header className="no-print hidden lg:block sticky top-0 z-40 bg-pinkteam-charcoal/95 text-white border-b border-pinkteam-light/20 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+      {/* Desktop Top Editorial Navbar with Torn Menu Paper */}
+      <header className="no-print hidden lg:block sticky top-0 z-40 text-white overflow-x-clip">
+        <div className="relative">
+          <img
+            src="/images/figma/torn-menu-paper.png"
+            alt=""
+            aria-hidden="true"
+            className="absolute -top-2 -left-[4%] w-[108%] max-w-none h-[84px] object-fill pointer-events-none drop-shadow-[0_6px_12px_rgba(31,18,22,0.45)]"
+          />
+          <div className="relative z-10 max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
           <Link href="/" className="flex items-center gap-3 shrink-0 group">
             <img
               src="/images/figma/calligraphy-ayutthaya.png"
@@ -137,6 +144,7 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
               </Link>
             )}
           </div>
+          </div>
         </div>
       </header>
 
@@ -172,8 +180,14 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setDrawerOpen(false)}
           />
-          <aside className="absolute right-0 top-0 bottom-0 w-72 max-w-[85vw] figma-charcoal-surface text-white p-5 flex flex-col justify-between shadow-2xl border-l border-pinkteam-light/20">
-            <div>
+          <aside className="absolute right-0 top-0 bottom-0 w-72 max-w-[85vw] figma-charcoal-surface text-white p-5 flex flex-col justify-between shadow-2xl border-l border-pinkteam-light/20 overflow-hidden">
+            <img
+              src="/images/figma/torn-menu-paper.png"
+              alt=""
+              aria-hidden="true"
+              className="absolute -top-6 -left-[6%] w-[112%] max-w-none h-24 object-cover object-bottom opacity-85 pointer-events-none"
+            />
+            <div className="relative z-10">
               <div className="flex items-center justify-between pb-4 border-b border-white/10">
                 <div>
                   <div className="font-display font-bold text-base text-white">
@@ -228,7 +242,7 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
               </nav>
             </div>
 
-            <div className="pt-4 border-t border-white/10">
+            <div className="relative z-10 pt-4 border-t border-white/10">
               {profile ? (
                 <div className="space-y-3">
                   <div className="bg-white/5 rounded-xl p-3">
@@ -267,20 +281,18 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
       {/* Figma Mobile 3-Slot Bottom Navigation (440x956 reference) */}
       <nav
         aria-label="แถบนำทางหลักมือถือ"
-        className="no-print lg:hidden fixed bottom-0 inset-x-0 z-40 h-[98px] pointer-events-none"
+        className="no-print lg:hidden fixed bottom-0 inset-x-0 z-40 h-[108px] pointer-events-none overflow-x-clip"
       >
-        <div className="relative h-full w-full max-w-[480px] mx-auto pointer-events-auto">
-          {/* Torn charcoal texture base matching Figma */}
-          <div
-            className="absolute inset-x-0 bottom-0 h-[86px] rounded-t-[26px] overflow-hidden shadow-[0_-8px_24px_rgba(31,18,22,0.45)]"
-            style={{
-              backgroundImage: "url('/images/figma/torn-stone.png')",
-              backgroundSize: 'cover',
-              backgroundPosition: 'top center',
-            }}
+        <div className="relative h-full w-full max-w-[480px] mx-auto pointer-events-auto overflow-x-clip">
+          {/* True jagged torn-paper menu base matching Figma */}
+          <img
+            src="/images/figma/torn-menu-paper.png"
+            alt=""
+            aria-hidden="true"
+            className="absolute -bottom-6 -left-[7%] w-[114%] max-w-none h-[116px] object-cover object-top pointer-events-none drop-shadow-[0_-6px_14px_rgba(31,18,22,0.5)]"
           />
 
-          <div className="relative h-full grid grid-cols-3 items-end px-4 pb-2.5">
+          <div className="relative z-10 h-full grid grid-cols-3 items-end px-4 pb-2.5">
             {/* Left: ลงทะเบียน */}
             <Link
               href="/register"
