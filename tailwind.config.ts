@@ -10,14 +10,17 @@ const config: Config = {
     extend: {
       colors: {
         pinkteam: {
-          blush: '#FFF5F8',
-          soft: '#FFD8E5',
+          paper: '#F8F5F6',
+          raised: '#F2ECEE',
+          blush: '#FDF4F7',
+          soft: '#F3D8E2',
           light: '#FFAFCA',
           magenta: '#B32151',
           deep: '#8E163E',
           charcoal: '#1F1216',
           plum: '#4A353C',
-          muted: '#6B4E57',
+          secondary: '#57484D',
+          muted: '#7A6A70',
         },
       },
       fontFamily: {

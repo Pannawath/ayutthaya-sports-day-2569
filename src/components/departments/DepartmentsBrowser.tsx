@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { CheckCircle2, Clock3, QrCode, Search } from 'lucide-react';
+import { QrCode, Search } from 'lucide-react';
 import { QrPassModal } from '@/components/qr/QrPassModal';
 import { EmptyState, SourceModeBanner } from '@/components/ui/States';
 import { CENTRAL_POSITIONS, SPORT_TYPES } from '@/lib/constants';
@@ -54,25 +54,22 @@ export function DepartmentsBrowser({
       : 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-5">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-4">
       <SourceModeBanner sourceMode={sourceMode} />
 
-      <div className="editorial-panel rounded-3xl p-5 sm:p-6">
-        <span className="inline-flex px-2.5 py-0.5 rounded-full bg-pinkteam-blush text-pinkteam-magenta text-xs font-bold">
-          05 · DEPARTMENTS (8 ฝ่ายงาน + ส่วนกลาง)
-        </span>
-        <h1 className="mt-1.5 font-display font-extrabold text-2xl text-pinkteam-charcoal">
-          รายชื่อสมาชิกและสถิติแยกตามฝ่ายงาน
+      <div className="editorial-panel rounded-2xl p-5 sm:p-6">
+        <h1 className="font-display font-semibold text-2xl text-pinkteam-charcoal">
+          รายชื่อสมาชิกและสถิติตามฝ่ายงาน
         </h1>
-        <p className="text-sm text-pinkteam-muted">
-          เลือกฝ่ายเพื่อตรวจสอบจำนวนสมาชิก ประธาน สตาฟ สถานะเช็คชื่อ และรายบุคคล
+        <p className="text-sm text-pinkteam-secondary mt-1">
+          8 ฝ่ายงานหลักและคณะกรรมการบริหารส่วนกลาง 6 ตำแหน่ง
         </p>
       </div>
 
       {/* Central Committee Overview */}
-      <div className="editorial-panel rounded-3xl p-5">
-        <h2 className="font-display font-bold text-base text-pinkteam-charcoal mb-3">
-          คณะกรรมการบริหารคณะสีส่วนกลาง ({centralMembers.length} / {CENTRAL_POSITIONS.length} ตำแหน่ง)
+      <div className="editorial-panel rounded-2xl p-5">
+        <h2 className="font-display font-medium text-base text-pinkteam-charcoal mb-3 tabular-nums">
+          คณะกรรมการบริหารคณะสีส่วนกลาง ({centralMembers.length} / {CENTRAL_POSITIONS.length})
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {CENTRAL_POSITIONS.map((pos) => {
@@ -80,22 +77,21 @@ export function DepartmentsBrowser({
             return (
               <div
                 key={pos}
-                className="rounded-2xl bg-pinkteam-blush/60 border border-pinkteam-soft p-3 flex items-center justify-between gap-2"
+                className="rounded-xl editorial-raised p-3 flex items-center justify-between gap-2"
               >
-                <div>
-                  <div className="text-[11px] font-bold text-pinkteam-magenta">{pos}</div>
-                  <div className="text-sm font-semibold text-pinkteam-charcoal">
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-pinkteam-magenta">{pos}</div>
+                  <div className="text-sm font-medium text-pinkteam-charcoal truncate mt-0.5">
                     {holder ? `${holder.fullName} (${holder.nickname})` : 'ว่าง'}
                   </div>
                 </div>
                 {holder && (
-                  <span
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                      holder.checkedIn
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-white text-pinkteam-muted border border-pinkteam-soft'
-                    }`}
-                  >
+                  <span className="inline-flex items-center gap-1.5 text-xs text-pinkteam-secondary shrink-0">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        holder.checkedIn ? 'bg-emerald-600' : 'bg-pinkteam-muted/50'
+                      }`}
+                    />
                     {holder.checkedIn ? 'มาแล้ว' : 'ยังไม่มา'}
                   </span>
                 )}
@@ -107,7 +103,7 @@ export function DepartmentsBrowser({
 
       {/* 8 Department Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {departments.map((dept, index) => {
+        {departments.map((dept) => {
           const allInDept = students.filter((s) => s.departmentName === dept.name);
           const pres = allInDept.filter((s) => s.checkedIn).length;
           const active = dept.name === selectedDeptName;
@@ -116,35 +112,34 @@ export function DepartmentsBrowser({
               key={dept.id}
               type="button"
               onClick={() => setSelectedDeptName(dept.name)}
-              className={`text-left rounded-2xl p-4 transition border ${
+              className={`text-left rounded-xl p-4 transition-colors duration-150 border cursor-pointer ${
                 active
-                  ? 'figma-charcoal-surface text-white border-pinkteam-light shadow-lg'
-                  : 'editorial-panel hover:border-pinkteam-magenta'
+                  ? 'bg-pinkteam-charcoal text-white border-pinkteam-charcoal'
+                  : 'editorial-panel hover:bg-pinkteam-blush/50'
               }`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span
-                  className={`text-[11px] font-bold ${
-                    active ? 'text-pinkteam-light' : 'text-pinkteam-magenta'
+                  className={`font-display font-medium text-sm sm:text-base ${
+                    active ? 'text-white' : 'text-pinkteam-charcoal'
                   }`}
                 >
-                  {String(index + 1).padStart(2, '0')}
+                  {dept.name}
                 </span>
                 {dept.isClosed && (
-                  <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold">
+                  <span
+                    className={`text-xs font-medium ${
+                      active ? 'text-pinkteam-light' : 'text-pinkteam-muted'
+                    }`}
+                  >
                     ปิดรับ
                   </span>
                 )}
               </div>
               <div
-                className={`mt-1 font-display font-bold text-sm sm:text-base ${
-                  active ? 'text-white' : 'text-pinkteam-charcoal'
+                className={`mt-2 text-xs tabular-nums ${
+                  active ? 'text-white/80' : 'text-pinkteam-secondary'
                 }`}
-              >
-                {dept.name}
-              </div>
-              <div
-                className={`mt-2 text-xs ${active ? 'text-white/80' : 'text-pinkteam-muted'}`}
               >
                 ทั้งหมด {allInDept.length} คน · มา {pres}
                 {typeof dept.maxCapacity === 'number' ? ` · โควตา ${dept.maxCapacity}` : ''}
@@ -156,25 +151,28 @@ export function DepartmentsBrowser({
 
       {/* Selected Department Detail */}
       {selectedDept && (
-        <div className="editorial-panel rounded-3xl p-5 sm:p-6 space-y-4">
+        <div className="editorial-panel rounded-2xl p-5 sm:p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-display font-extrabold text-xl text-pinkteam-charcoal">
+              <h2 className="font-display font-semibold text-xl text-pinkteam-charcoal">
                 {selectedDept.name}
               </h2>
-              <p className="text-xs sm:text-sm text-pinkteam-muted">
+              <p className="text-xs sm:text-sm text-pinkteam-secondary tabular-nums mt-0.5">
                 ทั้งหมด {deptMembers.length} คน · มาแล้ว {presentCount} · ยังไม่มา {pendingCount} ·{' '}
-                <strong>{rate}%</strong>
+                <strong className="font-semibold text-pinkteam-magenta">{rate}%</strong>
               </p>
             </div>
             <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-pinkteam-muted absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search
+                className="w-4 h-4 text-pinkteam-muted absolute left-3 top-1/2 -translate-y-1/2"
+                strokeWidth={1.5}
+              />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ค้นหาสมาชิกในฝ่าย..."
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                placeholder="ค้นหาสมาชิกในฝ่าย"
+                className="w-full min-h-[40px] pl-9 pr-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
               />
             </div>
           </div>
@@ -185,11 +183,8 @@ export function DepartmentsBrowser({
                 const inSport = deptMembers.filter((m) => m.sportType === sport);
                 if (inSport.length === 0 && searchQuery.trim()) return null;
                 return (
-                  <div
-                    key={sport}
-                    className="rounded-2xl bg-pinkteam-blush/50 border border-pinkteam-soft p-4"
-                  >
-                    <div className="font-display font-bold text-sm text-pinkteam-magenta mb-2">
+                  <div key={sport} className="rounded-xl editorial-raised p-4">
+                    <div className="font-display font-medium text-sm text-pinkteam-charcoal mb-2 tabular-nums">
                       {sport} ({inSport.length} คน)
                     </div>
                     {inSport.length === 0 ? (
@@ -233,32 +228,31 @@ function MemberRow({
   onOpenQr: (s: StudentRecord) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-pinkteam-soft bg-white p-3.5 flex items-center justify-between gap-2">
+    <div className="rounded-xl border border-black/10 bg-white p-3.5 flex items-center justify-between gap-2">
       <div className="min-w-0">
-        <div className="font-display font-bold text-sm text-pinkteam-charcoal truncate">
+        <div className="font-display font-medium text-sm text-pinkteam-charcoal truncate">
           {member.fullName} {member.nickname ? `(${member.nickname})` : ''}
         </div>
-        <div className="text-xs text-pinkteam-muted">
+        <div className="text-xs text-pinkteam-secondary tabular-nums mt-0.5">
           ห้อง {member.classRoom} · เลขที่ {member.numberLabel} · {member.position}
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {member.checkedIn ? (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-            <CheckCircle2 className="w-3 h-3" /> มาแล้ว
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 text-gray-600 text-[11px] font-medium">
-            <Clock3 className="w-3 h-3" /> ยังไม่มา
-          </span>
-        )}
+      <div className="flex items-center gap-2.5 shrink-0">
+        <span className="inline-flex items-center gap-1.5 text-xs text-pinkteam-secondary">
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              member.checkedIn ? 'bg-emerald-600' : 'bg-pinkteam-muted/50'
+            }`}
+          />
+          {member.checkedIn ? 'มาแล้ว' : 'ยังไม่มา'}
+        </span>
         <button
           type="button"
           onClick={() => onOpenQr(member)}
           aria-label={`ดู QR ${member.fullName}`}
-          className="p-2 rounded-lg border border-pinkteam-soft hover:bg-pinkteam-blush"
+          className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg editorial-raised hover:bg-black/5 cursor-pointer"
         >
-          <QrCode className="w-3.5 h-3.5 text-pinkteam-magenta" />
+          <QrCode className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
         </button>
       </div>
     </div>

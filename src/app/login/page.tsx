@@ -17,7 +17,7 @@ function LoginFormInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     reason === 'auth_required'
-      ? 'กรุณาเข้าสู่ระบบด้วยบัญชี Admin หรือเจ้าหน้าที่ก่อนเข้าใช้งานหน้านี้'
+      ? 'กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบหรือเจ้าหน้าที่ก่อนเข้าใช้งานหน้านี้'
       : null
   );
 
@@ -53,7 +53,7 @@ function LoginFormInner() {
       } else if (role === 'STAFF') {
         router.push(nextPath.startsWith('/admin') ? '/check-in' : nextPath);
       } else {
-        setError('บัญชีนี้ยังไม่มีสิทธิ์ในระบบ (ไม่พบข้อมูลในตาราง profiles)');
+        setError('บัญชีนี้ยังไม่มีสิทธิ์ในระบบ');
         return;
       }
       router.refresh();
@@ -66,24 +66,25 @@ function LoginFormInner() {
 
   return (
     <div className="max-w-md mx-auto px-4 pt-20 lg:pt-14 pb-10">
-      <div className="editorial-panel rounded-3xl p-6 sm:p-8 space-y-5">
+      <div className="editorial-panel rounded-2xl p-6 sm:p-8 space-y-5">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-pinkteam-charcoal text-pinkteam-light flex items-center justify-center mx-auto shadow">
-            <Lock className="w-6 h-6" />
+          <div className="w-11 h-11 rounded-xl bg-pinkteam-charcoal text-white flex items-center justify-center mx-auto">
+            <Lock className="w-4 h-4" strokeWidth={1.5} />
           </div>
-          <h1 className="font-display font-extrabold text-2xl text-pinkteam-charcoal">
-            เข้าสู่ระบบเจ้าหน้าที่ / Admin
+          <h1 className="font-display font-semibold text-2xl text-pinkteam-charcoal">
+            เข้าสู่ระบบเจ้าหน้าที่
           </h1>
-          <p className="text-xs sm:text-sm text-pinkteam-muted">
-            AYUTTHAYA SPORTS DAY 2569 · Supabase Auth RBAC
+          <p className="text-xs sm:text-sm text-pinkteam-secondary">
+            ระบบจัดการคณะสีชมพู อยุธยา 2569
           </p>
         </div>
 
         {!supabaseConfigured && (
-          <div className="rounded-2xl bg-pinkteam-charcoal text-white p-4 text-xs leading-relaxed">
-            <strong>ยังไม่พบการตั้งค่า Supabase ใน .env.local:</strong> กรุณาคัดลอก{' '}
-            <code>.env.example</code> เป็น <code>.env.local</code> แล้วใส่ URL/Key
-            จากนั้นสร้างบัญชีผ่าน <code>npm run create:admin</code>
+          <div className="rounded-xl editorial-raised p-4 text-xs text-pinkteam-charcoal leading-relaxed">
+            <strong className="font-medium">ยังไม่พบการตั้งค่า Supabase ใน .env.local:</strong>{' '}
+            คัดลอก <code className="font-mono">.env.example</code> เป็น{' '}
+            <code className="font-mono">.env.local</code> แล้วใส่ URL/Key จากนั้นสร้างบัญชีผ่าน{' '}
+            <code className="font-mono">npm run create:admin</code>
           </div>
         )}
 
@@ -91,29 +92,29 @@ function LoginFormInner() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
-              อีเมล (Email)
+            <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
+              อีเมล
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="staff@ayutthaya.shop"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+              className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
-              รหัสผ่าน (Password)
+            <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
+              รหัสผ่าน
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+              placeholder="รหัสผ่าน"
+              className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
               required
             />
           </div>
@@ -121,10 +122,10 @@ function LoginFormInner() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-display font-bold text-sm transition disabled:opacity-50"
+            className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-lg bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-display font-medium text-sm transition-colors duration-150 disabled:opacity-50 cursor-pointer"
           >
-            <LogIn className="w-4 h-4" />
-            <span>{loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}</span>
+            <LogIn className="w-4 h-4" strokeWidth={1.5} />
+            <span>{loading ? 'กำลังตรวจสอบ' : 'เข้าสู่ระบบ'}</span>
           </button>
         </form>
       </div>
@@ -136,8 +137,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="max-w-md mx-auto px-4 pt-20 text-center text-white text-sm">
-          กำลังโหลด...
+        <div className="max-w-md mx-auto px-4 pt-20 text-center text-pinkteam-secondary text-sm">
+          กำลังโหลด
         </div>
       }
     >

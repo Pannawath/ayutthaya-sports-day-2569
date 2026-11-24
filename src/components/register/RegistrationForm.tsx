@@ -146,40 +146,38 @@ export function RegistrationForm({
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-5">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-4">
       <SourceModeBanner sourceMode={sourceMode} />
 
-      <div className="editorial-panel rounded-3xl p-5 sm:p-8">
+      <div className="editorial-panel rounded-2xl p-5 sm:p-7">
         <div className="mb-6">
-          <span className="inline-flex px-2.5 py-0.5 rounded-full bg-pinkteam-blush text-pinkteam-magenta text-xs font-bold">
-            03 · REGISTRATION
-          </span>
-          <h1 className="mt-1.5 font-display font-extrabold text-2xl text-pinkteam-charcoal">
+          <h1 className="font-display font-semibold text-2xl text-pinkteam-charcoal">
             ลงทะเบียนข้อมูลและฝ่ายงาน
           </h1>
-          <p className="text-sm text-pinkteam-muted">
-            กรอกข้อมูลส่วนตัวและเลือกบทบาทหน้าที่ในคณะสีชมพู (อยุธยา 2569)
+          <p className="text-sm text-pinkteam-secondary mt-1">
+            กรอกข้อมูลส่วนตัวและเลือกบทบาทหน้าที่ในคณะสีชมพู อยุธยา 2569
           </p>
         </div>
 
-        <div className="space-y-4 mb-5">
+        <div className="space-y-3 mb-5">
           {errorMsg && <ErrorState message={errorMsg} />}
           {successInfo && (
             <div className="space-y-3">
               <SuccessBanner message={successInfo.message} />
-              <div className="rounded-2xl bg-pinkteam-charcoal text-white p-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="rounded-xl bg-pinkteam-charcoal text-white p-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="font-display font-bold text-sm">บัตร QR ประจำตัวพร้อมใช้งาน</div>
-                  <div className="text-xs text-pinkteam-light">
+                  <div className="font-display font-medium text-sm">บัตร QR ประจำตัวพร้อมใช้งาน</div>
+                  <div className="text-xs text-white/75">
                     บันทึกภาพไว้สแกนเข้างานได้ทันที
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setQrStudent(successInfo.student)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-pinkteam-light text-pinkteam-charcoal text-xs font-bold"
+                  className="min-h-[40px] inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-pinkteam-charcoal text-xs font-medium cursor-pointer"
                 >
-                  <QrCode className="w-4 h-4" /> เปิดบัตร QR Code
+                  <QrCode className="w-4 h-4" strokeWidth={1.5} />
+                  เปิดบัตร QR Code
                 </button>
               </div>
             </div>
@@ -187,36 +185,35 @@ export function RegistrationForm({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 01 Personal Info */}
           <div className="space-y-4">
-            <h2 className="font-display font-bold text-sm uppercase tracking-wider text-pinkteam-magenta border-b border-pinkteam-soft pb-2">
-              01 · ข้อมูลส่วนตัวนักเรียน
+            <h2 className="font-display font-medium text-sm text-pinkteam-charcoal border-b border-black/10 pb-2">
+              ข้อมูลส่วนตัวนักเรียน
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
+                <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                   ชื่อ-นามสกุล <span className="text-pinkteam-magenta">*</span>
                 </label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="กรอกชื่อ-นามสกุล"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                  placeholder="ชื่อ-นามสกุล"
+                  className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
+                <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                   ชื่อเล่น <span className="text-pinkteam-magenta">*</span>
                 </label>
                 <input
                   type="text"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  placeholder="กรอกชื่อเล่น"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                  placeholder="ชื่อเล่น"
+                  className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
                   required
                 />
               </div>
@@ -224,26 +221,26 @@ export function RegistrationForm({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
+                <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                   เลขประจำตัวนักเรียน (ถ้ามี)
                 </label>
                 <input
                   type="text"
                   value={studentCode}
                   onChange={(e) => setStudentCode(e.target.value)}
-                  placeholder="เช่น 45678"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                  placeholder="เลขประจำตัว"
+                  className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm tabular-nums"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
+                <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                   ชั้น / ห้อง <span className="text-pinkteam-magenta">*</span>
                 </label>
                 <select
                   value={classRoom}
                   onChange={(e) => setClassRoom(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                  className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm cursor-pointer"
                   required
                 >
                   <option value="">เลือกชั้น / ห้อง</option>
@@ -260,13 +257,13 @@ export function RegistrationForm({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
+                <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                   เลขที่และกลุ่ม <span className="text-pinkteam-magenta">*</span>
                 </label>
                 <select
                   value={numberLabel}
                   onChange={(e) => setNumberLabel(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                  className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm cursor-pointer"
                   required
                 >
                   <option value="">เลือกเลขที่ (1 ก–20 ข)</option>
@@ -280,30 +277,29 @@ export function RegistrationForm({
             </div>
           </div>
 
-          {/* 02 Role & Department */}
           <div className="space-y-4">
-            <h2 className="font-display font-bold text-sm uppercase tracking-wider text-pinkteam-magenta border-b border-pinkteam-soft pb-2">
-              02 · ตำแหน่งและฝ่ายงาน
+            <h2 className="font-display font-medium text-sm text-pinkteam-charcoal border-b border-black/10 pb-2">
+              ตำแหน่งและฝ่ายงาน
             </h2>
 
             {isM1Locked ? (
-              <div className="rounded-2xl bg-pinkteam-blush border border-pinkteam-soft p-4 text-sm text-pinkteam-charcoal leading-relaxed">
-                ระบบล็อกคำตอบให้เข้า <strong>ฝ่ายสแตนเชียร์</strong> ในสถานะ{' '}
-                <strong>สมาชิกฝ่าย</strong> โดยอัตโนมัติ หากต้องการตำแหน่งอื่น กรุณาแจ้งพี่สตาฟเพื่อแก้ไขข้อมูลให้
+              <div className="rounded-xl editorial-raised p-4 text-sm text-pinkteam-charcoal leading-relaxed">
+                ระบบล็อกคำตอบให้เข้า <strong className="font-semibold">ฝ่ายสแตนเชียร์</strong> ในสถานะ{' '}
+                <strong className="font-semibold">สมาชิกฝ่าย</strong> โดยอัตโนมัติ หากต้องการตำแหน่งอื่น กรุณาแจ้งพี่สตาฟ
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-2 bg-pinkteam-blush p-1.5 rounded-xl border border-pinkteam-soft">
+                <div className="grid grid-cols-2 gap-1.5 editorial-raised p-1.5 rounded-xl">
                   <button
                     type="button"
                     onClick={() => {
                       setRoleCategory('department');
                       setPosition('');
                     }}
-                    className={`py-2 rounded-lg text-xs sm:text-sm font-bold transition ${
+                    className={`min-h-[40px] rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
                       roleCategory === 'department'
-                        ? 'bg-pinkteam-magenta text-white shadow'
-                        : 'text-pinkteam-charcoal'
+                        ? 'bg-pinkteam-magenta text-white'
+                        : 'text-pinkteam-charcoal hover:bg-white/70'
                     }`}
                   >
                     ฝ่ายงาน (8 ฝ่าย)
@@ -314,10 +310,10 @@ export function RegistrationForm({
                       setRoleCategory('central');
                       setPosition('');
                     }}
-                    className={`py-2 rounded-lg text-xs sm:text-sm font-bold transition ${
+                    className={`min-h-[40px] rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
                       roleCategory === 'central'
-                        ? 'bg-pinkteam-magenta text-white shadow'
-                        : 'text-pinkteam-charcoal'
+                        ? 'bg-pinkteam-magenta text-white'
+                        : 'text-pinkteam-charcoal hover:bg-white/70'
                     }`}
                   >
                     ตำแหน่งบริหารคณะสี
@@ -326,13 +322,13 @@ export function RegistrationForm({
 
                 {roleCategory === 'central' ? (
                   <div>
-                    <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
+                    <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                       ตำแหน่งบริหาร <span className="text-pinkteam-magenta">*</span>
                     </label>
                     <select
                       value={centralPosition}
                       onChange={(e) => setCentralPosition(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                      className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm cursor-pointer"
                       required
                     >
                       <option value="">เลือกตำแหน่ง</option>
@@ -351,7 +347,7 @@ export function RegistrationForm({
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
+                        <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                           ฝ่ายงาน <span className="text-pinkteam-magenta">*</span>
                         </label>
                         <select
@@ -361,7 +357,7 @@ export function RegistrationForm({
                             setPosition('');
                             setSportType('');
                           }}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                          className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm cursor-pointer"
                           required
                         >
                           <option value="">เลือกฝ่ายงาน</option>
@@ -397,13 +393,13 @@ export function RegistrationForm({
 
                       {selectedDeptMeta && !selectedDeptMeta.hasSports && (
                         <div>
-                          <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
+                          <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                             ตำแหน่ง <span className="text-pinkteam-magenta">*</span>
                           </label>
                           <select
                             value={position}
                             onChange={(e) => setPosition(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                            className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm cursor-pointer"
                             required
                           >
                             <option value="">เลือกตำแหน่ง</option>
@@ -436,13 +432,13 @@ export function RegistrationForm({
                     {selectedDeptMeta?.hasSports && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
+                          <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                             ประเภทกีฬา <span className="text-pinkteam-magenta">*</span>
                           </label>
                           <select
                             value={sportType}
                             onChange={(e) => setSportType(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                            className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm cursor-pointer"
                           >
                             <option value="">เลือกประเภทกีฬา</option>
                             {SPORT_TYPES.map((sp) => (
@@ -453,13 +449,13 @@ export function RegistrationForm({
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-pinkteam-charcoal mb-1">
+                          <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                             ตำแหน่งกีฬา <span className="text-pinkteam-magenta">*</span>
                           </label>
                           <select
                             value={position}
                             onChange={(e) => setPosition(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-pinkteam-soft bg-white text-sm"
+                            className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm cursor-pointer"
                             required
                           >
                             <option value="">เลือกตำแหน่ง</option>
@@ -479,10 +475,10 @@ export function RegistrationForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-display font-bold text-base shadow-lg transition disabled:opacity-50"
+            className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-display font-medium text-sm sm:text-base transition-colors duration-150 disabled:opacity-50 cursor-pointer"
           >
-            <UserPlus className="w-5 h-5" />
-            <span>{isSubmitting ? 'กำลังบันทึกข้อมูล...' : 'ยืนยันการลงทะเบียน'}</span>
+            <UserPlus className="w-4 h-4" strokeWidth={1.5} />
+            <span>{isSubmitting ? 'กำลังบันทึกข้อมูล' : 'ยืนยันการลงทะเบียน'}</span>
           </button>
         </form>
       </div>

@@ -53,14 +53,12 @@ export default async function HomePage() {
   return (
     <div className="w-full">
       {/* ================= ABOVE THE FOLD: FIGMA HERO + FEATURED JERSEY CARD ================= */}
-      <section className="relative overflow-hidden">
-        {/* Top Mobile/Editorial Hero Collage matching หน้าหลัก.svg */}
+      <section className="figma-pink-backdrop relative overflow-hidden pb-10 lg:pb-12">
         <div className="lg:max-w-7xl lg:mx-auto lg:px-6 lg:pt-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-8 lg:items-center">
             {/* Left / Top Editorial Hero Collage */}
             <div className="lg:col-span-7 relative">
-              <div className="relative h-[340px] sm:h-[380px] lg:h-[440px] w-full overflow-hidden lg:rounded-3xl lg:shadow-2xl">
-                {/* Blurred Stadium + Pink Aura Backdrop */}
+              <div className="relative h-[340px] sm:h-[380px] lg:h-[440px] w-full overflow-hidden lg:rounded-2xl">
                 <img
                   src="/images/figma/hero-bg-1.png"
                   alt=""
@@ -71,16 +69,14 @@ export default async function HomePage() {
                   className="absolute inset-0"
                   style={{
                     background:
-                      'linear-gradient(180deg, rgba(31,18,22,0.25) 0%, rgba(255,175,202,0.22) 60%, rgba(255,175,202,0.92) 100%)',
+                      'linear-gradient(180deg, rgba(31,18,22,0.22) 0%, rgba(255,175,202,0.2) 60%, rgba(255,175,202,0.92) 100%)',
                   }}
                 />
-                {/* Committee Group Photo */}
                 <img
                   src="/images/figma/hero-bg-4.png"
                   alt="คณะกรรมการสีชมพู อยุธยา 2569"
                   className="absolute inset-x-0 bottom-4 w-full h-[82%] object-contain object-bottom blur-[1.2px] opacity-95"
                 />
-                {/* Top Torn Charcoal Edge */}
                 <img
                   src="/images/figma/torn-stone.png"
                   alt=""
@@ -88,20 +84,12 @@ export default async function HomePage() {
                   className="absolute -top-24 sm:-top-28 inset-x-0 w-[115%] -left-[7%] max-w-none h-[180px] object-cover object-bottom drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)]"
                 />
 
-                {/* Editorial Top Badge */}
-                <div className="relative z-10 pt-5 px-5 lg:px-7 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 text-pinkteam-charcoal text-[11px] font-display font-bold tracking-wider uppercase shadow">
-                    <span className="w-2 h-2 rounded-full bg-pinkteam-magenta" />
-                    AYUTTHAYA SPORTS DAY 2569
-                  </span>
-                </div>
-
                 {/* White Calligraphic "คณะ อยุธยา" Script */}
                 <div className="absolute right-1 sm:right-6 bottom-0 z-20 pointer-events-none">
                   <img
                     src="/images/figma/calligraphy-ayutthaya.png"
                     alt="คณะ อยุธยา"
-                    className="w-[260px] sm:w-[320px] lg:w-[360px] h-auto object-contain drop-shadow-[0_6px_14px_rgba(31,18,22,0.55)]"
+                    className="w-[260px] sm:w-[320px] lg:w-[360px] h-auto object-contain drop-shadow-[0_6px_14px_rgba(31,18,22,0.5)]"
                   />
                 </div>
               </div>
@@ -112,14 +100,14 @@ export default async function HomePage() {
               {isExternalShop ? (
                 <a
                   href={SHOP_URL}
-                  className="block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_18px_36px_rgba(31,18,22,0.42)] transition-transform duration-300 hover:-translate-y-1"
+                  className="block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-opacity duration-150 hover:opacity-95 cursor-pointer"
                 >
                   <JerseyCardInner />
                 </a>
               ) : (
                 <Link
                   href={SHOP_URL}
-                  className="block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_18px_36px_rgba(31,18,22,0.42)] transition-transform duration-300 hover:-translate-y-1"
+                  className="block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-opacity duration-150 hover:opacity-95 cursor-pointer"
                 >
                   <JerseyCardInner />
                 </Link>
@@ -129,70 +117,83 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ================= BELOW THE FOLD: LIVE STATS, 4 QUICK MENUS & ANNOUNCEMENTS ================= */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-8 space-y-6 pb-8">
+      {/* ================= BELOW THE FOLD: CALM WARM-PAPER WORKSPACE ================= */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-6 space-y-6 pb-8">
         <SourceModeBanner sourceMode={stats.sourceMode} />
 
         {/* Real-time Attendance Overview */}
-        <section aria-labelledby="overview-heading" className="space-y-3">
-          <div className="flex flex-wrap items-end justify-between gap-2 text-white">
+        <section aria-labelledby="overview-heading" className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 id="overview-heading" className="font-display font-bold text-xl sm:text-2xl figma-text-shadow">
-                ภาพรวมคณะสีชมพู (อยุธยา 2569)
+              <h1
+                id="overview-heading"
+                className="font-display font-semibold text-xl sm:text-2xl text-pinkteam-charcoal"
+              >
+                ภาพรวมคณะสีชมพู อยุธยา 2569
               </h1>
-              <p className="text-xs sm:text-sm text-white/90">
+              <p className="text-sm text-pinkteam-secondary mt-0.5">
                 {stats.activeSession
                   ? `รอบเช็คชื่อปัจจุบัน: ${stats.activeSession.title}`
-                  : 'ข้อมูลตรงจากฐานข้อมูลจริง (พร้อมรอบเช็คชื่อ)'}
+                  : 'ข้อมูลตรงจากฐานข้อมูลจริง'}
               </p>
             </div>
             <Link
               href="/statistics"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-pinkteam-charcoal/80 hover:bg-pinkteam-charcoal px-3 py-1.5 rounded-full transition"
+              className="inline-flex items-center gap-1.5 min-h-[36px] px-3.5 py-1.5 rounded-lg editorial-panel text-xs font-medium text-pinkteam-charcoal hover:bg-pinkteam-raised transition-colors duration-150 cursor-pointer"
             >
-              ดูสถิติเชิงลึก <ArrowUpRight className="w-3.5 h-3.5" />
+              <span>ดูสถิติทั้งหมด</span>
+              <ArrowUpRight className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="editorial-panel rounded-2xl p-4">
-              <div className="text-xs font-semibold text-pinkteam-muted">นักเรียนทั้งหมดในระบบ</div>
-              <div className="mt-1 font-display font-extrabold text-3xl text-pinkteam-charcoal">
+          <div className="grid grid-cols-2 lg:grid-cols-12 gap-3">
+            <div className="lg:col-span-2 editorial-panel rounded-xl p-4">
+              <div className="text-xs font-normal text-pinkteam-muted">นักเรียนทั้งหมด</div>
+              <div className="mt-1 font-display font-semibold text-2xl sm:text-3xl text-pinkteam-charcoal tabular-nums">
                 {stats.totalStudents}
               </div>
-              <div className="text-[11px] text-pinkteam-muted mt-0.5">6 ระดับชั้น · 21 ห้อง</div>
+              <div className="text-xs text-pinkteam-secondary mt-1 tabular-nums">
+                6 ชั้น · 21 ห้อง
+              </div>
             </div>
-            <div className="editorial-panel rounded-2xl p-4">
-              <div className="text-xs font-semibold text-pinkteam-muted">ผู้ลงทะเบียนแล้ว</div>
-              <div className="mt-1 font-display font-extrabold text-3xl text-pinkteam-magenta">
+            <div className="lg:col-span-2 editorial-panel rounded-xl p-4">
+              <div className="text-xs font-normal text-pinkteam-muted">ลงทะเบียนแล้ว</div>
+              <div className="mt-1 font-display font-semibold text-2xl sm:text-3xl text-pinkteam-charcoal tabular-nums">
                 {stats.totalStudents}
               </div>
-              <div className="text-[11px] text-pinkteam-muted mt-0.5">8 ฝ่ายงาน + ส่วนกลาง</div>
+              <div className="text-xs text-pinkteam-secondary mt-1 tabular-nums">8 ฝ่ายงาน</div>
             </div>
-            <div className="editorial-panel rounded-2xl p-4">
-              <div className="text-xs font-semibold text-emerald-700">มาเข้าร่วมแล้ว</div>
-              <div className="mt-1 font-display font-extrabold text-3xl text-emerald-600">
+            <div className="lg:col-span-2 editorial-panel rounded-xl p-4">
+              <div className="text-xs font-normal text-pinkteam-muted">มาเข้าร่วม</div>
+              <div className="mt-1 font-display font-semibold text-2xl sm:text-3xl text-pinkteam-charcoal tabular-nums">
                 {stats.checkedInCount}
               </div>
-              <div className="text-[11px] text-emerald-700/80 mt-0.5">ยืนยันเช็คชื่อแล้ว</div>
+              <div className="text-xs text-pinkteam-secondary mt-1">ยืนยันเช็คชื่อแล้ว</div>
             </div>
-            <div className="editorial-panel rounded-2xl p-4">
-              <div className="text-xs font-semibold text-amber-700">ยังไม่มา / รอเช็คชื่อ</div>
-              <div className="mt-1 font-display font-extrabold text-3xl text-amber-600">
+            <div className="lg:col-span-2 editorial-panel rounded-xl p-4">
+              <div className="text-xs font-normal text-pinkteam-muted">ยังไม่มา</div>
+              <div className="mt-1 font-display font-semibold text-2xl sm:text-3xl text-pinkteam-charcoal tabular-nums">
                 {stats.pendingCount}
               </div>
-              <div className="text-[11px] text-amber-700/80 mt-0.5">รอดำเนินการ</div>
+              <div className="text-xs text-pinkteam-secondary mt-1">รอเช็คชื่อ</div>
             </div>
-            <div className="col-span-2 lg:col-span-1 figma-charcoal-surface text-white rounded-2xl p-4 flex flex-col justify-between">
-              <div className="text-xs font-semibold text-pinkteam-light">เปอร์เซ็นต์เข้าร่วม</div>
-              <div className="mt-1 font-display font-extrabold text-3xl text-white">
-                {stats.attendanceRate}%
+            <div className="col-span-2 lg:col-span-4 editorial-panel rounded-xl p-4 flex flex-col justify-between">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-xs font-normal text-pinkteam-muted">อัตราการเข้าร่วม</span>
+                <span className="font-display font-semibold text-2xl sm:text-3xl text-pinkteam-magenta tabular-nums">
+                  {stats.attendanceRate}%
+                </span>
               </div>
-              <div className="w-full h-1.5 bg-white/15 rounded-full overflow-hidden mt-2">
-                <div
-                  className="h-full bg-pinkteam-light transition-all"
-                  style={{ width: `${Math.min(100, stats.attendanceRate)}%` }}
-                />
+              <div className="mt-3 space-y-1.5">
+                <div className="w-full h-2 bg-pinkteam-raised rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-pinkteam-magenta transition-[width] duration-300"
+                    style={{ width: `${Math.min(100, stats.attendanceRate)}%` }}
+                  />
+                </div>
+                <div className="text-xs text-pinkteam-secondary tabular-nums">
+                  {stats.checkedInCount} จาก {stats.totalStudents} คน
+                </div>
               </div>
             </div>
           </div>
@@ -206,19 +207,17 @@ export default async function HomePage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="editorial-panel rounded-2xl p-4 hover:border-pinkteam-magenta transition group flex flex-col justify-between gap-3"
+                className="editorial-panel rounded-xl p-4 hover:bg-pinkteam-blush/60 transition-colors duration-150 flex flex-col justify-between gap-3 cursor-pointer"
               >
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-pinkteam-blush text-pinkteam-magenta flex items-center justify-center group-hover:bg-pinkteam-magenta group-hover:text-white transition">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <ArrowUpRight className="w-4 h-4 text-pinkteam-muted group-hover:text-pinkteam-magenta transition" />
+                <div className="flex items-center justify-between text-pinkteam-muted">
+                  <Icon className="w-4 h-4 text-pinkteam-magenta" strokeWidth={1.5} />
+                  <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <div className="font-display font-bold text-sm sm:text-base text-pinkteam-charcoal">
+                  <div className="font-display font-medium text-sm sm:text-base text-pinkteam-charcoal">
                     {item.title}
                   </div>
-                  <div className="text-xs text-pinkteam-muted mt-0.5">{item.sub}</div>
+                  <div className="text-xs text-pinkteam-secondary mt-0.5">{item.sub}</div>
                 </div>
               </Link>
             );
@@ -226,29 +225,26 @@ export default async function HomePage() {
         </section>
 
         {/* Latest Announcements */}
-        <section className="editorial-panel rounded-3xl p-5 sm:p-6">
+        <section className="editorial-panel rounded-2xl p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-pinkteam-magenta text-white flex items-center justify-center">
-                <Megaphone className="w-4 h-4" />
-              </div>
+              <Megaphone className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
               <div>
-                <h2 className="font-display font-bold text-base sm:text-lg text-pinkteam-charcoal">
+                <h2 className="font-display font-semibold text-base text-pinkteam-charcoal">
                   ข่าวสารและประกาศล่าสุด
                 </h2>
-                <p className="text-xs text-pinkteam-muted">กำหนดการซ้อมและประกาศสำคัญจากคณะสีชมพู</p>
               </div>
             </div>
             <Link
               href="/announcements"
-              className="text-xs font-semibold text-pinkteam-magenta hover:underline"
+              className="text-xs font-medium text-pinkteam-magenta hover:underline cursor-pointer"
             >
               ดูทั้งหมด
             </Link>
           </div>
 
           {latestAnnouncements.length === 0 ? (
-            <div className="rounded-2xl bg-pinkteam-blush/70 border border-pinkteam-soft p-6 text-center text-sm text-pinkteam-muted">
+            <div className="rounded-xl editorial-raised p-6 text-center text-sm text-pinkteam-secondary">
               ยังไม่มีประกาศที่เผยแพร่ในขณะนี้
             </div>
           ) : (
@@ -257,7 +253,7 @@ export default async function HomePage() {
                 <Link
                   key={ann.id}
                   href={`/announcements?id=${ann.id}`}
-                  className="rounded-2xl border border-pinkteam-soft bg-white overflow-hidden hover:border-pinkteam-magenta transition flex flex-col"
+                  className="rounded-xl border border-black/10 bg-white overflow-hidden hover:border-pinkteam-magenta/40 transition-colors duration-150 flex flex-col cursor-pointer"
                 >
                   {ann.imageUrl && (
                     <img
@@ -268,24 +264,18 @@ export default async function HomePage() {
                   )}
                   <div className="p-4 flex-1 flex flex-col justify-between gap-2">
                     <div>
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                          ann.category === 'SCHEDULE'
-                            ? 'bg-pinkteam-charcoal text-white'
-                            : 'bg-pinkteam-soft text-pinkteam-magenta'
-                        }`}
-                      >
+                      <span className="text-xs font-medium text-pinkteam-magenta">
                         {ann.category === 'SCHEDULE' ? 'กำหนดการ' : 'ข่าวสาร'}
                       </span>
-                      <h3 className="mt-2 font-display font-bold text-sm text-pinkteam-charcoal line-clamp-2">
+                      <h3 className="mt-1 font-display font-medium text-sm text-pinkteam-charcoal line-clamp-2">
                         {ann.title}
                       </h3>
-                      <p className="mt-1 text-xs text-pinkteam-muted line-clamp-2">
+                      <p className="mt-1 text-xs text-pinkteam-secondary line-clamp-2">
                         {ann.content}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-pinkteam-muted pt-2 border-t border-pinkteam-blush">
-                      <Calendar className="w-3.5 h-3.5" />
+                    <div className="flex items-center gap-1.5 text-xs text-pinkteam-muted pt-2 border-t border-black/5 tabular-nums">
+                      <Calendar className="w-4 h-4" strokeWidth={1.5} />
                       <span>
                         {new Date(ann.publishedAt).toLocaleDateString('th-TH', {
                           day: 'numeric',
@@ -311,7 +301,7 @@ function JerseyCardInner() {
       <img
         src="/images/figma/jersey-models.png"
         alt="เสื้อคณะสีชมพู อยุธยา 2569"
-        className="w-full h-[84%] object-cover object-top drop-shadow-[10px_19px_10px_rgba(0,0,0,0.35)] transition-transform duration-500 group-hover:scale-[1.03]"
+        className="w-full h-[84%] object-cover object-top drop-shadow-[8px_14px_10px_rgba(0,0,0,0.3)]"
       />
       <div className="absolute inset-x-0 bottom-0 h-[114px] flex items-end px-7 pb-5">
         <img
@@ -321,13 +311,11 @@ function JerseyCardInner() {
           className="absolute -bottom-4 -left-[6%] w-[112%] max-w-none h-[126px] object-cover object-top pointer-events-none"
         />
         <div className="relative z-10 w-full flex items-center justify-between gap-3">
-          <div>
-            <span className="font-display font-extrabold text-4xl sm:text-[42px] leading-none text-white figma-text-shadow">
-              สั่งจองเสื้อ
-            </span>
-          </div>
-          <span className="w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white group-hover:bg-pinkteam-magenta transition">
-            <ArrowUpRight className="w-5 h-5" />
+          <span className="font-display font-bold text-4xl sm:text-[42px] leading-none text-white figma-text-shadow">
+            สั่งจองเสื้อ
+          </span>
+          <span className="w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white group-hover:bg-pinkteam-magenta transition-colors duration-150">
+            <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
           </span>
         </div>
       </div>

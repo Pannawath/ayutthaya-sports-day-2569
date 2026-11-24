@@ -48,19 +48,16 @@ export function StatisticsDashboard({
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-5">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-4">
       <SourceModeBanner sourceMode={stats.sourceMode} />
 
-      <div className="editorial-panel rounded-3xl p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="editorial-panel rounded-2xl p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="inline-flex px-2.5 py-0.5 rounded-full bg-pinkteam-blush text-pinkteam-magenta text-xs font-bold">
-            06 · REAL-TIME STATISTICS
-          </span>
-          <h1 className="mt-1.5 font-display font-extrabold text-2xl text-pinkteam-charcoal">
-            สถิติและกราฟวิเคราะห์การเข้าร่วม
+          <h1 className="font-display font-semibold text-2xl text-pinkteam-charcoal">
+            สถิติการเข้าร่วมกิจกรรม
           </h1>
-          <p className="text-sm text-pinkteam-muted">
-            อัปเดตตรงจากฐานข้อมูล แยกตามฝ่าย ระดับชั้น ห้องเรียน และช่วงเวลา
+          <p className="text-sm text-pinkteam-secondary mt-1">
+            ข้อมูลตรงจากฐานข้อมูล แยกตามฝ่าย ระดับชั้น ห้องเรียน และช่วงเวลา
           </p>
         </div>
 
@@ -73,7 +70,7 @@ export function StatisticsDashboard({
                 refreshStats(e.target.value, range);
               }}
               aria-label="เลือกรอบกิจกรรม"
-              className="px-3 py-2 rounded-xl border border-pinkteam-soft bg-white text-xs sm:text-sm font-semibold"
+              className="min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-xs sm:text-sm font-medium cursor-pointer"
             >
               {sessions.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -82,7 +79,7 @@ export function StatisticsDashboard({
               ))}
             </select>
           )}
-          <div className="flex rounded-xl bg-pinkteam-blush p-1 border border-pinkteam-soft">
+          <div className="flex rounded-lg editorial-raised p-1">
             {(
               [
                 { id: 'all', label: 'ทั้งหมด' },
@@ -97,10 +94,10 @@ export function StatisticsDashboard({
                   setRange(opt.id);
                   refreshStats(sessionId, opt.id);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`min-h-[34px] px-3 py-1 rounded-md text-xs font-medium transition-colors duration-150 cursor-pointer ${
                   range === opt.id
                     ? 'bg-pinkteam-magenta text-white'
-                    : 'text-pinkteam-charcoal'
+                    : 'text-pinkteam-charcoal hover:bg-white/70'
                 }`}
               >
                 {opt.label}
@@ -111,100 +108,114 @@ export function StatisticsDashboard({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 opacity-100">
-        <div className="editorial-panel rounded-2xl p-4">
-          <div className="text-xs font-semibold text-pinkteam-muted">นักเรียนทั้งหมด</div>
-          <div className="font-display font-extrabold text-3xl text-pinkteam-charcoal mt-1">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="editorial-panel rounded-xl p-4">
+          <div className="text-xs font-normal text-pinkteam-muted">นักเรียนทั้งหมด</div>
+          <div className="font-display font-semibold text-3xl text-pinkteam-charcoal tabular-nums mt-1">
             {loading ? '...' : stats.totalStudents}
           </div>
         </div>
-        <div className="editorial-panel rounded-2xl p-4">
-          <div className="text-xs font-semibold text-emerald-700">เข้าร่วมแล้ว</div>
-          <div className="font-display font-extrabold text-3xl text-emerald-600 mt-1">
+        <div className="editorial-panel rounded-xl p-4">
+          <div className="text-xs font-normal text-pinkteam-muted">เข้าร่วมแล้ว</div>
+          <div className="font-display font-semibold text-3xl text-pinkteam-charcoal tabular-nums mt-1">
             {loading ? '...' : stats.checkedInCount}
           </div>
         </div>
-        <div className="editorial-panel rounded-2xl p-4">
-          <div className="text-xs font-semibold text-amber-700">ยังไม่มา</div>
-          <div className="font-display font-extrabold text-3xl text-amber-600 mt-1">
+        <div className="editorial-panel rounded-xl p-4">
+          <div className="text-xs font-normal text-pinkteam-muted">ยังไม่มา</div>
+          <div className="font-display font-semibold text-3xl text-pinkteam-charcoal tabular-nums mt-1">
             {loading ? '...' : stats.pendingCount}
           </div>
         </div>
-        <div className="figma-charcoal-surface text-white rounded-2xl p-4">
-          <div className="text-xs font-semibold text-pinkteam-light">เปอร์เซ็นต์เข้าร่วม</div>
-          <div className="font-display font-extrabold text-3xl mt-1">
+        <div className="editorial-panel rounded-xl p-4">
+          <div className="text-xs font-normal text-pinkteam-muted">เปอร์เซ็นต์เข้าร่วม</div>
+          <div className="font-display font-semibold text-3xl text-pinkteam-magenta tabular-nums mt-1">
             {loading ? '...' : `${stats.attendanceRate}%`}
           </div>
         </div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Department Bar Chart */}
-        <div className="editorial-panel rounded-3xl p-5">
-          <h2 className="font-display font-bold text-base text-pinkteam-charcoal mb-3">
+      {/* Main Chart (2/3 width) + Grade Ranked List (1/3 width) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8 editorial-panel rounded-2xl p-5">
+          <h2 className="font-display font-semibold text-base text-pinkteam-charcoal mb-3">
             จำนวนสมาชิกและผู้มาเข้าร่วมแยกตามฝ่าย (8 ฝ่าย)
           </h2>
-          <div className="h-72 w-full">
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.byDepartment} margin={{ top: 8, right: 12, left: -16, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3d5e0" />
-                <XAxis
+              <BarChart
+                data={stats.byDepartment}
+                layout="vertical"
+                margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E8DEE1" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 12, fill: '#7A6A70' }} />
+                <YAxis
+                  type="category"
                   dataKey="name"
-                  tick={{ fontSize: 11, fill: '#1F1216' }}
-                  interval={0}
-                  angle={-15}
-                  textAnchor="end"
-                  height={56}
+                  width={140}
+                  tick={{ fontSize: 12, fill: '#1F1216' }}
                 />
-                <YAxis tick={{ fontSize: 11, fill: '#6B4E57' }} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="present" name="มาแล้ว" stackId="a" fill="#B32151" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="pending" name="ยังไม่มา" stackId="a" fill="#FFAFCA" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="present" name="มาแล้ว" stackId="a" fill="#B32151" />
+                <Bar
+                  dataKey="pending"
+                  name="ยังไม่มา"
+                  stackId="a"
+                  fill="#E6DCE0"
+                  radius={[0, 4, 4, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Grade Bar Chart */}
-        <div className="editorial-panel rounded-3xl p-5">
-          <h2 className="font-display font-bold text-base text-pinkteam-charcoal mb-3">
-            สถิติแยกตามระดับชั้น (ม.1 – ม.6)
-          </h2>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.byGrade} margin={{ top: 8, right: 12, left: -16, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3d5e0" />
-                <XAxis dataKey="grade" tick={{ fontSize: 12, fill: '#1F1216' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#6B4E57' }} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="present" name="มาแล้ว" stackId="g" fill="#1F1216" />
-                <Bar dataKey="pending" name="ยังไม่มา" stackId="g" fill="#FFAFCA" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Grade Ranked Bars */}
+        <div className="lg:col-span-4 editorial-panel rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <h2 className="font-display font-semibold text-base text-pinkteam-charcoal mb-3">
+              สัดส่วนรายระดับชั้น (ม.1 – ม.6)
+            </h2>
+            <div className="space-y-3">
+              {stats.byGrade.map((g) => (
+                <div key={g.grade} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs tabular-nums">
+                    <span className="font-medium text-pinkteam-charcoal">{g.grade}</span>
+                    <span className="text-pinkteam-secondary">
+                      {g.present}/{g.total} คน ({g.rate}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-pinkteam-raised rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-pinkteam-magenta transition-[width] duration-300"
+                      style={{ width: `${Math.min(100, g.rate)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Timeline Trend Chart */}
-      <div className="editorial-panel rounded-3xl p-5">
-        <h2 className="font-display font-bold text-base text-pinkteam-charcoal mb-3">
+      <div className="editorial-panel rounded-2xl p-5">
+        <h2 className="font-display font-semibold text-base text-pinkteam-charcoal mb-3">
           แนวโน้มการเช็คชื่อตามช่วงเวลา
         </h2>
         {stats.timeline.length === 0 ? (
           <EmptyState
             title="ยังไม่มีข้อมูลเวลาเช็คชื่อในช่วงนี้"
-            description="กราฟแนวโน้มจะปรากฏขึ้นอัตโนมัติทันทีที่มีเจ้าหน้าที่บันทึกเช็คชื่อในรอบที่เลือก"
+            description="กราฟแนวโน้มจะปรากฏขึ้นเมื่อเจ้าหน้าที่บันทึกการเช็คชื่อในรอบที่เลือก"
           />
         ) : (
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats.timeline} margin={{ top: 8, right: 16, left: -16, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3d5e0" />
-                <XAxis dataKey="bucket" tick={{ fontSize: 12, fill: '#1F1216' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#6B4E57' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E8DEE1" />
+                <XAxis dataKey="bucket" tick={{ fontSize: 12, fill: '#7A6A70' }} />
+                <YAxis tick={{ fontSize: 12, fill: '#7A6A70' }} />
                 <Tooltip />
                 <Area
                   type="monotone"
@@ -212,7 +223,7 @@ export function StatisticsDashboard({
                   name="ยอดสะสม"
                   stroke="#B32151"
                   fill="#FFAFCA"
-                  fillOpacity={0.6}
+                  fillOpacity={0.45}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -221,30 +232,32 @@ export function StatisticsDashboard({
       </div>
 
       {/* Room Breakdown Table */}
-      <div className="editorial-panel rounded-3xl p-5 overflow-x-auto">
-        <h2 className="font-display font-bold text-base text-pinkteam-charcoal mb-3">
+      <div className="editorial-panel rounded-2xl p-5 overflow-x-auto">
+        <h2 className="font-display font-semibold text-base text-pinkteam-charcoal mb-3">
           ตารางสถิติรายห้องเรียน (21 ห้อง)
         </h2>
-        <table className="w-full text-sm border-collapse min-w-[480px]">
+        <table className="w-full text-sm border-collapse min-w-[480px] tabular-nums">
           <thead>
-            <tr className="border-b border-pinkteam-soft text-left text-xs text-pinkteam-muted">
-              <th className="py-2 pr-3">ห้อง</th>
-              <th className="py-2 pr-3">ระดับชั้น</th>
-              <th className="py-2 pr-3">ทั้งหมด</th>
-              <th className="py-2 pr-3">มาแล้ว</th>
-              <th className="py-2 pr-3">ยังไม่มา</th>
-              <th className="py-2">เข้าร่วม (%)</th>
+            <tr className="border-b border-black/10 text-left text-xs text-pinkteam-muted">
+              <th className="py-2 pr-3 font-medium">ห้อง</th>
+              <th className="py-2 pr-3 font-medium">ระดับชั้น</th>
+              <th className="py-2 pr-3 font-medium text-right">ทั้งหมด</th>
+              <th className="py-2 pr-3 font-medium text-right">มาแล้ว</th>
+              <th className="py-2 pr-3 font-medium text-right">ยังไม่มา</th>
+              <th className="py-2 font-medium text-right">เข้าร่วม</th>
             </tr>
           </thead>
           <tbody>
             {stats.byRoom.map((r) => (
-              <tr key={r.room} className="border-b border-pinkteam-blush last:border-0">
-                <td className="py-2 pr-3 font-bold text-pinkteam-charcoal">{r.room}</td>
-                <td className="py-2 pr-3 text-pinkteam-muted">{r.grade}</td>
-                <td className="py-2 pr-3">{r.total}</td>
-                <td className="py-2 pr-3 text-emerald-700 font-semibold">{r.present}</td>
-                <td className="py-2 pr-3 text-amber-700">{r.pending}</td>
-                <td className="py-2 font-semibold text-pinkteam-magenta">{r.rate}%</td>
+              <tr key={r.room} className="border-b border-black/5 last:border-0">
+                <td className="py-2.5 pr-3 font-medium text-pinkteam-charcoal">{r.room}</td>
+                <td className="py-2.5 pr-3 text-pinkteam-secondary">{r.grade}</td>
+                <td className="py-2.5 pr-3 text-right">{r.total}</td>
+                <td className="py-2.5 pr-3 text-right">{r.present}</td>
+                <td className="py-2.5 pr-3 text-right text-pinkteam-secondary">{r.pending}</td>
+                <td className="py-2.5 text-right font-medium text-pinkteam-magenta">
+                  {r.rate}%
+                </td>
               </tr>
             ))}
           </tbody>
