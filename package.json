@@ -1,0 +1,38 @@
+{
+  "name": "ayutthaya-sports-day-2569",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "extract:figma": "node scripts/extract-figma-assets.mjs",
+    "migrate:legacy": "node scripts/migrate-legacy-sheets.mjs",
+    "create:admin": "node scripts/create-admin.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.4",
+    "html5-qrcode": "^2.3.8",
+    "lucide-react": "^0.487.0",
+    "next": "^15.3.2",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.3",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3"
+  }
+}
