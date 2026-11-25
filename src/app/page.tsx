@@ -61,21 +61,12 @@ export default async function HomePage() {
 
             {/* Right / Center Featured "สั่งจองเสื้อ" Card matching Figma Arch Geometry */}
             <div className="lg:col-span-5 px-7 sm:px-8 lg:px-0 mt-3 lg:mt-0">
-              {isExternalShop ? (
-                <a
-                  href={SHOP_URL}
-                  className="btn-animated block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(31,18,22,0.42)] active:scale-[0.985] cursor-pointer"
-                >
-                  <JerseyCardInner />
-                </a>
-              ) : (
-                <Link
-                  href={SHOP_URL}
-                  className="btn-animated block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(31,18,22,0.42)] active:scale-[0.985] cursor-pointer"
-                >
-                  <JerseyCardInner />
-                </Link>
-              )}
+              <a
+                href={SHOP_URL}
+                className="btn-animated block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(31,18,22,0.42)] active:scale-[0.985] cursor-pointer"
+              >
+                <JerseyCardInner />
+              </a>
             </div>
           </div>
         </div>

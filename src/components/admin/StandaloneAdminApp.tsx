@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { CheckInWorkspace } from '@/components/checkin/CheckInWorkspace';
 import { ErrorState, SuccessBanner } from '@/components/ui/States';
-import { ALL_ROOMS, CENTRAL_POSITIONS, GRADES, NUMBERS } from '@/lib/constants';
+import { ALL_ROOMS, CENTRAL_POSITIONS, GRADES, NUMBERS, SPORT_TYPES } from '@/lib/constants';
 import type { LiveDuplicateEntry } from '@/lib/live-store';
 import type {
   AttendanceSummaryStats,
@@ -100,15 +100,21 @@ export function StandaloneAdminApp({
 
   // Directory filters & modals
   const [studentSearch, setStudentSearch] = useState('');
+  const [roomFilter, setRoomFilter] = useState('ALL');
+  const [deptFilter, setDeptFilter] = useState('ALL');
   const [editingStudent, setEditingStudent] = useState<StudentWithCheckIn | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newStudent, setNewStudent] = useState({
+    studentCode: '',
     fullName: '',
     nickname: '',
     classRoom: ALL_ROOMS[0],
     numberLabel: NUMBERS[0],
+    roleCategory: 'department' as 'department' | 'central',
+    centralPosition: CENTRAL_POSITIONS[0],
     departmentName: initialDepartments[0]?.name || 'ฝ่ายอุปกรณ์',
     position: 'สมาชิกฝ่าย',
+    sportType: SPORT_TYPES[0],
   });
 
   // Session creation state
@@ -220,16 +226,25 @@ export function StandaloneAdminApp({
 
   const filteredStudents = useMemo(() => {
     const q = studentSearch.trim().toLowerCase();
-    if (!q) return students;
-    return students.filter(
-      (s) =>
+    return students.filter((s) => {
+      if (roomFilter !== 'ALL' && s.classRoom !== roomFilter) return false;
+      if (deptFilter === 'CENTRAL' && s.roleCategory !== 'central') return false;
+      if (deptFilter !== 'ALL' && deptFilter !== 'CENTRAL' && s.departmentName !== deptFilter) {
+        return false;
+      }
+      if (!q) return true;
+      return (
         s.fullName.toLowerCase().includes(q) ||
         s.nickname.toLowerCase().includes(q) ||
         (s.studentCode || '').toLowerCase().includes(q) ||
         s.classRoom.toLowerCase().includes(q) ||
-        (s.departmentName || '').toLowerCase().includes(q)
-    );
-  }, [students, studentSearch]);
+        s.numberLabel.toLowerCase().includes(q) ||
+        (s.departmentName || '').toLowerCase().includes(q) ||
+        (s.position || '').toLowerCase().includes(q) ||
+        (s.sportType || '').toLowerCase().includes(q)
+      );
+    });
+  }, [students, studentSearch, roomFilter, deptFilter]);
 
   const gradeCounts = useMemo(() => {
     const map: Record<string, number> = {};
@@ -245,19 +260,22 @@ export function StandaloneAdminApp({
   async function handleAddStudent(e: React.FormEvent) {
     e.preventDefault();
     setFeedback(null);
-    const isCentral = CENTRAL_POSITIONS.includes(newStudent.position);
+    const isCentral = newStudent.roleCategory === 'central';
+    const isSports = !isCentral && newStudent.departmentName === 'ฝ่ายกีฬา';
     const res = await fetch('/api/students', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        studentCode: newStudent.studentCode.trim() || undefined,
         fullName: newStudent.fullName.trim(),
         nickname: newStudent.nickname.trim(),
         classRoom: newStudent.classRoom,
         numberLabel: newStudent.numberLabel,
         roleCategory: isCentral ? 'central' : 'department',
-        centralPosition: isCentral ? newStudent.position : null,
+        centralPosition: isCentral ? newStudent.centralPosition : null,
         departmentName: isCentral ? null : newStudent.departmentName,
-        position: newStudent.position,
+        position: isCentral ? newStudent.centralPosition : newStudent.position,
+        sportType: isSports ? newStudent.sportType : null,
         bypassRules: true,
       }),
     });
@@ -267,7 +285,7 @@ export function StandaloneAdminApp({
       return;
     }
     setShowAddModal(false);
-    setNewStudent({ ...newStudent, fullName: '', nickname: '' });
+    setNewStudent({ ...newStudent, studentCode: '', fullName: '', nickname: '' });
     setFeedback({ type: 'success', message: 'เพิ่มนักเรียนเรียบร้อยแล้ว' });
     await reloadAll();
   }
@@ -277,18 +295,25 @@ export function StandaloneAdminApp({
     if (!editingStudent) return;
     setFeedback(null);
     const isCentral = editingStudent.roleCategory === 'central';
+    const isSports = !isCentral && editingStudent.departmentName === 'ฝ่ายกีฬา';
     const res = await fetch(`/api/students/${editingStudent.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        fullName: editingStudent.fullName,
-        nickname: editingStudent.nickname,
+        studentCode: editingStudent.studentCode || null,
+        fullName: editingStudent.fullName.trim(),
+        nickname: editingStudent.nickname.trim(),
         classRoom: editingStudent.classRoom,
         numberLabel: editingStudent.numberLabel,
         roleCategory: editingStudent.roleCategory,
-        centralPosition: isCentral ? editingStudent.position : null,
+        centralPosition: isCentral
+          ? editingStudent.centralPosition || editingStudent.position
+          : null,
         departmentName: isCentral ? null : editingStudent.departmentName,
-        position: editingStudent.position,
+        position: isCentral
+          ? editingStudent.centralPosition || editingStudent.position
+          : editingStudent.position,
+        sportType: isSports ? editingStudent.sportType || SPORT_TYPES[0] : null,
       }),
     });
     const data = await res.json();
@@ -833,10 +858,10 @@ export function StandaloneAdminApp({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="font-bold text-base text-[#0F172A]">
-                  รายชื่อผู้ลงทะเบียนทั้งหมด ({filteredStudents.length} คน)
+                  จัดการรายชื่อสมาชิกคณะสีชมพู ({filteredStudents.length} / {students.length} คน)
                 </h2>
                 <p className="text-xs text-[#64748B]">
-                  เพิ่ม ลบ หรือแก้ไขฝ่าย/ตำแหน่งของนักเรียนรายคน (รวมถึงย้ายฝ่ายให้น้อง ม.1)
+                  เพิ่ม ลบ แก้ไขชื่อ-นามสกุล ย้ายห้องเรียน หรือย้ายฝ่ายงาน/ตำแหน่ง/ชนิดกีฬาของนักเรียนได้ทุกส่วน
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -846,10 +871,35 @@ export function StandaloneAdminApp({
                     type="text"
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
-                    placeholder="ค้นหาชื่อ, ห้อง หรือฝ่าย"
-                    className="min-h-[38px] pl-9 pr-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm w-56"
+                    placeholder="ค้นหาชื่อ, ห้อง, เลขที่ หรือฝ่าย"
+                    className="min-h-[38px] pl-9 pr-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm w-52"
                   />
                 </div>
+                <select
+                  value={roomFilter}
+                  onChange={(e) => setRoomFilter(e.target.value)}
+                  className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-xs font-medium bg-white"
+                >
+                  <option value="ALL">ทุกห้องเรียน ({ALL_ROOMS.length} ห้อง)</option>
+                  {ALL_ROOMS.map((r) => (
+                    <option key={r} value={r}>
+                      ห้อง {r}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={deptFilter}
+                  onChange={(e) => setDeptFilter(e.target.value)}
+                  className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-xs font-medium bg-white"
+                >
+                  <option value="ALL">ทุกฝ่ายงาน</option>
+                  <option value="CENTRAL">คณะกรรมการบริหารส่วนกลาง</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(true)}
@@ -883,10 +933,13 @@ export function StandaloneAdminApp({
                       <td className="py-2.5 px-3 tabular-nums">{s.numberLabel}</td>
                       <td className="py-2.5 px-3">
                         {s.roleCategory === 'central' ? (
-                          <span className="font-semibold text-[#BE185D]">{s.centralPosition}</span>
+                          <span className="font-semibold text-[#BE185D]">
+                            คณะกรรมการกลาง · {s.centralPosition || s.position}
+                          </span>
                         ) : (
                           <span>
-                            <strong>{s.departmentName || '-'}</strong> · {s.position}
+                            <strong>{s.departmentName || '-'}</strong>
+                            {s.sportType ? ` (${s.sportType})` : ''} · {s.position}
                           </span>
                         )}
                       </td>
@@ -1192,74 +1245,169 @@ export function StandaloneAdminApp({
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <form
             onSubmit={handleAddStudent}
-            className="w-full max-w-md bg-white rounded-xl border border-[#CBD5E1] p-5 space-y-3 shadow-xl"
+            className="w-full max-w-lg bg-white rounded-xl border border-[#CBD5E1] p-5 space-y-3 shadow-xl"
           >
             <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
-              <h3 className="font-bold text-base">เพิ่มนักเรียนใหม่ (Admin)</h3>
-              <button type="button" onClick={() => setShowAddModal(false)} className="cursor-pointer">
+              <h3 className="font-bold text-base">เพิ่มรายชื่อนักเรียนใหม่ (Admin)</h3>
+              <button
+                type="button"
+                aria-label="ปิดหน้าต่างเพิ่มนักเรียน"
+                onClick={() => setShowAddModal(false)}
+                className="cursor-pointer"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <input
-              type="text"
-              placeholder="ชื่อ-นามสกุล *"
-              value={newStudent.fullName}
-              onChange={(e) => setNewStudent({ ...newStudent, fullName: e.target.value })}
-              className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-              required
-            />
-            <input
-              type="text"
-              placeholder="ชื่อเล่น"
-              value={newStudent.nickname}
-              onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })}
-              className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={newStudent.classRoom}
-                onChange={(e) => setNewStudent({ ...newStudent, classRoom: e.target.value })}
-                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-              >
-                {ALL_ROOMS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={newStudent.numberLabel}
-                onChange={(e) => setNewStudent({ ...newStudent, numberLabel: e.target.value })}
-                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-              >
-                {NUMBERS.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={newStudent.departmentName}
-                onChange={(e) => setNewStudent({ ...newStudent, departmentName: e.target.value })}
-                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-              >
-                {departments.map((d) => (
-                  <option key={d.id} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <input
                 type="text"
-                placeholder="ตำแหน่ง *"
-                value={newStudent.position}
-                onChange={(e) => setNewStudent({ ...newStudent, position: e.target.value })}
-                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                placeholder="ชื่อ-นามสกุล *"
+                value={newStudent.fullName}
+                onChange={(e) => setNewStudent({ ...newStudent, fullName: e.target.value })}
+                className="sm:col-span-2 min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
                 required
               />
+              <input
+                type="text"
+                placeholder="ชื่อเล่น"
+                value={newStudent.nickname}
+                onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })}
+                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+              />
             </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ห้องเรียน</label>
+                <select
+                  value={newStudent.classRoom}
+                  onChange={(e) => setNewStudent({ ...newStudent, classRoom: e.target.value })}
+                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                >
+                  {ALL_ROOMS.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">เลขที่</label>
+                <select
+                  value={newStudent.numberLabel}
+                  onChange={(e) => setNewStudent({ ...newStudent, numberLabel: e.target.value })}
+                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                >
+                  {NUMBERS.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">รหัสนักเรียน (ถ้ามี)</label>
+                <input
+                  type="text"
+                  placeholder="เช่น 69001"
+                  value={newStudent.studentCode}
+                  onChange={(e) => setNewStudent({ ...newStudent, studentCode: e.target.value })}
+                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">หมวดบทบาท</label>
+                <select
+                  value={newStudent.roleCategory}
+                  onChange={(e) =>
+                    setNewStudent({
+                      ...newStudent,
+                      roleCategory: e.target.value as 'department' | 'central',
+                    })
+                  }
+                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                >
+                  <option value="department">คณะทำงานฝ่าย (8 ฝ่าย)</option>
+                  <option value="central">คณะกรรมการบริหารส่วนกลาง</option>
+                </select>
+              </div>
+
+              {newStudent.roleCategory === 'central' ? (
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ตำแหน่งส่วนกลาง</label>
+                  <select
+                    value={newStudent.centralPosition}
+                    onChange={(e) =>
+                      setNewStudent({ ...newStudent, centralPosition: e.target.value })
+                    }
+                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  >
+                    {CENTRAL_POSITIONS.map((pos) => (
+                      <option key={pos} value={pos}>
+                        {pos}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ฝ่ายงาน</label>
+                  <select
+                    value={newStudent.departmentName}
+                    onChange={(e) =>
+                      setNewStudent({ ...newStudent, departmentName: e.target.value })
+                    }
+                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  >
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {newStudent.roleCategory === 'department' && (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ตำแหน่งในฝ่าย</label>
+                  <select
+                    value={newStudent.position}
+                    onChange={(e) => setNewStudent({ ...newStudent, position: e.target.value })}
+                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  >
+                    <option value="ประธานฝ่าย">ประธานฝ่าย</option>
+                    <option value="รองประธานฝ่ายสวัสดิการ">รองประธานฝ่ายสวัสดิการ</option>
+                    <option value="สตาฟฝ่าย">สตาฟฝ่าย</option>
+                    <option value="สมาชิกฝ่าย">สมาชิกฝ่าย</option>
+                    <option value="หัวหน้ากีฬา">หัวหน้ากีฬา</option>
+                    <option value="สตาฟกีฬา">สตาฟกีฬา</option>
+                    <option value="นักกีฬา">นักกีฬา</option>
+                  </select>
+                </div>
+                {newStudent.departmentName === 'ฝ่ายกีฬา' && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ประเภทกีฬา</label>
+                    <select
+                      value={newStudent.sportType}
+                      onChange={(e) => setNewStudent({ ...newStudent, sportType: e.target.value })}
+                      className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                    >
+                      {SPORT_TYPES.map((sp) => (
+                        <option key={sp} value={sp}>
+                          {sp}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
               className="w-full min-h-[40px] rounded-lg bg-[#BE185D] text-white text-sm font-semibold cursor-pointer"
@@ -1275,85 +1423,188 @@ export function StandaloneAdminApp({
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <form
             onSubmit={handleSaveEditStudent}
-            className="w-full max-w-md bg-white rounded-xl border border-[#CBD5E1] p-5 space-y-3 shadow-xl"
+            className="w-full max-w-lg bg-white rounded-xl border border-[#CBD5E1] p-5 space-y-3 shadow-xl"
           >
             <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
-              <h3 className="font-bold text-base">แก้ไขข้อมูลนักเรียน</h3>
-              <button type="button" onClick={() => setEditingStudent(null)} className="cursor-pointer">
+              <h3 className="font-bold text-base">แก้ไขข้อมูลและฝ่ายงานนักเรียน</h3>
+              <button
+                type="button"
+                aria-label="ปิดหน้าต่างแก้ไขนักเรียน"
+                onClick={() => setEditingStudent(null)}
+                className="cursor-pointer"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <input
-              type="text"
-              value={editingStudent.fullName}
-              onChange={(e) => setEditingStudent({ ...editingStudent, fullName: e.target.value })}
-              className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-              required
-            />
-            <input
-              type="text"
-              value={editingStudent.nickname}
-              onChange={(e) => setEditingStudent({ ...editingStudent, nickname: e.target.value })}
-              placeholder="ชื่อเล่น"
-              className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={editingStudent.classRoom}
-                onChange={(e) =>
-                  setEditingStudent({ ...editingStudent, classRoom: e.target.value })
-                }
-                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-              >
-                {ALL_ROOMS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={editingStudent.numberLabel}
-                onChange={(e) =>
-                  setEditingStudent({ ...editingStudent, numberLabel: e.target.value })
-                }
-                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-              >
-                {NUMBERS.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={editingStudent.departmentName || ''}
-                onChange={(e) =>
-                  setEditingStudent({
-                    ...editingStudent,
-                    roleCategory: e.target.value ? 'department' : 'central',
-                    departmentName: e.target.value || null,
-                  })
-                }
-                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-              >
-                <option value="">บริหารคณะสีส่วนกลาง</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <input
                 type="text"
-                value={editingStudent.position}
-                onChange={(e) =>
-                  setEditingStudent({ ...editingStudent, position: e.target.value })
-                }
-                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                value={editingStudent.fullName}
+                onChange={(e) => setEditingStudent({ ...editingStudent, fullName: e.target.value })}
+                placeholder="ชื่อ-นามสกุล *"
+                className="sm:col-span-2 min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
                 required
               />
+              <input
+                type="text"
+                value={editingStudent.nickname}
+                onChange={(e) => setEditingStudent({ ...editingStudent, nickname: e.target.value })}
+                placeholder="ชื่อเล่น"
+                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+              />
             </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ห้องเรียน</label>
+                <select
+                  value={editingStudent.classRoom}
+                  onChange={(e) =>
+                    setEditingStudent({ ...editingStudent, classRoom: e.target.value })
+                  }
+                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                >
+                  {ALL_ROOMS.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">เลขที่</label>
+                <select
+                  value={editingStudent.numberLabel}
+                  onChange={(e) =>
+                    setEditingStudent({ ...editingStudent, numberLabel: e.target.value })
+                  }
+                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                >
+                  {NUMBERS.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">รหัสนักเรียน</label>
+                <input
+                  type="text"
+                  value={editingStudent.studentCode || ''}
+                  onChange={(e) =>
+                    setEditingStudent({ ...editingStudent, studentCode: e.target.value })
+                  }
+                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ฝ่ายงาน / ส่วนกลาง</label>
+                <select
+                  value={
+                    editingStudent.roleCategory === 'central'
+                      ? '__CENTRAL__'
+                      : editingStudent.departmentName || departments[0]?.name || ''
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '__CENTRAL__') {
+                      setEditingStudent({
+                        ...editingStudent,
+                        roleCategory: 'central',
+                        departmentName: null,
+                        centralPosition: editingStudent.centralPosition || CENTRAL_POSITIONS[0],
+                        position: editingStudent.centralPosition || CENTRAL_POSITIONS[0],
+                      });
+                    } else {
+                      setEditingStudent({
+                        ...editingStudent,
+                        roleCategory: 'department',
+                        departmentName: val,
+                        centralPosition: null,
+                      });
+                    }
+                  }}
+                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                >
+                  <option value="__CENTRAL__">คณะกรรมการบริหารส่วนกลาง</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {editingStudent.roleCategory === 'central' ? (
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ตำแหน่งส่วนกลาง</label>
+                  <select
+                    value={editingStudent.centralPosition || editingStudent.position}
+                    onChange={(e) =>
+                      setEditingStudent({
+                        ...editingStudent,
+                        centralPosition: e.target.value,
+                        position: e.target.value,
+                      })
+                    }
+                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  >
+                    {CENTRAL_POSITIONS.map((pos) => (
+                      <option key={pos} value={pos}>
+                        {pos}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ตำแหน่งในฝ่าย</label>
+                  <input
+                    type="text"
+                    list="admin-role-suggestions"
+                    value={editingStudent.position}
+                    onChange={(e) =>
+                      setEditingStudent({ ...editingStudent, position: e.target.value })
+                    }
+                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                    required
+                  />
+                  <datalist id="admin-role-suggestions">
+                    <option value="ประธานฝ่าย" />
+                    <option value="รองประธานฝ่ายสวัสดิการ" />
+                    <option value="สตาฟฝ่าย" />
+                    <option value="สมาชิกฝ่าย" />
+                    <option value="หัวหน้ากีฬา" />
+                    <option value="สตาฟกีฬา" />
+                    <option value="นักกีฬา" />
+                  </datalist>
+                </div>
+              )}
+            </div>
+
+            {editingStudent.roleCategory === 'department' &&
+              editingStudent.departmentName === 'ฝ่ายกีฬา' && (
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ประเภทกีฬา</label>
+                  <select
+                    value={editingStudent.sportType || SPORT_TYPES[0]}
+                    onChange={(e) =>
+                      setEditingStudent({ ...editingStudent, sportType: e.target.value })
+                    }
+                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  >
+                    {SPORT_TYPES.map((sp) => (
+                      <option key={sp} value={sp}>
+                        {sp}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
             <button
               type="submit"
               className="w-full min-h-[40px] rounded-lg bg-[#BE185D] text-white text-sm font-semibold cursor-pointer"

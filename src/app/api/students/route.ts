@@ -133,6 +133,29 @@ export async function POST(req: NextRequest) {
     metadata: { fullName: validated.record.fullName, classRoom: validated.record.classRoom },
   });
 
+  // Best-effort sync to legacy Google Apps Script (Google Sheets)
+  const gasUrl = process.env.LEGACY_GAS_API_URL;
+  if (gasUrl) {
+    fetch(gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        id: newId,
+        fullName: validated.record.fullName,
+        nickname: validated.record.nickname,
+        classRoom: validated.record.classRoom,
+        numberLabel: validated.record.numberLabel,
+        roleCategory: validated.record.roleCategory,
+        centralPosition: validated.record.centralPosition || '',
+        department: validated.record.departmentName || '',
+        position: validated.record.position,
+        sportType: validated.record.sportType || '',
+        autoAssigned: validated.record.autoAssigned,
+        timestamp: Date.now(),
+      }),
+    }).catch(() => null);
+  }
+
   return NextResponse.json(
     {
       student: {

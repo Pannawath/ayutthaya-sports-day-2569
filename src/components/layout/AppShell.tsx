@@ -9,7 +9,6 @@ import {
   Menu,
   RefreshCw,
   Shirt,
-  UserPlus,
   Users,
   X,
 } from 'lucide-react';
@@ -21,11 +20,10 @@ interface AppShellProps {
 }
 
 const STUDENT_NAV_LINKS = [
-  { href: '/', label: 'หน้าแรก', icon: Home },
-  { href: '/register', label: 'ลงทะเบียน', icon: UserPlus },
-  { href: '/classrooms', label: 'ดูตามห้อง', icon: Users },
-  { href: '/departments', label: 'ดูตามฝ่าย', icon: Building2 },
-  { href: '/shop', label: 'สั่งจองเสื้อ', icon: Shirt },
+  { href: '/', label: 'หน้าหลัก', icon: Home, fullPage: false },
+  { href: '/departments', label: 'ฝ่ายงาน', icon: Building2, fullPage: false },
+  { href: '/classrooms', label: 'ห้องเรียน', icon: Users, fullPage: false },
+  { href: '/shop', label: 'สั่งจองเสื้อ', icon: Shirt, fullPage: true },
 ];
 
 export function AppShell({ children }: AppShellProps) {
@@ -47,9 +45,9 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   const isHome = pathname === '/';
-  const routeSlot = pathname.startsWith('/register')
+  const routeSlot = pathname.startsWith('/departments')
     ? 0
-    : pathname.startsWith('/classrooms') || pathname.startsWith('/departments')
+    : pathname.startsWith('/classrooms')
       ? 2
       : 1;
   const activeSlot = optimisticSlot ?? routeSlot;
@@ -57,8 +55,8 @@ export function AppShell({ children }: AppShellProps) {
   const mobileBottomTabs = [
     {
       slot: 0,
-      href: '/register',
-      label: 'ลงทะเบียน',
+      href: '/departments',
+      label: 'ฝ่ายงาน',
       icon: '/images/figma/icon-register.png',
       iconClass: 'w-8 h-9',
       hoverRotate: 'group-hover:-rotate-3',
@@ -74,7 +72,7 @@ export function AppShell({ children }: AppShellProps) {
     {
       slot: 2,
       href: '/classrooms',
-      label: 'รายชื่อ',
+      label: 'ห้องเรียน',
       icon: '/images/figma/icon-directory.png',
       iconClass: 'w-9 h-9',
       hoverRotate: 'group-hover:rotate-3',
@@ -149,16 +147,18 @@ export function AppShell({ children }: AppShellProps) {
                     ? pathname === '/'
                     : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer ${
-                      active
-                        ? 'bg-pinkteam-magenta text-white'
-                        : 'text-white/90 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
+                const cls = `inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer ${
+                  active
+                    ? 'bg-pinkteam-magenta text-white'
+                    : 'text-white/90 hover:text-white hover:bg-white/10'
+                }`;
+                return item.fullPage ? (
+                  <a key={item.href} href={item.href} className={cls}>
+                    <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                    <span>{item.label}</span>
+                  </a>
+                ) : (
+                  <Link key={item.href} href={item.href} className={cls}>
                     <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
                     <span>{item.label}</span>
                   </Link>
@@ -238,16 +238,27 @@ export function AppShell({ children }: AppShellProps) {
                 {STUDENT_NAV_LINKS.map((item) => {
                   const Icon = item.icon;
                   const active = pathname === item.href;
-                  return (
+                  const cls = `flex items-center gap-3 min-h-[42px] px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer ${
+                    active
+                      ? 'bg-pinkteam-magenta text-white'
+                      : 'text-white/85 hover:bg-white/10'
+                  }`;
+                  return item.fullPage ? (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setDrawerOpen(false)}
+                      className={cls}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                      <span>{item.label}</span>
+                    </a>
+                  ) : (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setDrawerOpen(false)}
-                      className={`flex items-center gap-3 min-h-[42px] px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer ${
-                        active
-                          ? 'bg-pinkteam-magenta text-white'
-                          : 'text-white/85 hover:bg-white/10'
-                      }`}
+                      className={cls}
                     >
                       <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
                       <span>{item.label}</span>
@@ -281,7 +292,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* Page Body */}
       <main className="flex-1 pb-28 lg:pb-12">{children}</main>
 
-      {/* Figma Mobile 3-Slot Bottom Navigation (440x956 reference) */}
+      {/* Figma Mobile 3-Slot Bottom Navigation (ฝ่ายงาน | หน้าหลัก | ห้องเรียน) */}
       <nav
         aria-label="แถบนำทางหลักมือถือ"
         className="no-print lg:hidden fixed bottom-0 inset-x-0 z-40 h-[124px] pointer-events-none overflow-x-clip"
