@@ -186,18 +186,7 @@ export function AppShell({ children }: AppShellProps) {
       </header>
 
       {/* Mobile Floating Top Bar / Drawer Trigger */}
-      <div className="no-print lg:hidden fixed top-3 right-3 left-3 z-40 flex items-center justify-between pointer-events-none">
-        <button
-          type="button"
-          onClick={() => handleSecretBrandTap(!isHome)}
-          className={`pointer-events-auto inline-flex items-center gap-2 min-h-[40px] px-3.5 py-1.5 rounded-xl bg-pinkteam-charcoal/95 text-white border border-white/15 text-xs font-medium cursor-pointer ${
-            isHome ? 'opacity-90' : 'opacity-100'
-          }`}
-        >
-          <span className="w-2 h-2 rounded-full bg-pinkteam-light" />
-          <span>อยุธยาสีชมพู 2569</span>
-        </button>
-
+      <div className="no-print lg:hidden fixed top-3 right-3 left-3 z-40 flex items-center justify-end pointer-events-none">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}

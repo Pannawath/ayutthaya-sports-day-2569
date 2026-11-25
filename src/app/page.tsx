@@ -27,7 +27,7 @@ export default async function HomePage() {
                   src="/images/figma/hero-bg-1.png"
                   alt=""
                   aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover object-center scale-105 blur-[3px]"
+                  className="absolute inset-0 w-full h-full object-cover object-center scale-105"
                 />
                 <div
                   className="absolute inset-0"
@@ -39,7 +39,7 @@ export default async function HomePage() {
                 <img
                   src="/images/figma/hero-bg-4.png"
                   alt="คณะกรรมการสีชมพู อยุธยา 2569"
-                  className="absolute inset-x-0 bottom-4 w-full h-[82%] object-contain object-bottom blur-[1.2px] opacity-95"
+                  className="absolute inset-x-0 bottom-4 w-full h-[82%] object-contain object-bottom"
                 />
                 <img
                   src="/images/figma/torn-stone.png"
@@ -49,11 +49,11 @@ export default async function HomePage() {
                 />
 
                 {/* White Calligraphic "คณะ อยุธยา" Script */}
-                <div className="absolute right-1 sm:right-6 bottom-0 z-20 pointer-events-none">
+                <div className="absolute -right-8 sm:-right-6 lg:-right-4 -bottom-14 sm:-bottom-16 z-20 pointer-events-none">
                   <img
                     src="/images/figma/calligraphy-ayutthaya.png"
                     alt="คณะ อยุธยา"
-                    className="w-[260px] sm:w-[320px] lg:w-[360px] h-auto object-contain drop-shadow-[0_6px_14px_rgba(31,18,22,0.5)]"
+                    className="w-[390px] sm:w-[443px] lg:w-[490px] max-w-none h-auto object-contain drop-shadow-[0_2px_3px_rgba(31,18,22,0.85)] drop-shadow-[0_8px_16px_rgba(31,18,22,0.55)]"
                   />
                 </div>
               </div>
