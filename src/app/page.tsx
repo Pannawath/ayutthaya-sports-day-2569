@@ -100,14 +100,14 @@ export default async function HomePage() {
               {isExternalShop ? (
                 <a
                   href={SHOP_URL}
-                  className="block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-opacity duration-150 hover:opacity-95 cursor-pointer"
+                  className="btn-animated block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(31,18,22,0.42)] active:scale-[0.985] cursor-pointer"
                 >
                   <JerseyCardInner />
                 </a>
               ) : (
                 <Link
                   href={SHOP_URL}
-                  className="block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-opacity duration-150 hover:opacity-95 cursor-pointer"
+                  className="btn-animated block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[340px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(31,18,22,0.42)] active:scale-[0.985] cursor-pointer"
                 >
                   <JerseyCardInner />
                 </Link>
@@ -139,10 +139,10 @@ export default async function HomePage() {
             </div>
             <Link
               href="/statistics"
-              className="inline-flex items-center gap-1.5 min-h-[36px] px-3.5 py-1.5 rounded-lg editorial-panel text-xs font-medium text-pinkteam-charcoal hover:bg-pinkteam-raised transition-colors duration-150 cursor-pointer"
+              className="btn-animated group inline-flex items-center gap-1.5 min-h-[36px] px-3.5 py-1.5 rounded-lg editorial-panel text-xs font-medium text-pinkteam-charcoal hover:bg-pinkteam-raised transition-all duration-150 cursor-pointer"
             >
               <span>ดูสถิติทั้งหมด</span>
-              <ArrowUpRight className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
+              <ArrowUpRight className="w-4 h-4 text-pinkteam-muted transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.5} />
             </Link>
           </div>
 
@@ -207,11 +207,11 @@ export default async function HomePage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="editorial-panel rounded-xl p-4 hover:bg-pinkteam-blush/60 transition-colors duration-150 flex flex-col justify-between gap-3 cursor-pointer"
+                className="btn-animated group editorial-panel rounded-xl p-4 hover:bg-pinkteam-blush/60 hover:-translate-y-1 hover:border-pinkteam-magenta/35 hover:shadow-md active:scale-[0.98] transition-all duration-200 flex flex-col justify-between gap-3 cursor-pointer"
               >
                 <div className="flex items-center justify-between text-pinkteam-muted">
-                  <Icon className="w-4 h-4 text-pinkteam-magenta" strokeWidth={1.5} />
-                  <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
+                  <Icon className="w-4 h-4 text-pinkteam-magenta transition-transform duration-200 group-hover:scale-110" strokeWidth={1.5} />
+                  <ArrowUpRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-pinkteam-magenta" strokeWidth={1.5} />
                 </div>
                 <div>
                   <div className="font-display font-medium text-sm sm:text-base text-pinkteam-charcoal">
@@ -237,7 +237,7 @@ export default async function HomePage() {
             </div>
             <Link
               href="/announcements"
-              className="text-xs font-medium text-pinkteam-magenta hover:underline cursor-pointer"
+              className="btn-animated inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium text-pinkteam-magenta hover:bg-pinkteam-blush/60 cursor-pointer"
             >
               ดูทั้งหมด
             </Link>
@@ -253,7 +253,7 @@ export default async function HomePage() {
                 <Link
                   key={ann.id}
                   href={`/announcements?id=${ann.id}`}
-                  className="rounded-xl border border-black/10 bg-white overflow-hidden hover:border-pinkteam-magenta/40 transition-colors duration-150 flex flex-col cursor-pointer"
+                  className="btn-animated group rounded-xl border border-black/10 bg-white overflow-hidden hover:border-pinkteam-magenta/40 hover:-translate-y-1 hover:shadow-md active:scale-[0.985] transition-all duration-200 flex flex-col cursor-pointer"
                 >
                   {ann.imageUrl && (
                     <img
@@ -301,7 +301,7 @@ function JerseyCardInner() {
       <img
         src="/images/figma/jersey-models.png"
         alt="เสื้อคณะสีชมพู อยุธยา 2569"
-        className="w-full h-[84%] object-cover object-top drop-shadow-[8px_14px_10px_rgba(0,0,0,0.3)]"
+        className="w-full h-[84%] object-cover object-top drop-shadow-[8px_14px_10px_rgba(0,0,0,0.3)] transition-transform duration-300 ease-out group-hover:scale-[1.03]"
       />
       <div className="absolute inset-x-0 bottom-0 h-[114px] flex items-end px-7 pb-5">
         <img
@@ -314,7 +314,7 @@ function JerseyCardInner() {
           <span className="font-display font-bold text-4xl sm:text-[42px] leading-none text-white figma-text-shadow">
             สั่งจองเสื้อ
           </span>
-          <span className="w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white group-hover:bg-pinkteam-magenta transition-colors duration-150">
+          <span className="w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white transition-all duration-200 group-hover:bg-pinkteam-magenta group-hover:scale-110 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-active:scale-90">
             <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
           </span>
         </div>

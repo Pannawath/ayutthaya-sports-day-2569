@@ -68,7 +68,7 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
           <div className="relative z-10 max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
             <Link
               href="/"
-              className="flex items-center gap-3 shrink-0 transition-opacity duration-150 hover:opacity-85 cursor-pointer"
+              className="btn-animated flex items-center gap-3 shrink-0 rounded-lg px-1.5 py-1 transition-all duration-150 hover:opacity-90 cursor-pointer"
             >
               <img
                 src="/images/figma/calligraphy-ayutthaya.png"
@@ -299,14 +299,14 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
             {/* Left: ลงทะเบียน */}
             <Link
               href="/register"
-              className={`flex flex-col items-center justify-end gap-1 pb-1 transition-opacity duration-150 active:scale-[0.97] cursor-pointer ${
+              className={`group btn-animated flex flex-col items-center justify-end gap-1 pb-1 rounded-xl transition-all duration-200 ease-out hover:-translate-y-1 active:scale-95 cursor-pointer ${
                 pathname === '/register' ? 'opacity-100' : 'opacity-90 hover:opacity-100'
               }`}
             >
               <img
                 src="/images/figma/icon-register.png"
                 alt="ลงทะเบียน"
-                className="w-8 h-9 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.4)]"
+                className="w-8 h-9 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.4)] transition-transform duration-200 ease-out group-hover:scale-110 group-hover:-rotate-3 group-active:scale-95"
               />
               <span className="font-display font-bold text-sm text-white figma-text-shadow">
                 ลงทะเบียน
@@ -316,23 +316,23 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
             {/* Center: Elevated Glowing Pink หน้าหลัก */}
             <Link
               href="/"
-              className="relative flex flex-col items-center justify-end pb-1 transition-opacity duration-150 active:scale-[0.97] cursor-pointer"
+              className="group btn-animated relative flex flex-col items-center justify-end pb-1 rounded-2xl transition-all duration-200 ease-out hover:-translate-y-1 active:scale-95 cursor-pointer"
             >
               <div
-                className={`relative w-[108px] h-[94px] rounded-t-[26px] rounded-b-[16px] flex flex-col items-center justify-center gap-1 overflow-hidden shadow-[0_-4px_14px_rgba(255,175,202,0.38)] ${
-                  isHome ? 'ring-2 ring-white/80' : 'opacity-95'
+                className={`relative w-[108px] h-[94px] rounded-t-[26px] rounded-b-[16px] flex flex-col items-center justify-center gap-1 overflow-hidden shadow-[0_-4px_14px_rgba(255,175,202,0.38)] transition-all duration-200 group-hover:shadow-[0_-6px_22px_rgba(255,175,202,0.62)] ${
+                  isHome ? 'ring-2 ring-white/80' : 'opacity-95 group-hover:opacity-100'
                 }`}
               >
                 <img
                   src="/images/figma/home-pill-glow.png"
                   alt=""
                   aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <img
                   src="/images/figma/icon-home.png"
                   alt="หน้าหลัก"
-                  className="relative z-10 w-10 h-10 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.3)]"
+                  className="relative z-10 w-10 h-10 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.3)] transition-transform duration-200 ease-out group-hover:scale-110 group-active:scale-95"
                 />
                 <span className="relative z-10 font-display font-bold text-sm text-white figma-text-shadow">
                   หน้าหลัก
@@ -343,7 +343,7 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
             {/* Right: รายชื่อ */}
             <Link
               href="/classrooms"
-              className={`flex flex-col items-center justify-end gap-1 pb-1 transition-opacity duration-150 active:scale-[0.97] cursor-pointer ${
+              className={`group btn-animated flex flex-col items-center justify-end gap-1 pb-1 rounded-xl transition-all duration-200 ease-out hover:-translate-y-1 active:scale-95 cursor-pointer ${
                 pathname === '/classrooms' || pathname === '/departments'
                   ? 'opacity-100'
                   : 'opacity-90 hover:opacity-100'
@@ -352,7 +352,7 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
               <img
                 src="/images/figma/icon-directory.png"
                 alt="รายชื่อ"
-                className="w-9 h-9 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.4)]"
+                className="w-9 h-9 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.4)] transition-transform duration-200 ease-out group-hover:scale-110 group-hover:rotate-3 group-active:scale-95"
               />
               <span className="font-display font-bold text-sm text-white figma-text-shadow">
                 รายชื่อ
