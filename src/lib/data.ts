@@ -6,6 +6,7 @@ import {
   extractGradeFromRoom,
 } from '@/lib/constants';
 import { deterministicUuid, signQrToken } from '@/lib/qr';
+import { createLiveStoreClient } from '@/lib/live-store';
 import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase/admin';
 import { createSupabaseServerClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import type {
@@ -108,7 +109,9 @@ async function getReaderClient() {
   if (isSupabaseConfigured()) {
     return await createSupabaseServerClient();
   }
-  return null;
+  return createLiveStoreClient() as unknown as NonNullable<
+    ReturnType<typeof createSupabaseAdminClient>
+  >;
 }
 
 export async function getDepartmentsData(): Promise<DepartmentRecord[]> {
@@ -209,7 +212,10 @@ export async function getStudentsData(): Promise<{
     registeredAt: row.registered_at,
   }));
 
-  return { students, sourceMode: 'supabase' };
+  return {
+    students,
+    sourceMode: isSupabaseAdminConfigured() || isSupabaseConfigured() ? 'supabase' : 'legacy-readonly',
+  };
 }
 
 export async function getSessionsData(): Promise<CheckInSessionRecord[]> {
@@ -339,7 +345,7 @@ export async function getAnnouncementsData(includeDrafts = false): Promise<Annou
 }
 
 export async function getUsersProfilesData(): Promise<UserProfile[]> {
-  const client = createSupabaseAdminClient();
+  const client = await getReaderClient();
   if (!client) return [];
 
   const { data } = await client
@@ -357,7 +363,7 @@ export async function getUsersProfilesData(): Promise<UserProfile[]> {
 }
 
 export async function getAuditLogsData(limit = 100): Promise<AuditLogRecord[]> {
-  const client = createSupabaseAdminClient();
+  const client = await getReaderClient();
   if (!client) return [];
 
   const { data } = await client

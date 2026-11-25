@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { createLiveStoreClient } from '@/lib/live-store';
 import { createSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase/admin';
 
 export function getClientIp(req: NextRequest): string {
@@ -12,14 +13,9 @@ export function requireSupabaseAdmin():
   | { errorResponse: NextResponse } {
   if (!isSupabaseAdminConfigured()) {
     return {
-      errorResponse: NextResponse.json(
-        {
-          error:
-            'ยังไม่ได้ตั้งค่า SUPABASE_SERVICE_ROLE_KEY หรือ NEXT_PUBLIC_SUPABASE_URL ใน .env.local จึงยังไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้',
-          code: 'SUPABASE_NOT_CONFIGURED',
-        },
-        { status: 503 }
-      ),
+      admin: createLiveStoreClient() as unknown as NonNullable<
+        ReturnType<typeof createSupabaseAdminClient>
+      >,
     };
   }
 

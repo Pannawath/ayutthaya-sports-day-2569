@@ -55,7 +55,7 @@ export async function DELETE(
   _req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireRole(['ADMIN']);
+  const auth = await requireRole(['ADMIN', 'STAFF']);
   if ('errorResponse' in auth) return auth.errorResponse;
 
   const dbCheck = requireSupabaseAdmin();

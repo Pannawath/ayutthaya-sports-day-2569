@@ -43,6 +43,10 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
   const [optimisticSlot, setOptimisticSlot] = useState<number | null>(null);
 
   useEffect(() => {
+    setProfile(initialProfile);
+  }, [initialProfile]);
+
+  useEffect(() => {
     setOptimisticSlot(null);
   }, [pathname]);
 
@@ -85,9 +89,15 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
     if (isBrowserSupabaseConfigured()) {
       const supabase = createSupabaseBrowserClient();
       await supabase.auth.signOut();
+    } else {
+      await fetch('/api/auth/logout', { method: 'POST' });
     }
     setProfile(null);
     setDrawerOpen(false);
+    if (pathname.startsWith('/admin')) {
+      window.location.assign('/');
+      return;
+    }
     router.push('/');
     router.refresh();
   }
@@ -96,12 +106,12 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
     <div className="min-h-dvh flex flex-col">
       {/* Desktop Top Editorial Navbar with Torn Menu Paper */}
       <header className="no-print hidden lg:block sticky top-0 z-40 text-white overflow-x-clip">
-        <div className="relative">
+        <div className="relative bg-[#22161A]">
           <img
             src="/images/figma/torn-menu-paper.png"
             alt=""
             aria-hidden="true"
-            className="absolute bottom-[-14px] -left-[8.18%] w-[116.36%] max-w-none h-auto pointer-events-none drop-shadow-[0_4px_10px_rgba(31,18,22,0.35)]"
+            className="absolute bottom-[-28px] -left-[8.18%] w-[116.36%] max-w-none h-auto pointer-events-none drop-shadow-[0_4px_10px_rgba(31,18,22,0.35)]"
           />
           <div className="relative z-10 max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
             <Link

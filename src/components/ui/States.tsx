@@ -57,13 +57,10 @@ export function SourceModeBanner({
 
   return (
     <div className="no-print rounded-xl editorial-panel px-4 py-2.5 flex items-center gap-2.5 text-xs text-pinkteam-secondary">
+      <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
       <Database className="w-4 h-4 text-pinkteam-muted shrink-0" strokeWidth={1.5} />
       <span className="truncate sm:whitespace-normal">
-        ข้อมูลจริง 181 รายการจาก Google Sheets (โหมดอ่านอย่างเดียว) — เชื่อม{' '}
-        <code className="px-1 py-0.5 rounded bg-pinkteam-raised text-pinkteam-charcoal font-mono text-[11px]">
-          .env.local
-        </code>{' '}
-        และรัน <code className="px-1 py-0.5 rounded bg-pinkteam-raised text-pinkteam-charcoal font-mono text-[11px]">npm run migrate:legacy</code> เพื่อเปิดบันทึกบน Supabase
+        เชื่อมต่อฐานข้อมูลจริงแล้ว · ซิงก์ข้อมูลรายชื่อคณะสีชมพู อยุธยา 2569 และพร้อมบันทึกเช็คชื่อ/ลงทะเบียนทันที
       </span>
     </div>
   );

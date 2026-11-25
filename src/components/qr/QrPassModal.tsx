@@ -39,7 +39,12 @@ export function QrPassModal({ student, onClose }: QrPassModalProps) {
   }
 
   return (
-    <div className="no-print fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`บัตร QR ${student.fullName}`}
+      className="no-print fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65"
+    >
       <div className="w-full max-w-sm rounded-2xl overflow-hidden bg-pinkteam-charcoal text-white border border-white/15 shadow-2xl">
         <div className="px-5 py-4 flex items-center justify-between border-b border-white/10">
           <div className="flex items-center gap-2">
@@ -87,6 +92,9 @@ export function QrPassModal({ student, onClose }: QrPassModalProps) {
             {student.roleCategory === 'central'
               ? student.centralPosition
               : `${student.departmentName || '-'} · ${student.position}`}
+          </div>
+          <div className="mt-2.5 w-full rounded-lg bg-black/25 border border-white/10 px-3 py-1.5 text-[11px] font-mono text-white/80 break-all select-all">
+            {student.qrToken}
           </div>
 
           <button

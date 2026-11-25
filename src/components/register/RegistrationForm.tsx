@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { QrCode, UserPlus } from 'lucide-react';
+import { QrCode, Search, UserPlus } from 'lucide-react';
 import { QrPassModal } from '@/components/qr/QrPassModal';
 import { ErrorState, SourceModeBanner, SuccessBanner } from '@/components/ui/States';
 import {
@@ -50,6 +50,22 @@ export function RegistrationForm({
     student: StudentRecord;
   } | null>(null);
   const [qrStudent, setQrStudent] = useState<StudentRecord | null>(null);
+  const [lookupQuery, setLookupQuery] = useState('');
+
+  const lookupMatches = useMemo(() => {
+    const q = lookupQuery.trim().toLowerCase();
+    if (!q) return [];
+    return students
+      .filter(
+        (s) =>
+          s.fullName.toLowerCase().includes(q) ||
+          s.nickname.toLowerCase().includes(q) ||
+          s.classRoom.toLowerCase().includes(q) ||
+          s.numberLabel.toLowerCase().includes(q) ||
+          (s.studentCode || '').toLowerCase().includes(q)
+      )
+      .slice(0, 6);
+  }, [students, lookupQuery]);
 
   const isM1Locked = policies.lockM1Registration && LOCKED_ROOMS.includes(classRoom);
   const selectedDeptMeta = departments.find((d) => d.name === departmentName) || null;
@@ -148,6 +164,66 @@ export function RegistrationForm({
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-4">
       <SourceModeBanner sourceMode={sourceMode} />
+
+      {/* Student Registration & QR Pass Self-Lookup */}
+      <div className="editorial-panel rounded-2xl p-5 space-y-3">
+        <div>
+          <h2 className="font-display font-semibold text-base text-pinkteam-charcoal">
+            ค้นหาสถานะลงทะเบียน / รับบัตร QR
+          </h2>
+          <p className="text-xs text-pinkteam-secondary mt-0.5">
+            นักเรียนที่ลงทะเบียนแล้วสามารถค้นหาชื่อ ห้อง หรือเลขประจำตัว (เช่น 69001) เพื่อเปิดบัตร QR ได้ทันที
+          </p>
+        </div>
+        <div className="relative">
+          <Search
+            className="w-4 h-4 text-pinkteam-muted absolute left-3 top-1/2 -translate-y-1/2"
+            strokeWidth={1.5}
+          />
+          <input
+            type="text"
+            value={lookupQuery}
+            onChange={(e) => setLookupQuery(e.target.value)}
+            placeholder="พิมพ์ชื่อ, ชื่อเล่น, ห้อง หรือรหัส 5 หลัก"
+            className="w-full min-h-[40px] pl-9 pr-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
+          />
+        </div>
+        {lookupQuery.trim() !== '' && (
+          <div className="space-y-2 pt-1">
+            {lookupMatches.length === 0 ? (
+              <div className="text-xs text-pinkteam-muted py-1">
+                ไม่พบรายชื่อที่ตรงกับ "{lookupQuery}" — สามารถกรอกแบบฟอร์มลงทะเบียนด้านล่างได้
+              </div>
+            ) : (
+              lookupMatches.map((s) => (
+                <div
+                  key={s.id}
+                  className="rounded-xl editorial-raised p-3 flex items-center justify-between gap-3"
+                >
+                  <div className="min-w-0">
+                    <div className="font-display font-medium text-sm text-pinkteam-charcoal truncate">
+                      {s.fullName} {s.nickname ? `(${s.nickname})` : ''}
+                    </div>
+                    <div className="text-xs text-pinkteam-secondary tabular-nums">
+                      ห้อง {s.classRoom} · เลขที่ {s.numberLabel}
+                      {s.studentCode ? ` · รหัส ${s.studentCode}` : ''} ·{' '}
+                      {s.roleCategory === 'central' ? s.centralPosition : s.departmentName || '-'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setQrStudent(s)}
+                    className="shrink-0 min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pinkteam-charcoal text-white text-xs font-medium cursor-pointer"
+                  >
+                    <QrCode className="w-4 h-4" strokeWidth={1.5} />
+                    เปิดบัตร QR
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="editorial-panel rounded-2xl p-5 sm:p-7">
         <div className="mb-6">

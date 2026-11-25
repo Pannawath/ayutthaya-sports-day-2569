@@ -1,11 +1,22 @@
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { createLiveStoreClient, getLiveProfileById } from '@/lib/live-store';
+import { SESSION_COOKIE_NAME, verifySessionCookie } from '@/lib/session-cookie';
 import { createSupabaseServerClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import type { UserProfile, UserRole } from '@/lib/types';
 
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   if (!isSupabaseConfigured()) {
-    return null;
+    try {
+      const cookieStore = await cookies();
+      const rawSession = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+      const parsed = await verifySessionCookie(rawSession);
+      if (!parsed) return null;
+      return await getLiveProfileById(parsed.userId);
+    } catch {
+      return null;
+    }
   }
 
   const supabase = await createSupabaseServerClient();
@@ -44,18 +55,6 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
 export async function requireRole(
   allowedRoles: UserRole[]
 ): Promise<{ profile: UserProfile } | { errorResponse: NextResponse }> {
-  if (!isSupabaseConfigured()) {
-    return {
-      errorResponse: NextResponse.json(
-        {
-          error: 'ยังไม่ได้ตั้งค่า Supabase (.env.local) กรุณาเพิ่มค่าเชื่อมฐานข้อมูลก่อนใช้งานสิทธิ์เจ้าหน้าที่/ผู้ดูแล',
-          code: 'SUPABASE_NOT_CONFIGURED',
-        },
-        { status: 503 }
-      ),
-    };
-  }
-
   const profile = await getCurrentUserProfile();
   if (!profile) {
     return {
@@ -85,7 +84,9 @@ export async function writeAuditLog(params: {
   entityId?: string | null;
   metadata?: Record<string, unknown>;
 }): Promise<void> {
-  const adminClient = createSupabaseAdminClient();
+  const adminClient =
+    createSupabaseAdminClient() ??
+    (createLiveStoreClient() as unknown as ReturnType<typeof createSupabaseAdminClient>);
   if (!adminClient) return;
 
   try {

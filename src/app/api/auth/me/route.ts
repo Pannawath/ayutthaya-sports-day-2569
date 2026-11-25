@@ -3,10 +3,11 @@ import { getCurrentUserProfile } from '@/lib/auth';
 import { isSupabaseConfigured } from '@/lib/supabase/server';
 
 export async function GET() {
-  const configured = isSupabaseConfigured();
-  const profile = configured ? await getCurrentUserProfile() : null;
+  const supabaseMode = isSupabaseConfigured();
+  const profile = await getCurrentUserProfile();
   return NextResponse.json({
-    configured,
+    configured: true,
+    mode: supabaseMode ? 'supabase' : 'live-store',
     profile,
   });
 }

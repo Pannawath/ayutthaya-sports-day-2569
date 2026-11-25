@@ -22,6 +22,7 @@ export function DepartmentsBrowser({
     departments[0]?.name || ''
   );
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PRESENT' | 'PENDING'>('ALL');
   const [qrStudent, setQrStudent] = useState<StudentRecord | null>(null);
 
   const selectedDept = departments.find((d) => d.name === selectedDeptName);
@@ -31,13 +32,14 @@ export function DepartmentsBrowser({
     [students]
   );
 
-  const deptMembers = useMemo(() => {
+  const scopeDeptMembers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return students
       .filter((s) => s.departmentName === selectedDeptName)
       .filter((s) => {
         if (!q) return true;
         return (
+          (s.studentCode || '').toLowerCase().includes(q) ||
           s.fullName.toLowerCase().includes(q) ||
           s.nickname.toLowerCase().includes(q) ||
           s.classRoom.toLowerCase().includes(q) ||
@@ -46,11 +48,18 @@ export function DepartmentsBrowser({
       });
   }, [students, selectedDeptName, searchQuery]);
 
-  const presentCount = deptMembers.filter((s) => s.checkedIn).length;
-  const pendingCount = deptMembers.length - presentCount;
+  const deptMembers = useMemo(() => {
+    if (statusFilter === 'ALL') return scopeDeptMembers;
+    return scopeDeptMembers.filter((s) =>
+      statusFilter === 'PRESENT' ? s.checkedIn : !s.checkedIn
+    );
+  }, [scopeDeptMembers, statusFilter]);
+
+  const presentCount = scopeDeptMembers.filter((s) => s.checkedIn).length;
+  const pendingCount = scopeDeptMembers.length - presentCount;
   const rate =
-    deptMembers.length > 0
-      ? Math.round((presentCount / deptMembers.length) * 1000) / 10
+    scopeDeptMembers.length > 0
+      ? Math.round((presentCount / scopeDeptMembers.length) * 1000) / 10
       : 0;
 
   return (
@@ -158,22 +167,46 @@ export function DepartmentsBrowser({
                 {selectedDept.name}
               </h2>
               <p className="text-xs sm:text-sm text-pinkteam-secondary tabular-nums mt-0.5">
-                ทั้งหมด {deptMembers.length} คน · มาแล้ว {presentCount} · ยังไม่มา {pendingCount} ·{' '}
+                ทั้งหมด {scopeDeptMembers.length} คน · มาแล้ว {presentCount} · ยังไม่มา {pendingCount} ·{' '}
                 <strong className="font-semibold text-pinkteam-magenta">{rate}%</strong>
               </p>
             </div>
-            <div className="relative w-full sm:w-64">
-              <Search
-                className="w-4 h-4 text-pinkteam-muted absolute left-3 top-1/2 -translate-y-1/2"
-                strokeWidth={1.5}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ค้นหาสมาชิกในฝ่าย"
-                className="w-full min-h-[40px] pl-9 pr-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
-              />
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <div className="flex gap-1">
+                {(
+                  [
+                    { id: 'ALL', label: 'ทั้งหมด' },
+                    { id: 'PRESENT', label: 'มาแล้ว' },
+                    { id: 'PENDING', label: 'ยังไม่มา' },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setStatusFilter(opt.id)}
+                    className={`min-h-[36px] px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer ${
+                      statusFilter === opt.id
+                        ? 'bg-pinkteam-charcoal text-white'
+                        : 'editorial-raised text-pinkteam-charcoal hover:bg-black/5'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div className="relative flex-1 sm:w-56">
+                <Search
+                  className="w-4 h-4 text-pinkteam-muted absolute left-3 top-1/2 -translate-y-1/2"
+                  strokeWidth={1.5}
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="ค้นหาชื่อ, รหัส หรือห้อง"
+                  className="w-full min-h-[40px] pl-9 pr-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
+                />
+              </div>
             </div>
           </div>
 
@@ -234,7 +267,8 @@ function MemberRow({
           {member.fullName} {member.nickname ? `(${member.nickname})` : ''}
         </div>
         <div className="text-xs text-pinkteam-secondary tabular-nums mt-0.5">
-          ห้อง {member.classRoom} · เลขที่ {member.numberLabel} · {member.position}
+          ห้อง {member.classRoom} · เลขที่ {member.numberLabel}
+          {member.studentCode ? ` · รหัส ${member.studentCode}` : ''} · {member.position}
         </div>
       </div>
       <div className="flex items-center gap-2.5 shrink-0">

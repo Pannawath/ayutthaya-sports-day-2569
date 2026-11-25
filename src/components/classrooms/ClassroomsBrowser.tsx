@@ -22,11 +22,12 @@ export function ClassroomsBrowser({
   const [gradeFilter, setGradeFilter] = useState<string>('ALL');
   const [roomFilter, setRoomFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PRESENT' | 'PENDING'>('ALL');
   const [qrStudent, setQrStudent] = useState<StudentRecord | null>(null);
 
   const selectedGradeObj = GRADES.find((g) => g.grade === gradeFilter);
 
-  const filtered = useMemo(() => {
+  const scopeMatched = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return students
       .filter((s) => {
@@ -49,10 +50,17 @@ export function ClassroomsBrowser({
       );
   }, [students, gradeFilter, roomFilter, searchQuery]);
 
-  const presentCount = filtered.filter((s) => s.checkedIn).length;
-  const pendingCount = filtered.length - presentCount;
+  const filtered = useMemo(() => {
+    if (statusFilter === 'ALL') return scopeMatched;
+    return scopeMatched.filter((s) =>
+      statusFilter === 'PRESENT' ? s.checkedIn : !s.checkedIn
+    );
+  }, [scopeMatched, statusFilter]);
+
+  const presentCount = scopeMatched.filter((s) => s.checkedIn).length;
+  const pendingCount = scopeMatched.length - presentCount;
   const rate =
-    filtered.length > 0 ? Math.round((presentCount / filtered.length) * 1000) / 10 : 0;
+    scopeMatched.length > 0 ? Math.round((presentCount / scopeMatched.length) * 1000) / 10 : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-4">
@@ -161,11 +169,34 @@ export function ClassroomsBrowser({
         </div>
 
         {/* Summary Strip */}
+        <div className="flex flex-wrap gap-1.5">
+          {(
+            [
+              { id: 'ALL', label: `ทั้งหมด (${scopeMatched.length})` },
+              { id: 'PRESENT', label: `มาแล้ว (${presentCount})` },
+              { id: 'PENDING', label: `ยังไม่มา (${pendingCount})` },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setStatusFilter(opt.id)}
+              className={`min-h-[34px] px-3 py-1 rounded-lg text-xs font-medium tabular-nums transition-colors duration-150 cursor-pointer ${
+                statusFilter === opt.id
+                  ? 'bg-pinkteam-charcoal text-white'
+                  : 'editorial-panel text-pinkteam-charcoal hover:bg-pinkteam-raised'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="editorial-panel rounded-xl p-4">
             <div className="text-xs font-normal text-pinkteam-muted">สมาชิกที่พบ</div>
             <div className="font-display font-semibold text-2xl text-pinkteam-charcoal tabular-nums mt-0.5">
-              {filtered.length}
+              {scopeMatched.length}
             </div>
           </div>
           <div className="editorial-panel rounded-xl p-4">

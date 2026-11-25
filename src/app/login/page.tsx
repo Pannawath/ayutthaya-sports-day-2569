@@ -25,23 +25,31 @@ function LoginFormInner() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (!supabaseConfigured) {
-      setError('ยังไม่ได้ตั้งค่า NEXT_PUBLIC_SUPABASE_URL และ NEXT_PUBLIC_SUPABASE_ANON_KEY ใน .env.local');
-      return;
-    }
-
     setLoading(true);
     setError(null);
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { error: authErr } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      if (supabaseConfigured) {
+        const supabase = createSupabaseBrowserClient();
+        const { error: authErr } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
 
-      if (authErr) {
-        setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
-        return;
+        if (authErr) {
+          setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+          return;
+        }
+      } else {
+        const loginRes = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim(), password }),
+        });
+        const loginData = await loginRes.json();
+        if (!loginRes.ok) {
+          setError(loginData.error || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+          return;
+        }
       }
 
       const meRes = await fetch('/api/auth/me');
@@ -80,11 +88,37 @@ function LoginFormInner() {
         </div>
 
         {!supabaseConfigured && (
-          <div className="rounded-xl editorial-raised p-4 text-xs text-pinkteam-charcoal leading-relaxed">
-            <strong className="font-medium">ยังไม่พบการตั้งค่า Supabase ใน .env.local:</strong>{' '}
-            คัดลอก <code className="font-mono">.env.example</code> เป็น{' '}
-            <code className="font-mono">.env.local</code> แล้วใส่ URL/Key จากนั้นสร้างบัญชีผ่าน{' '}
-            <code className="font-mono">npm run create:admin</code>
+          <div className="rounded-xl editorial-raised p-3.5 space-y-2.5 text-xs text-pinkteam-charcoal">
+            <div className="font-medium text-pinkteam-secondary">
+              เข้าสู่ระบบด่วน (โหมดฐานข้อมูลในตัว):
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@ayutthaya.shop');
+                  setPassword('2569');
+                  setError(null);
+                }}
+                className="min-h-[36px] px-2.5 py-1.5 rounded-lg bg-white border border-black/10 text-xs font-medium text-pinkteam-charcoal hover:border-pinkteam-magenta/40 cursor-pointer"
+              >
+                เติมบัญชี Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('staff@ayutthaya.shop');
+                  setPassword('2569');
+                  setError(null);
+                }}
+                className="min-h-[36px] px-2.5 py-1.5 rounded-lg bg-white border border-black/10 text-xs font-medium text-pinkteam-charcoal hover:border-pinkteam-magenta/40 cursor-pointer"
+              >
+                เติมบัญชี Staff
+              </button>
+            </div>
+            <div className="text-[11px] text-pinkteam-muted tabular-nums">
+              Admin: admin@ayutthaya.shop · Staff: staff@ayutthaya.shop · PIN: 2569
+            </div>
           </div>
         )}
 

@@ -9,6 +9,7 @@ import {
   LogIn,
   Printer,
   QrCode,
+  RotateCcw,
   Search,
   UserCheck,
   XCircle,
@@ -57,6 +58,7 @@ export function CheckInWorkspace({
   const [searchQuery, setSearchQuery] = useState('');
   const [roomFilter, setRoomFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'PRESENT'>('ALL');
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
     type: 'success' | 'error';
@@ -102,6 +104,8 @@ export function CheckInWorkspace({
     return students.filter((s) => {
       if (roomFilter && s.classRoom !== roomFilter) return false;
       if (deptFilter && s.departmentName !== deptFilter) return false;
+      if (statusFilter === 'PENDING' && s.checkedIn) return false;
+      if (statusFilter === 'PRESENT' && !s.checkedIn) return false;
       if (!q) return true;
       return (
         (s.studentCode || '').toLowerCase().includes(q) ||
@@ -112,7 +116,36 @@ export function CheckInWorkspace({
         (s.departmentName || '').toLowerCase().includes(q)
       );
     });
-  }, [students, searchQuery, roomFilter, deptFilter]);
+  }, [students, searchQuery, roomFilter, deptFilter, statusFilter]);
+
+  async function handleUndoCheckIn(student: StudentWithCheckIn) {
+    if (!canCheckIn || !student.checkIn || submittingId) return;
+    setSubmittingId(student.id);
+    setFeedback(null);
+    try {
+      const res = await fetch(`/api/check-in/${student.checkIn.id}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setFeedback({ type: 'error', message: json.error || 'ยกเลิกเช็คชื่อไม่สำเร็จ' });
+        return;
+      }
+      setFeedback({ type: 'success', message: `ยกเลิกเช็คชื่อ ${student.fullName} แล้ว` });
+      await reloadSessionStudents(selectedSessionId);
+      if (scannedStudent?.id === student.id) {
+        setScannedStudent({
+          ...student,
+          checkedIn: false,
+          checkIn: null,
+        });
+      }
+    } catch {
+      setFeedback({ type: 'error', message: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' });
+    } finally {
+      setSubmittingId(null);
+    }
+  }
 
   async function handleConfirmCheckIn(
     student: StudentWithCheckIn,
@@ -338,7 +371,10 @@ export function CheckInWorkspace({
         <div className="grid grid-cols-3 gap-1.5 editorial-raised p-1.5 rounded-xl">
           <button
             type="button"
-            onClick={() => setTab('search')}
+            onClick={() => {
+              setTab('search');
+              setFeedback(null);
+            }}
             className={`min-h-[40px] flex items-center justify-center gap-2 px-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
               tab === 'search'
                 ? 'bg-pinkteam-magenta text-white'
@@ -350,7 +386,10 @@ export function CheckInWorkspace({
           </button>
           <button
             type="button"
-            onClick={() => setTab('qr')}
+            onClick={() => {
+              setTab('qr');
+              setFeedback(null);
+            }}
             className={`min-h-[40px] flex items-center justify-center gap-2 px-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
               tab === 'qr'
                 ? 'bg-pinkteam-magenta text-white'
@@ -362,7 +401,10 @@ export function CheckInWorkspace({
           </button>
           <button
             type="button"
-            onClick={() => setTab('paper')}
+            onClick={() => {
+              setTab('paper');
+              setFeedback(null);
+            }}
             className={`min-h-[40px] flex items-center justify-center gap-2 px-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
               tab === 'paper'
                 ? 'bg-pinkteam-magenta text-white'
@@ -534,8 +576,18 @@ export function CheckInWorkspace({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="ค้นหาเลขประจำตัว, ชื่อ หรือห้อง"
-                  className="w-full min-h-[40px] pl-9 pr-3 py-2 rounded-lg border border-black/15 text-sm bg-white"
+                  className="w-full min-h-[40px] pl-9 pr-9 py-2 rounded-lg border border-black/15 text-sm bg-white"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="ล้างคำค้นหา"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-pinkteam-muted hover:text-pinkteam-charcoal hover:bg-black/5 cursor-pointer"
+                  >
+                    <XCircle className="w-4 h-4" strokeWidth={1.5} />
+                  </button>
+                )}
               </div>
               <select
                 value={roomFilter}
@@ -563,6 +615,34 @@ export function CheckInWorkspace({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-black/5">
+              <div className="flex flex-wrap gap-1.5">
+                {(
+                  [
+                    { id: 'ALL', label: `ทั้งหมด (${students.length})` },
+                    { id: 'PENDING', label: `ยังไม่มา (${students.length - presentCount})` },
+                    { id: 'PRESENT', label: `มาแล้ว (${presentCount})` },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setStatusFilter(opt.id)}
+                    className={`min-h-[34px] px-3 py-1 rounded-lg text-xs font-medium tabular-nums transition-colors duration-150 cursor-pointer ${
+                      statusFilter === opt.id
+                        ? 'bg-pinkteam-charcoal text-white'
+                        : 'editorial-raised text-pinkteam-charcoal hover:bg-black/5'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs text-pinkteam-muted tabular-nums">
+                แสดง {filteredStudents.length} รายการ
+              </span>
             </div>
 
             {tab === 'paper' && (
@@ -661,27 +741,41 @@ export function CheckInWorkspace({
 
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                       {tab === 'search' && (
-                        <button
-                          type="button"
-                          disabled={s.checkedIn || !canCheckIn || submittingId === s.id}
-                          onClick={() =>
-                            handleConfirmCheckIn(s, searchQuery.trim() ? 'ID_SEARCH' : 'MANUAL')
-                          }
-                          className={`min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer ${
-                            s.checkedIn
-                              ? 'editorial-raised text-emerald-800 cursor-default'
-                              : 'bg-pinkteam-magenta text-white hover:bg-pinkteam-deep disabled:opacity-45'
-                          }`}
-                        >
-                          <UserCheck className="w-4 h-4" strokeWidth={1.5} />
-                          <span>
-                            {s.checkedIn
-                              ? 'เช็คแล้ว'
-                              : submittingId === s.id
-                                ? 'กำลังบันทึก'
-                                : 'ยืนยันเช็คชื่อ'}
-                          </span>
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            disabled={s.checkedIn || !canCheckIn || submittingId === s.id}
+                            onClick={() =>
+                              handleConfirmCheckIn(s, searchQuery.trim() ? 'ID_SEARCH' : 'MANUAL')
+                            }
+                            className={`min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 cursor-pointer ${
+                              s.checkedIn
+                                ? 'editorial-raised text-emerald-800 cursor-default'
+                                : 'bg-pinkteam-magenta text-white hover:bg-pinkteam-deep disabled:opacity-45'
+                            }`}
+                          >
+                            <UserCheck className="w-4 h-4" strokeWidth={1.5} />
+                            <span>
+                              {s.checkedIn
+                                ? 'เช็คแล้ว'
+                                : submittingId === s.id
+                                  ? 'กำลังบันทึก'
+                                  : 'ยืนยันเช็คชื่อ'}
+                            </span>
+                          </button>
+                          {s.checkedIn && canCheckIn && s.checkIn && (
+                            <button
+                              type="button"
+                              disabled={submittingId === s.id}
+                              onClick={() => handleUndoCheckIn(s)}
+                              aria-label={`ยกเลิกเช็คชื่อ ${s.fullName}`}
+                              title="ยกเลิกเช็คชื่อ"
+                              className="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg border border-black/15 bg-white text-pinkteam-secondary hover:text-red-700 hover:border-red-200 cursor-pointer"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.5} />
+                            </button>
+                          )}
+                        </div>
                       )}
                       <button
                         type="button"

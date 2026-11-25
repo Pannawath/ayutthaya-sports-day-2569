@@ -8,15 +8,19 @@ import type { AnnouncementRecord, UserProfile } from '@/lib/types';
 interface AnnouncementsBoardProps {
   initialAnnouncements: AnnouncementRecord[];
   profile: UserProfile | null;
+  initialSelectedId?: string | null;
 }
 
 export function AnnouncementsBoard({
   initialAnnouncements,
   profile,
+  initialSelectedId = null,
 }: AnnouncementsBoardProps) {
   const [items, setItems] = useState<AnnouncementRecord[]>(initialAnnouncements);
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'NEWS' | 'SCHEDULE'>('ALL');
-  const [detailItem, setDetailItem] = useState<AnnouncementRecord | null>(null);
+  const [detailItem, setDetailItem] = useState<AnnouncementRecord | null>(
+    () => initialAnnouncements.find((a) => a.id === initialSelectedId) || null
+  );
 
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
@@ -322,7 +326,12 @@ export function AnnouncementsBoard({
       )}
 
       {detailItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={detailItem.title}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+        >
           <div className="w-full max-w-lg rounded-2xl bg-white overflow-hidden shadow-2xl">
             {detailItem.imageUrl && (
               <img
@@ -344,6 +353,7 @@ export function AnnouncementsBoard({
                 <button
                   type="button"
                   onClick={() => setDetailItem(null)}
+                  aria-label="ปิดหน้าต่างประกาศ"
                   className="p-2 rounded-lg editorial-raised hover:bg-black/5 cursor-pointer"
                 >
                   <X className="w-4 h-4" strokeWidth={1.5} />
