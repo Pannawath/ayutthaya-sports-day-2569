@@ -12,22 +12,25 @@ interface ClassroomsBrowserProps {
   students: StudentWithCheckIn[];
   activeSession: CheckInSessionRecord | null;
   sourceMode: 'supabase' | 'legacy-readonly';
+  initialGrade?: string;
+  initialRoom?: string;
 }
 
 export function ClassroomsBrowser({
   students,
   activeSession,
   sourceMode,
+  initialGrade = 'ALL',
+  initialRoom = '',
 }: ClassroomsBrowserProps) {
-  const [gradeFilter, setGradeFilter] = useState<string>('ALL');
-  const [roomFilter, setRoomFilter] = useState<string>('');
+  const [gradeFilter, setGradeFilter] = useState<string>(initialGrade);
+  const [roomFilter, setRoomFilter] = useState<string>(initialRoom);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PRESENT' | 'PENDING'>('ALL');
   const [qrStudent, setQrStudent] = useState<StudentRecord | null>(null);
 
   const selectedGradeObj = GRADES.find((g) => g.grade === gradeFilter);
 
-  const scopeMatched = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return students
       .filter((s) => {
@@ -50,31 +53,19 @@ export function ClassroomsBrowser({
       );
   }, [students, gradeFilter, roomFilter, searchQuery]);
 
-  const filtered = useMemo(() => {
-    if (statusFilter === 'ALL') return scopeMatched;
-    return scopeMatched.filter((s) =>
-      statusFilter === 'PRESENT' ? s.checkedIn : !s.checkedIn
-    );
-  }, [scopeMatched, statusFilter]);
-
-  const presentCount = scopeMatched.filter((s) => s.checkedIn).length;
-  const pendingCount = scopeMatched.length - presentCount;
-  const rate =
-    scopeMatched.length > 0 ? Math.round((presentCount / scopeMatched.length) * 1000) / 10 : 0;
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-4">
       <div className="no-print space-y-4">
         <SourceModeBanner sourceMode={sourceMode} />
 
-        {/* Header */}
+        {/* Header matching legacy renderClasses() */}
         <div className="editorial-panel rounded-2xl p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="font-display font-semibold text-2xl text-pinkteam-charcoal">
-              รายชื่อนักเรียนตามห้องเรียน
+              ค้นหาและดูข้อมูลตามห้อง
             </h1>
             <p className="text-sm text-pinkteam-secondary mt-1 tabular-nums">
-              ระดับชั้น ม.1 – ม.6 ทั้งหมด 21 ห้องเรียน
+              พบรายชื่อนักเรียน {filtered.length} รายการ (ระดับชั้น ม.1 – ม.6 ทั้งหมด 21 ห้องเรียน)
             </p>
           </div>
           <button
@@ -83,7 +74,7 @@ export function ClassroomsBrowser({
             className="min-h-[40px] inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-pinkteam-charcoal text-white text-xs sm:text-sm font-medium hover:bg-pinkteam-plum transition-colors duration-150 cursor-pointer"
           >
             <Printer className="w-4 h-4" strokeWidth={1.5} />
-            พิมพ์ใบเช็คชื่อห้องนี้
+            พิมพ์ใบรายชื่อห้องนี้
           </button>
         </div>
 
@@ -98,7 +89,7 @@ export function ClassroomsBrowser({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ค้นหาชื่อ, เลขประจำตัว หรือห้อง"
+              placeholder="พิมพ์ชื่อ, ชื่อเล่น, ห้อง หรือเลขที่เพื่อค้นหา..."
               className="w-full min-h-[40px] pl-9 pr-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
             />
           </div>
@@ -168,108 +159,63 @@ export function ClassroomsBrowser({
           )}
         </div>
 
-        {/* Summary Strip */}
-        <div className="flex flex-wrap gap-1.5">
-          {(
-            [
-              { id: 'ALL', label: `ทั้งหมด (${scopeMatched.length})` },
-              { id: 'PRESENT', label: `มาแล้ว (${presentCount})` },
-              { id: 'PENDING', label: `ยังไม่มา (${pendingCount})` },
-            ] as const
-          ).map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setStatusFilter(opt.id)}
-              className={`min-h-[34px] px-3 py-1 rounded-lg text-xs font-medium tabular-nums transition-colors duration-150 cursor-pointer ${
-                statusFilter === opt.id
-                  ? 'bg-pinkteam-charcoal text-white'
-                  : 'editorial-panel text-pinkteam-charcoal hover:bg-pinkteam-raised'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="editorial-panel rounded-xl p-4">
-            <div className="text-xs font-normal text-pinkteam-muted">สมาชิกที่พบ</div>
-            <div className="font-display font-semibold text-2xl text-pinkteam-charcoal tabular-nums mt-0.5">
-              {scopeMatched.length}
-            </div>
-          </div>
-          <div className="editorial-panel rounded-xl p-4">
-            <div className="text-xs font-normal text-pinkteam-muted">มาแล้ว</div>
-            <div className="font-display font-semibold text-2xl text-pinkteam-charcoal tabular-nums mt-0.5">
-              {presentCount}
-            </div>
-          </div>
-          <div className="editorial-panel rounded-xl p-4">
-            <div className="text-xs font-normal text-pinkteam-muted">ยังไม่มา</div>
-            <div className="font-display font-semibold text-2xl text-pinkteam-charcoal tabular-nums mt-0.5">
-              {pendingCount}
-            </div>
-          </div>
-          <div className="editorial-panel rounded-xl p-4">
-            <div className="text-xs font-normal text-pinkteam-muted">อัตราเข้าร่วม</div>
-            <div className="font-display font-semibold text-2xl text-pinkteam-magenta tabular-nums mt-0.5">
-              {rate}%
-            </div>
-          </div>
-        </div>
-
-        {/* Student Cards */}
+        {/* Clean Legacy-Style Student Cards */}
         {filtered.length === 0 ? (
           <EmptyState
-            title="ไม่พบรายชื่อในห้องหรือคำค้นหานี้"
-            description="ลองเปลี่ยนระดับชั้นหรือคำค้นหาใหม่อีกครั้ง"
+            title="ไม่พบข้อมูลนักเรียนที่ตรงกับเงื่อนไข"
+            description="ลองเปลี่ยนระดับชั้น ห้องเรียน หรือคำค้นหาใหม่อีกครั้ง"
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {filtered.map((s) => (
-              <div
-                key={s.id}
-                className="editorial-panel rounded-xl p-4 flex items-center justify-between gap-3"
-              >
-                <div className="min-w-0">
-                  <div className="font-display font-medium text-sm sm:text-base text-pinkteam-charcoal truncate">
-                    {s.fullName}{' '}
-                    {s.nickname && (
-                      <span className="font-normal text-pinkteam-secondary">({s.nickname})</span>
-                    )}
-                  </div>
-                  <div className="text-xs text-pinkteam-secondary mt-0.5 tabular-nums">
-                    ห้อง {s.classRoom} · เลขที่ {s.numberLabel}
-                    {s.studentCode ? ` · รหัส ${s.studentCode}` : ''}
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-                    <span className="text-pinkteam-magenta font-medium">
-                      {s.roleCategory === 'central'
-                        ? s.centralPosition
-                        : `${s.departmentName || '-'} · ${s.position}`}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-pinkteam-secondary">
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          s.checkedIn ? 'bg-emerald-600' : 'bg-pinkteam-muted/50'
-                        }`}
-                      />
-                      {s.checkedIn ? 'มาแล้ว' : 'ยังไม่มา'}
-                    </span>
-                  </div>
-                </div>
+            {filtered.map((s) => {
+              const roleText =
+                s.roleCategory === 'central'
+                  ? s.centralPosition || s.position
+                  : `${s.departmentName || '-'}${s.sportType ? ` · ${s.sportType}` : ''} · ${s.position}`;
+              const isLeader =
+                s.roleCategory === 'central' ||
+                s.position === 'ประธานฝ่าย' ||
+                s.position === 'หัวหน้ากีฬา';
 
-                <button
-                  type="button"
-                  onClick={() => setQrStudent(s)}
-                  className="shrink-0 min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg editorial-raised hover:bg-black/5 text-xs font-medium text-pinkteam-charcoal cursor-pointer"
+              return (
+                <div
+                  key={s.id}
+                  className="editorial-panel rounded-xl p-4 flex items-center justify-between gap-3"
                 >
-                  <QrCode className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
-                  QR
-                </button>
-              </div>
-            ))}
+                  <div className="min-w-0">
+                    <div className="font-display font-medium text-sm sm:text-base text-pinkteam-charcoal truncate">
+                      {s.fullName}{' '}
+                      {s.nickname && (
+                        <span className="font-normal text-pinkteam-secondary">({s.nickname})</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-pinkteam-secondary mt-0.5 tabular-nums">
+                      ห้อง {s.classRoom} · เลขที่ {s.numberLabel}
+                    </div>
+                    <div className="mt-2">
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-md text-xs font-medium ${
+                          isLeader
+                            ? 'bg-pinkteam-blush text-pinkteam-magenta'
+                            : 'editorial-raised text-pinkteam-charcoal'
+                        }`}
+                      >
+                        {roleText}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setQrStudent(s)}
+                    className="shrink-0 min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg editorial-raised hover:bg-black/5 text-xs font-medium text-pinkteam-charcoal cursor-pointer"
+                  >
+                    <QrCode className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
+                    บัตร QR
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

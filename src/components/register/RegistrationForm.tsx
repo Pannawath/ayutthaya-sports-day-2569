@@ -295,20 +295,7 @@ export function RegistrationForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
-                  เลขประจำตัวนักเรียน (ถ้ามี)
-                </label>
-                <input
-                  type="text"
-                  value={studentCode}
-                  onChange={(e) => setStudentCode(e.target.value)}
-                  placeholder="เลขประจำตัว"
-                  className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm tabular-nums"
-                />
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-pinkteam-charcoal mb-1">
                   ชั้น / ห้อง <span className="text-pinkteam-magenta">*</span>
@@ -342,13 +329,16 @@ export function RegistrationForm({
                   className="w-full min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm cursor-pointer"
                   required
                 >
-                  <option value="">เลือกเลขที่ (1 ก–20 ข)</option>
+                  <option value="">เลือกเลขที่และกลุ่ม</option>
                   {NUMBERS.map((n) => (
                     <option key={n} value={n}>
                       {n}
                     </option>
                   ))}
                 </select>
+                <div className="text-[11px] text-pinkteam-muted mt-1">
+                  เลขที่ 1–20 กลุ่ม ก และ 1–20 กลุ่ม ข
+                </div>
               </div>
             </div>
           </div>
@@ -361,39 +351,48 @@ export function RegistrationForm({
             {isM1Locked ? (
               <div className="rounded-xl editorial-raised p-4 text-sm text-pinkteam-charcoal leading-relaxed">
                 ระบบล็อกคำตอบให้เข้า <strong className="font-semibold">ฝ่ายสแตนเชียร์</strong> ในสถานะ{' '}
-                <strong className="font-semibold">สมาชิกฝ่าย</strong> โดยอัตโนมัติ หากต้องการตำแหน่งอื่น กรุณาแจ้งพี่สตาฟ
+                <strong className="font-semibold">สมาชิกฝ่าย</strong> โดยอัตโนมัติ หากต้องการตำแหน่งอื่น กรุณาแจ้งพี่สตาฟโดยตรง พี่สตาฟจะเป็นผู้แก้ไขข้อมูลในระบบให้
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-1.5 editorial-raised p-1.5 rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRoleCategory('department');
-                      setPosition('');
-                    }}
-                    className={`min-h-[40px] rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
-                      roleCategory === 'department'
-                        ? 'bg-pinkteam-magenta text-white'
-                        : 'text-pinkteam-charcoal hover:bg-white/70'
-                    }`}
-                  >
-                    ฝ่ายงาน (8 ฝ่าย)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRoleCategory('central');
-                      setPosition('');
-                    }}
-                    className={`min-h-[40px] rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
-                      roleCategory === 'central'
-                        ? 'bg-pinkteam-magenta text-white'
-                        : 'text-pinkteam-charcoal hover:bg-white/70'
-                    }`}
-                  >
-                    ตำแหน่งบริหารคณะสี
-                  </button>
+                <div className="editorial-raised p-1.5 rounded-xl">
+                  <div className="relative grid grid-cols-2 items-center">
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-y-0 left-0 w-1/2 rounded-lg bg-pinkteam-magenta shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                      style={{
+                        transform: `translate3d(${roleCategory === 'central' ? 100 : 0}%, 0, 0)`,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRoleCategory('department');
+                        setPosition('');
+                      }}
+                      className={`relative z-10 min-h-[40px] rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 cursor-pointer ${
+                        roleCategory === 'department'
+                          ? 'text-white'
+                          : 'text-pinkteam-charcoal hover:text-pinkteam-magenta'
+                      }`}
+                    >
+                      ฝ่ายงาน
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRoleCategory('central');
+                        setPosition('');
+                      }}
+                      className={`relative z-10 min-h-[40px] rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 cursor-pointer ${
+                        roleCategory === 'central'
+                          ? 'text-white'
+                          : 'text-pinkteam-charcoal hover:text-pinkteam-magenta'
+                      }`}
+                    >
+                      ตำแหน่งบริหารคณะสี
+                    </button>
+                  </div>
                 </div>
 
                 {roleCategory === 'central' ? (
@@ -535,7 +534,22 @@ export function RegistrationForm({
                             required
                           >
                             <option value="">เลือกตำแหน่ง</option>
-                            <option value="หัวหน้ากีฬา">หัวหน้ากีฬา</option>
+                            {(() => {
+                              const captainTaken = Boolean(
+                                sportType &&
+                                  students.some(
+                                    (s) =>
+                                      s.departmentName === selectedDeptMeta.name &&
+                                      s.sportType === sportType &&
+                                      s.position === 'หัวหน้ากีฬา'
+                                  )
+                              );
+                              return (
+                                <option value="หัวหน้ากีฬา" disabled={captainTaken}>
+                                  หัวหน้ากีฬา{captainTaken ? ' (มีผู้รับแล้ว)' : ''}
+                                </option>
+                              );
+                            })()}
                             <option value="สตาฟกีฬา">สตาฟกีฬา</option>
                             <option value="นักกีฬา">นักกีฬา</option>
                           </select>
@@ -548,13 +562,17 @@ export function RegistrationForm({
             )}
           </div>
 
+          <div className="rounded-xl editorial-raised px-4 py-3 text-xs text-pinkteam-secondary leading-relaxed">
+            ตำแหน่งสำคัญรับได้ตำแหน่งละ 1 คน ระบบตรวจสอบตำแหน่งว่างแบบเรียลไทม์จากข้อมูลจริง
+          </div>
+
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-xl bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-display font-medium text-sm sm:text-base transition-colors duration-150 disabled:opacity-50 cursor-pointer"
           >
             <UserPlus className="w-4 h-4" strokeWidth={1.5} />
-            <span>{isSubmitting ? 'กำลังบันทึกข้อมูล' : 'ยืนยันการลงทะเบียน'}</span>
+            <span>{isSubmitting ? 'กำลังบันทึกข้อมูล' : 'บันทึกข้อมูล'}</span>
           </button>
         </form>
       </div>

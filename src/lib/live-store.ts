@@ -122,6 +122,20 @@ export interface LiveJerseyOrderRow {
   created_at: string;
 }
 
+export interface LiveDuplicateEntry {
+  id: string;
+  fullName: string;
+  nickname: string;
+  classRoom: string;
+  numberLabel: string;
+  roleCategory: 'department' | 'central';
+  centralPosition: string | null;
+  department: string | null;
+  position: string;
+  sportType: string | null;
+  timestamp: number;
+}
+
 interface LiveStoreData {
   departments: LiveDepartmentRow[];
   system_settings: LiveSystemSettingRow[];
@@ -132,10 +146,16 @@ interface LiveStoreData {
   profiles: LiveProfileRow[];
   audit_logs: LiveAuditLogRow[];
   jersey_orders: LiveJerseyOrderRow[];
+  admin_pin?: string;
+  raw_duplicates?: Record<string, LiveDuplicateEntry[]>;
+  resolved_duplicates?: string[];
   lastSyncedAt: number;
 }
 
-type TableName = keyof Omit<LiveStoreData, 'lastSyncedAt'>;
+type TableName = Exclude<
+  keyof LiveStoreData,
+  'lastSyncedAt' | 'admin_pin' | 'raw_duplicates' | 'resolved_duplicates'
+>;
 
 const DATA_DIR = path.join(process.cwd(), '.data');
 const DATA_FILE = path.join(DATA_DIR, 'live-store.json');
@@ -257,6 +277,9 @@ function buildDefaultStore(): LiveStoreData {
     profiles,
     audit_logs: [],
     jersey_orders: [],
+    admin_pin: '2569',
+    raw_duplicates: {},
+    resolved_duplicates: [],
     lastSyncedAt: 0,
   };
 }
@@ -293,6 +316,16 @@ function loadStoreFromDisk(): LiveStoreData {
     profiles: loaded?.profiles?.length ? loaded.profiles : base.profiles,
     audit_logs: Array.isArray(loaded?.audit_logs) ? loaded.audit_logs : [],
     jersey_orders: Array.isArray(loaded?.jersey_orders) ? loaded.jersey_orders : [],
+    admin_pin: typeof loaded?.admin_pin === 'string' && /^\d{4}$/.test(loaded.admin_pin)
+      ? loaded.admin_pin
+      : '2569',
+    raw_duplicates:
+      loaded?.raw_duplicates && typeof loaded.raw_duplicates === 'object'
+        ? loaded.raw_duplicates
+        : {},
+    resolved_duplicates: Array.isArray(loaded?.resolved_duplicates)
+      ? loaded.resolved_duplicates
+      : [],
     lastSyncedAt: Number(loaded?.lastSyncedAt) || 0,
   };
 
@@ -371,6 +404,37 @@ export async function syncLegacyStudentsIntoStore(force = false): Promise<LiveSt
       const existingRoomKey = new Set(
         store.students.map((s) => `${s.class_room}|${s.number_label}`)
       );
+
+      // Detect upstream duplicate submissions per classRoom|numberLabel (matching legacy AttendanceStore.getDuplicateStudents)
+      const resolvedSet = new Set(store.resolved_duplicates || []);
+      const groupedByRoom = new Map<string, LiveDuplicateEntry[]>();
+      dedupedRaw.forEach((rec, idx) => {
+        const classRoom = String(rec.classRoom || '').trim();
+        const numberLabel = String(rec.numberLabel || '').trim();
+        if (!classRoom || !numberLabel) return;
+        const key = `${classRoom}|${numberLabel}`;
+        if (resolvedSet.has(key)) return;
+        const list = groupedByRoom.get(key) || [];
+        list.push({
+          id: String(rec.id || `legacy_${idx}`),
+          fullName: String(rec.fullName || '').trim(),
+          nickname: String(rec.nickname || '').trim(),
+          classRoom,
+          numberLabel,
+          roleCategory: rec.roleCategory === 'central' ? 'central' : 'department',
+          centralPosition: rec.centralPosition ? String(rec.centralPosition).trim() : null,
+          department: rec.department ? String(rec.department).trim() : null,
+          position: String(rec.position || rec.centralPosition || 'สมาชิกฝ่าย').trim(),
+          sportType: rec.sportType ? String(rec.sportType).trim() : null,
+          timestamp: Number(rec.timestamp) || 0,
+        });
+        groupedByRoom.set(key, list);
+      });
+      const dupesObj: Record<string, LiveDuplicateEntry[]> = {};
+      groupedByRoom.forEach((list, key) => {
+        if (list.length > 1) dupesObj[key] = list;
+      });
+      store.raw_duplicates = dupesObj;
 
       let addedCount = 0;
       dedupedRaw.forEach((rec, idx) => {
@@ -479,6 +543,118 @@ export async function getLiveProfileById(id: string) {
     role: user.role,
     createdAt: user.created_at,
   };
+}
+
+export async function verifyAdminPin(pinInput: string) {
+  const store = await syncLegacyStudentsIntoStore();
+  const expectedPin = store.admin_pin || '2569';
+  if (pinInput.trim() !== expectedPin) return null;
+  const adminUser =
+    store.profiles.find((p) => p.role === 'ADMIN') ?? store.profiles[0];
+  if (!adminUser) return null;
+  return {
+    id: adminUser.id,
+    email: adminUser.email,
+    fullName: adminUser.full_name,
+    role: 'ADMIN' as const,
+    createdAt: adminUser.created_at,
+  };
+}
+
+export async function getAdminPinSetting(): Promise<string> {
+  const store = await syncLegacyStudentsIntoStore();
+  return store.admin_pin || '2569';
+}
+
+export async function updateAdminPin(newPin: string): Promise<string> {
+  const store = await syncLegacyStudentsIntoStore();
+  store.admin_pin = newPin.trim();
+  persistStoreToDisk(store);
+  return store.admin_pin;
+}
+
+export async function getDuplicateGroupsData(): Promise<Record<string, LiveDuplicateEntry[]>> {
+  const store = await syncLegacyStudentsIntoStore();
+  const resolvedSet = new Set(store.resolved_duplicates || []);
+  const combined: Record<string, LiveDuplicateEntry[]> = {};
+
+  if (store.raw_duplicates) {
+    Object.entries(store.raw_duplicates).forEach(([key, list]) => {
+      if (!resolvedSet.has(key) && list.length > 1) {
+        combined[key] = list;
+      }
+    });
+  }
+
+  // Also include any duplicate room+number records inside store.students
+  const localByRoom = new Map<string, LiveDuplicateEntry[]>();
+  const deptById = new Map(store.departments.map((d) => [d.id, d.name]));
+  store.students.forEach((s) => {
+    const key = `${s.class_room}|${s.number_label}`;
+    if (resolvedSet.has(key)) return;
+    const list = localByRoom.get(key) || [];
+    list.push({
+      id: s.id,
+      fullName: s.full_name,
+      nickname: s.nickname,
+      classRoom: s.class_room,
+      numberLabel: s.number_label,
+      roleCategory: s.role_category,
+      centralPosition: s.central_position,
+      department: s.department_id ? deptById.get(s.department_id) ?? null : null,
+      position: s.position,
+      sportType: s.sport_type,
+      timestamp: new Date(s.registered_at).getTime() || 0,
+    });
+    localByRoom.set(key, list);
+  });
+  localByRoom.forEach((list, key) => {
+    if (list.length > 1) combined[key] = list;
+  });
+
+  return combined;
+}
+
+export async function resolveDuplicateGroup(params: {
+  studentKey: string;
+  keepRecord: LiveDuplicateEntry;
+}): Promise<{ ok: boolean }> {
+  const store = await syncLegacyStudentsIntoStore();
+  const deptByName = new Map(store.departments.map((d) => [d.name, d.id]));
+  const [classRoom, numberLabel] = params.studentKey.split('|');
+
+  // Remove any extra local student copies matching this key except one primary row
+  const matching = store.students.filter(
+    (s) => s.class_room === classRoom && s.number_label === numberLabel
+  );
+  if (matching.length > 0) {
+    const primary = matching.find((s) => s.id === params.keepRecord.id) ?? matching[0];
+    primary.full_name = params.keepRecord.fullName || primary.full_name;
+    primary.nickname = params.keepRecord.nickname ?? primary.nickname;
+    primary.role_category = params.keepRecord.roleCategory;
+    primary.central_position = params.keepRecord.centralPosition;
+    primary.department_id = params.keepRecord.department
+      ? deptByName.get(params.keepRecord.department) ?? null
+      : null;
+    primary.position = params.keepRecord.position;
+    primary.sport_type = params.keepRecord.sportType;
+    primary.updated_at = new Date().toISOString();
+
+    const dropIds = new Set(matching.filter((s) => s.id !== primary.id).map((s) => s.id));
+    if (dropIds.size > 0) {
+      store.students = store.students.filter((s) => !dropIds.has(s.id));
+      store.check_ins = store.check_ins.filter((c) => !dropIds.has(c.student_id));
+    }
+  }
+
+  store.resolved_duplicates = Array.from(
+    new Set([...(store.resolved_duplicates || []), params.studentKey])
+  );
+  if (store.raw_duplicates) {
+    delete store.raw_duplicates[params.studentKey];
+  }
+  persistStoreToDisk(store);
+  return { ok: true };
 }
 
 class LiveQueryBuilder<T extends Record<string, unknown>>

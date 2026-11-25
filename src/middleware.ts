@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { SESSION_COOKIE_NAME, verifySessionCookie } from '@/lib/session-cookie';
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -15,21 +14,7 @@ export async function middleware(request: NextRequest) {
   const isAdminPath = pathname === '/admin' || pathname.startsWith('/admin/');
 
   if (!url || !anonKey) {
-    if (isAdminPath) {
-      const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-      const session = await verifySessionCookie(token);
-      if (!session) {
-        const loginUrl = new URL('/login', request.url);
-        loginUrl.searchParams.set('next', pathname);
-        loginUrl.searchParams.set('reason', 'auth_required');
-        return NextResponse.redirect(loginUrl);
-      }
-      if (session.role !== 'ADMIN') {
-        const targetUrl = new URL('/check-in', request.url);
-        targetUrl.searchParams.set('error', 'admin_only');
-        return NextResponse.redirect(targetUrl);
-      }
-    }
+    // Standalone /admin handles its own 4-digit PIN gate on page
     return response;
   }
 

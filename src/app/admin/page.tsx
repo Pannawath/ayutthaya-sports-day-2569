@@ -1,41 +1,42 @@
-import { redirect } from 'next/navigation';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { StandaloneAdminApp } from '@/components/admin/StandaloneAdminApp';
 import { getCurrentUserProfile } from '@/lib/auth';
 import {
   getAttendanceStatistics,
   getAuditLogsData,
   getStudentsWithCheckIn,
-  getUsersProfilesData,
 } from '@/lib/data';
+import { getAdminPinSetting, getDuplicateGroupsData } from '@/lib/live-store';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
   const profile = await getCurrentUserProfile();
-  if (!profile) {
-    redirect('/login?next=/admin&reason=auth_required');
-  }
-  if (profile.role !== 'ADMIN') {
-    redirect('/check-in?error=admin_only');
+  const isAdmin = profile?.role === 'ADMIN';
+
+  if (!isAdmin) {
+    return <StandaloneAdminApp initialAuthenticated={false} profile={null} />;
   }
 
-  const [studentsData, stats, users, auditLogs] = await Promise.all([
+  const [studentsData, stats, auditLogs, duplicateGroups, currentPin] = await Promise.all([
     getStudentsWithCheckIn(),
     getAttendanceStatistics({ range: 'all' }),
-    getUsersProfilesData(),
-    getAuditLogsData(80),
+    getAuditLogsData(50),
+    getDuplicateGroupsData(),
+    getAdminPinSetting(),
   ]);
 
   return (
-    <AdminDashboard
+    <StandaloneAdminApp
+      initialAuthenticated
       profile={profile}
       initialStudents={studentsData.students}
       initialDepartments={studentsData.departments}
       initialPolicies={studentsData.policies}
       initialSessions={studentsData.sessions}
       initialStats={stats}
-      initialUsers={users}
+      initialDuplicateGroups={duplicateGroups}
       initialAuditLogs={auditLogs}
+      currentPin={currentPin}
     />
   );
 }

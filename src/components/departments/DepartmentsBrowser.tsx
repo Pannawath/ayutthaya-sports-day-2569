@@ -1,84 +1,71 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { QrCode, Search } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import { QrPassModal } from '@/components/qr/QrPassModal';
-import { EmptyState, SourceModeBanner } from '@/components/ui/States';
-import { CENTRAL_POSITIONS, SPORT_TYPES } from '@/lib/constants';
+import { SourceModeBanner } from '@/components/ui/States';
+import { CENTRAL_POSITIONS, NO_STAFF_DEPARTMENTS, SPORT_TYPES } from '@/lib/constants';
 import type { DepartmentRecord, StudentRecord, StudentWithCheckIn } from '@/lib/types';
 
 interface DepartmentsBrowserProps {
   students: StudentWithCheckIn[];
   departments: DepartmentRecord[];
   sourceMode: 'supabase' | 'legacy-readonly';
+  initialDeptName?: string | null;
 }
 
 export function DepartmentsBrowser({
   students,
   departments,
   sourceMode,
+  initialDeptName = null,
 }: DepartmentsBrowserProps) {
-  const [selectedDeptName, setSelectedDeptName] = useState<string>(
-    departments[0]?.name || ''
+  const [openDeptName, setOpenDeptName] = useState<string | null>(
+    () => initialDeptName || departments[0]?.name || 'ฝ่ายอุปกรณ์'
   );
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PRESENT' | 'PENDING'>('ALL');
   const [qrStudent, setQrStudent] = useState<StudentRecord | null>(null);
-
-  const selectedDept = departments.find((d) => d.name === selectedDeptName);
 
   const centralMembers = useMemo(
     () => students.filter((s) => s.roleCategory === 'central'),
     [students]
   );
 
-  const scopeDeptMembers = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return students
-      .filter((s) => s.departmentName === selectedDeptName)
-      .filter((s) => {
-        if (!q) return true;
-        return (
-          (s.studentCode || '').toLowerCase().includes(q) ||
-          s.fullName.toLowerCase().includes(q) ||
-          s.nickname.toLowerCase().includes(q) ||
-          s.classRoom.toLowerCase().includes(q) ||
-          s.position.toLowerCase().includes(q)
-        );
-      });
-  }, [students, selectedDeptName, searchQuery]);
-
-  const deptMembers = useMemo(() => {
-    if (statusFilter === 'ALL') return scopeDeptMembers;
-    return scopeDeptMembers.filter((s) =>
-      statusFilter === 'PRESENT' ? s.checkedIn : !s.checkedIn
-    );
-  }, [scopeDeptMembers, statusFilter]);
-
-  const presentCount = scopeDeptMembers.filter((s) => s.checkedIn).length;
-  const pendingCount = scopeDeptMembers.length - presentCount;
-  const rate =
-    scopeDeptMembers.length > 0
-      ? Math.round((presentCount / scopeDeptMembers.length) * 1000) / 10
-      : 0;
+  const query = searchQuery.trim().toLowerCase();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-4">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-4">
       <SourceModeBanner sourceMode={sourceMode} />
 
-      <div className="editorial-panel rounded-2xl p-5 sm:p-6">
-        <h1 className="font-display font-semibold text-2xl text-pinkteam-charcoal">
-          รายชื่อสมาชิกและสถิติตามฝ่ายงาน
-        </h1>
-        <p className="text-sm text-pinkteam-secondary mt-1">
-          8 ฝ่ายงานหลักและคณะกรรมการบริหารส่วนกลาง 6 ตำแหน่ง
-        </p>
+      {/* Header matching legacy renderDepartments() */}
+      <div className="editorial-panel rounded-2xl p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display font-semibold text-2xl text-pinkteam-charcoal">
+            รายชื่อสมาชิกแยกตามฝ่ายงาน
+          </h1>
+          <p className="text-sm text-pinkteam-secondary mt-1">
+            แตะเพื่อเปิดดูรายชื่อประธาน สตาฟ และสมาชิกในแต่ละฝ่าย
+          </p>
+        </div>
+        <div className="relative w-full sm:w-64">
+          <Search
+            className="w-4 h-4 text-pinkteam-muted absolute left-3 top-1/2 -translate-y-1/2"
+            strokeWidth={1.5}
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="ค้นหาชื่อ, ชื่อเล่น หรือห้อง..."
+            className="w-full min-h-[40px] pl-9 pr-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
+          />
+        </div>
       </div>
 
       {/* Central Committee Overview */}
       <div className="editorial-panel rounded-2xl p-5">
         <h2 className="font-display font-medium text-base text-pinkteam-charcoal mb-3 tabular-nums">
-          คณะกรรมการบริหารคณะสีส่วนกลาง ({centralMembers.length} / {CENTRAL_POSITIONS.length})
+          คณะกรรมการบริหารส่วนกลาง ({centralMembers.length} / {CENTRAL_POSITIONS.length})
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {CENTRAL_POSITIONS.map((pos) => {
@@ -91,18 +78,19 @@ export function DepartmentsBrowser({
                 <div className="min-w-0">
                   <div className="text-xs font-medium text-pinkteam-magenta">{pos}</div>
                   <div className="text-sm font-medium text-pinkteam-charcoal truncate mt-0.5">
-                    {holder ? `${holder.fullName} (${holder.nickname})` : 'ว่าง'}
+                    {holder
+                      ? `${holder.fullName}${holder.nickname ? ` (${holder.nickname})` : ''}`
+                      : 'ว่าง'}
                   </div>
                 </div>
                 {holder && (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-pinkteam-secondary shrink-0">
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        holder.checkedIn ? 'bg-emerald-600' : 'bg-pinkteam-muted/50'
-                      }`}
-                    />
-                    {holder.checkedIn ? 'มาแล้ว' : 'ยังไม่มา'}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setQrStudent(holder)}
+                    className="shrink-0 px-2.5 py-1 rounded-md bg-white border border-black/10 text-xs font-medium text-pinkteam-charcoal hover:border-pinkteam-magenta/40 cursor-pointer"
+                  >
+                    QR
+                  </button>
                 )}
               </div>
             );
@@ -110,184 +98,341 @@ export function DepartmentsBrowser({
         </div>
       </div>
 
-      {/* 8 Department Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {departments.map((dept) => {
-          const allInDept = students.filter((s) => s.departmentName === dept.name);
-          const pres = allInDept.filter((s) => s.checkedIn).length;
-          const active = dept.name === selectedDeptName;
+      {/* 8 Legacy Expandable Department Accordions */}
+      <div className="space-y-3">
+        {departments.map((dept, deptIndex) => {
+          const isOpen = openDeptName === dept.name;
+          const noStaff = NO_STAFF_DEPARTMENTS.includes(dept.name) || dept.noStaff;
+          const allMembers = students.filter((s) => s.departmentName === dept.name);
+          const filteredMembers = query
+            ? allMembers.filter(
+                (m) =>
+                  m.fullName.toLowerCase().includes(query) ||
+                  m.nickname.toLowerCase().includes(query) ||
+                  m.classRoom.toLowerCase().includes(query) ||
+                  m.position.toLowerCase().includes(query)
+              )
+            : allMembers;
+
           return (
-            <button
-              key={dept.id}
-              type="button"
-              onClick={() => setSelectedDeptName(dept.name)}
-              className={`text-left rounded-xl p-4 transition-colors duration-150 border cursor-pointer ${
-                active
-                  ? 'bg-pinkteam-charcoal text-white border-pinkteam-charcoal'
-                  : 'editorial-panel hover:bg-pinkteam-blush/50'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  className={`font-display font-medium text-sm sm:text-base ${
-                    active ? 'text-white' : 'text-pinkteam-charcoal'
-                  }`}
-                >
-                  {dept.name}
-                </span>
-                {dept.isClosed && (
-                  <span
-                    className={`text-xs font-medium ${
-                      active ? 'text-pinkteam-light' : 'text-pinkteam-muted'
-                    }`}
-                  >
-                    ปิดรับ
-                  </span>
-                )}
-              </div>
-              <div
-                className={`mt-2 text-xs tabular-nums ${
-                  active ? 'text-white/80' : 'text-pinkteam-secondary'
-                }`}
+            <div key={dept.id} className="editorial-panel rounded-2xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setOpenDeptName(isOpen ? null : dept.name)}
+                aria-expanded={isOpen}
+                className="w-full px-5 py-4 flex items-center justify-between gap-3 text-left hover:bg-pinkteam-blush/35 transition-colors duration-150 cursor-pointer"
               >
-                ทั้งหมด {allInDept.length} คน · มา {pres}
-                {typeof dept.maxCapacity === 'number' ? ` · โควตา ${dept.maxCapacity}` : ''}
-              </div>
-            </button>
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <span className="w-8 h-8 rounded-lg editorial-raised flex items-center justify-center font-mono text-xs font-semibold text-pinkteam-magenta shrink-0 tabular-nums">
+                    {String(deptIndex + 1).padStart(2, '0')}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="font-display font-semibold text-base text-pinkteam-charcoal truncate">
+                      {dept.name}
+                    </div>
+                    <div className="text-xs text-pinkteam-secondary mt-0.5">
+                      {dept.hasSports ? (
+                        <>
+                          ประธานฝ่าย · สตาฟ · นักกีฬา{' '}
+                          <span className="text-amber-700 font-medium">
+                            ({dept.closedNote || 'รอผลคัดตัว'})
+                          </span>
+                        </>
+                      ) : noStaff ? (
+                        'ประธานฝ่าย · สมาชิก'
+                      ) : (
+                        'ประธานฝ่าย · สตาฟ · สมาชิก'
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <span className="px-2.5 py-1 rounded-full bg-pinkteam-blush text-pinkteam-magenta text-xs font-semibold tabular-nums">
+                    {allMembers.length} คน
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-pinkteam-muted transition-transform duration-200 ${
+                      isOpen ? 'rotate-180' : ''
+                    }`}
+                    strokeWidth={1.5}
+                  />
+                </div>
+              </button>
+
+              {isOpen && (
+                <div className="px-5 pb-5 pt-2 border-t border-black/5 space-y-4">
+                  {dept.hasSports ? (
+                    <SportsDeptDetail members={filteredMembers} onSelectQr={setQrStudent} />
+                  ) : dept.isStand ? (
+                    <StandDeptDetail members={filteredMembers} onSelectQr={setQrStudent} />
+                  ) : (
+                    <GeneralDeptDetail
+                      dept={dept}
+                      members={filteredMembers}
+                      noStaff={noStaff}
+                      onSelectQr={setQrStudent}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
-
-      {/* Selected Department Detail */}
-      {selectedDept && (
-        <div className="editorial-panel rounded-2xl p-5 sm:p-6 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display font-semibold text-xl text-pinkteam-charcoal">
-                {selectedDept.name}
-              </h2>
-              <p className="text-xs sm:text-sm text-pinkteam-secondary tabular-nums mt-0.5">
-                ทั้งหมด {scopeDeptMembers.length} คน · มาแล้ว {presentCount} · ยังไม่มา {pendingCount} ·{' '}
-                <strong className="font-semibold text-pinkteam-magenta">{rate}%</strong>
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              <div className="flex gap-1">
-                {(
-                  [
-                    { id: 'ALL', label: 'ทั้งหมด' },
-                    { id: 'PRESENT', label: 'มาแล้ว' },
-                    { id: 'PENDING', label: 'ยังไม่มา' },
-                  ] as const
-                ).map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setStatusFilter(opt.id)}
-                    className={`min-h-[36px] px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer ${
-                      statusFilter === opt.id
-                        ? 'bg-pinkteam-charcoal text-white'
-                        : 'editorial-raised text-pinkteam-charcoal hover:bg-black/5'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <div className="relative flex-1 sm:w-56">
-                <Search
-                  className="w-4 h-4 text-pinkteam-muted absolute left-3 top-1/2 -translate-y-1/2"
-                  strokeWidth={1.5}
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ค้นหาชื่อ, รหัส หรือห้อง"
-                  className="w-full min-h-[40px] pl-9 pr-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
-                />
-              </div>
-            </div>
-          </div>
-
-          {selectedDept.hasSports ? (
-            <div className="space-y-3">
-              {SPORT_TYPES.map((sport) => {
-                const inSport = deptMembers.filter((m) => m.sportType === sport);
-                if (inSport.length === 0 && searchQuery.trim()) return null;
-                return (
-                  <div key={sport} className="rounded-xl editorial-raised p-4">
-                    <div className="font-display font-medium text-sm text-pinkteam-charcoal mb-2 tabular-nums">
-                      {sport} ({inSport.length} คน)
-                    </div>
-                    {inSport.length === 0 ? (
-                      <div className="text-xs text-pinkteam-muted">ยังไม่มีสมาชิก</div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {inSport.map((m) => (
-                          <MemberRow key={m.id} member={m} onOpenQr={setQrStudent} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : deptMembers.length === 0 ? (
-            <EmptyState
-              title="ไม่พบสมาชิกในฝ่ายนี้"
-              description="ยังไม่มีผู้ลงทะเบียนหรือตรงกับคำค้นหา"
-            />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {deptMembers.map((m) => (
-                <MemberRow key={m.id} member={m} onOpenQr={setQrStudent} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       <QrPassModal student={qrStudent} onClose={() => setQrStudent(null)} />
     </div>
   );
 }
 
-function MemberRow({
+function StudentNameChip({
   member,
-  onOpenQr,
+  suffix,
+  highlight = false,
+  onSelect,
 }: {
   member: StudentWithCheckIn;
-  onOpenQr: (s: StudentRecord) => void;
+  suffix?: string;
+  highlight?: boolean;
+  onSelect: (s: StudentRecord) => void;
 }) {
   return (
-    <div className="rounded-xl border border-black/10 bg-white p-3.5 flex items-center justify-between gap-2">
-      <div className="min-w-0">
-        <div className="font-display font-medium text-sm text-pinkteam-charcoal truncate">
-          {member.fullName} {member.nickname ? `(${member.nickname})` : ''}
-        </div>
-        <div className="text-xs text-pinkteam-secondary tabular-nums mt-0.5">
-          ห้อง {member.classRoom} · เลขที่ {member.numberLabel}
-          {member.studentCode ? ` · รหัส ${member.studentCode}` : ''} · {member.position}
+    <button
+      type="button"
+      onClick={() => onSelect(member)}
+      title={`กดเพื่อดูบัตร QR ของ ${member.fullName}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+        highlight
+          ? 'bg-pinkteam-blush/80 border-pinkteam-magenta/25 text-pinkteam-magenta hover:bg-pinkteam-blush'
+          : 'bg-white border-black/10 text-pinkteam-charcoal hover:border-pinkteam-magenta/35'
+      }`}
+    >
+      <span>
+        {member.fullName}
+        {member.nickname ? ` (${member.nickname})` : ''}
+        {suffix ? ` · ${suffix}` : ''}
+      </span>
+    </button>
+  );
+}
+
+function GeneralDeptDetail({
+  dept,
+  members,
+  noStaff,
+  onSelectQr,
+}: {
+  dept: DepartmentRecord;
+  members: StudentWithCheckIn[];
+  noStaff: boolean;
+  onSelectQr: (s: StudentRecord) => void;
+}) {
+  const president = members.find((m) => m.position === 'ประธานฝ่าย');
+  const deputy = dept.deputyLabel ? members.find((m) => m.position === dept.deputyLabel) : null;
+  const staff = members.filter((m) => m.position === 'สตาฟฝ่าย');
+  const regular = members.filter(
+    (m) =>
+      m.position !== 'ประธานฝ่าย' &&
+      m.position !== dept.deputyLabel &&
+      m.position !== 'สตาฟฝ่าย'
+  );
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-xs font-semibold text-pinkteam-secondary mb-1.5">ประธานฝ่าย</h3>
+        <div className="flex flex-wrap gap-2">
+          {president ? (
+            <StudentNameChip member={president} highlight onSelect={onSelectQr} />
+          ) : (
+            <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
+              ยังไม่มีผู้ดำรงตำแหน่ง
+            </span>
+          )}
         </div>
       </div>
-      <div className="flex items-center gap-2.5 shrink-0">
-        <span className="inline-flex items-center gap-1.5 text-xs text-pinkteam-secondary">
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              member.checkedIn ? 'bg-emerald-600' : 'bg-pinkteam-muted/50'
-            }`}
-          />
-          {member.checkedIn ? 'มาแล้ว' : 'ยังไม่มา'}
-        </span>
-        <button
-          type="button"
-          onClick={() => onOpenQr(member)}
-          aria-label={`ดู QR ${member.fullName}`}
-          className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg editorial-raised hover:bg-black/5 cursor-pointer"
-        >
-          <QrCode className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
-        </button>
+
+      {dept.deputyLabel && (
+        <div>
+          <h3 className="text-xs font-semibold text-pinkteam-secondary mb-1.5">
+            {dept.deputyLabel}
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {deputy ? (
+              <StudentNameChip member={deputy} highlight onSelect={onSelectQr} />
+            ) : (
+              <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
+                ยังไม่มีผู้ดำรงตำแหน่ง
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!noStaff && (
+        <div>
+          <h3 className="text-xs font-semibold text-pinkteam-secondary mb-1.5 tabular-nums">
+            สตาฟฝ่าย ({staff.length} คน)
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {staff.length > 0 ? (
+              staff.map((m) => (
+                <StudentNameChip key={m.id} member={m} suffix={m.classRoom} onSelect={onSelectQr} />
+              ))
+            ) : (
+              <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
+                ยังไม่มีข้อมูล
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <h3 className="text-xs font-semibold text-pinkteam-secondary mb-1.5 tabular-nums">
+          สมาชิกฝ่าย ({regular.length} คน)
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {regular.length > 0 ? (
+            regular.map((m) => (
+              <StudentNameChip key={m.id} member={m} suffix={m.classRoom} onSelect={onSelectQr} />
+            ))
+          ) : (
+            <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
+              ยังไม่มีข้อมูล
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StandDeptDetail({
+  members,
+  onSelectQr,
+}: {
+  members: StudentWithCheckIn[];
+  onSelectQr: (s: StudentRecord) => void;
+}) {
+  const mentors = members.filter((m) => !m.autoAssigned && !m.classRoom.startsWith('ม.1'));
+  const m1Students = members.filter((m) => m.autoAssigned || m.classRoom.startsWith('ม.1'));
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-xs font-semibold text-pinkteam-secondary mb-1.5 tabular-nums">
+          สตาฟพี่เลี้ยง (ประธาน / สตาฟฝ่าย) ({mentors.length} คน)
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {mentors.length > 0 ? (
+            mentors.map((m) => (
+              <StudentNameChip
+                key={m.id}
+                member={m}
+                suffix={`${m.classRoom} · ${m.position}`}
+                highlight={m.position === 'ประธานฝ่าย'}
+                onSelect={onSelectQr}
+              />
+            ))
+          ) : (
+            <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
+              ยังไม่มีข้อมูล
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-xs font-semibold text-pinkteam-secondary mb-1.5 tabular-nums">
+          น้อง ม.1 ({m1Students.length} คน)
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {m1Students.length > 0 ? (
+            m1Students.map((m) => (
+              <StudentNameChip key={m.id} member={m} suffix={m.classRoom} onSelect={onSelectQr} />
+            ))
+          ) : (
+            <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
+              ยังไม่มีข้อมูล
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SportsDeptDetail({
+  members,
+  onSelectQr,
+}: {
+  members: StudentWithCheckIn[];
+  onSelectQr: (s: StudentRecord) => void;
+}) {
+  const president = members.find((m) => m.position === 'ประธานฝ่าย');
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-xs font-semibold text-pinkteam-secondary mb-1.5">
+          ประธานฝ่ายกีฬา (ภาพรวม)
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {president ? (
+            <StudentNameChip member={president} highlight onSelect={onSelectQr} />
+          ) : (
+            <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
+              ยังไม่มีผู้ดำรงตำแหน่ง
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        {SPORT_TYPES.map((sport) => {
+          const captain = members.find(
+            (m) => m.sportType === sport && m.position === 'หัวหน้ากีฬา'
+          );
+          const staff = members.filter((m) => m.sportType === sport && m.position === 'สตาฟกีฬา');
+          const athletes = members.filter(
+            (m) =>
+              m.sportType === sport &&
+              m.position !== 'หัวหน้ากีฬา' &&
+              m.position !== 'สตาฟกีฬา'
+          );
+          return (
+            <div key={sport} className="rounded-xl editorial-raised p-3.5 space-y-2">
+              <div className="font-display font-medium text-sm text-pinkteam-charcoal">{sport}</div>
+              <div className="flex flex-wrap gap-1.5">
+                {captain ? (
+                  <StudentNameChip
+                    member={captain}
+                    suffix="หัวหน้า"
+                    highlight
+                    onSelect={onSelectQr}
+                  />
+                ) : (
+                  <span className="px-2.5 py-1 rounded-md bg-white border border-black/10 text-xs text-pinkteam-muted">
+                    หัวหน้า: ว่าง
+                  </span>
+                )}
+                {staff.map((m) => (
+                  <StudentNameChip key={m.id} member={m} suffix="สตาฟ" onSelect={onSelectQr} />
+                ))}
+                {athletes.map((m) => (
+                  <StudentNameChip
+                    key={m.id}
+                    member={m}
+                    suffix="นักกีฬา"
+                    onSelect={onSelectQr}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
