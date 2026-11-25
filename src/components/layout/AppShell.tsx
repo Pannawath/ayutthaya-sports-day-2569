@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -40,8 +40,46 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile);
+  const [optimisticSlot, setOptimisticSlot] = useState<number | null>(null);
+
+  useEffect(() => {
+    setOptimisticSlot(null);
+  }, [pathname]);
 
   const isHome = pathname === '/';
+  const routeSlot = pathname.startsWith('/register')
+    ? 0
+    : pathname.startsWith('/classrooms') || pathname.startsWith('/departments')
+      ? 2
+      : 1;
+  const activeSlot = optimisticSlot ?? routeSlot;
+
+  const mobileBottomTabs = [
+    {
+      slot: 0,
+      href: '/register',
+      label: 'ลงทะเบียน',
+      icon: '/images/figma/icon-register.png',
+      iconClass: 'w-8 h-9',
+      hoverRotate: 'group-hover:-rotate-3',
+    },
+    {
+      slot: 1,
+      href: '/',
+      label: 'หน้าหลัก',
+      icon: '/images/figma/icon-home.png',
+      iconClass: 'w-10 h-10',
+      hoverRotate: '',
+    },
+    {
+      slot: 2,
+      href: '/classrooms',
+      label: 'รายชื่อ',
+      icon: '/images/figma/icon-directory.png',
+      iconClass: 'w-9 h-9',
+      hoverRotate: 'group-hover:rotate-3',
+    },
+  ];
 
   async function handleLogout() {
     if (isBrowserSupabaseConfigured()) {
@@ -295,69 +333,53 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
             className="absolute -bottom-6 -left-[7%] w-[114%] max-w-none h-[116px] object-cover object-top pointer-events-none drop-shadow-[0_-4px_10px_rgba(31,18,22,0.45)]"
           />
 
-          <div className="relative z-10 h-full grid grid-cols-3 items-end px-4 pb-2.5">
-            {/* Left: ลงทะเบียน */}
-            <Link
-              href="/register"
-              className={`group btn-animated flex flex-col items-center justify-end gap-1 pb-1 rounded-xl transition-all duration-200 ease-out hover:-translate-y-1 active:scale-95 cursor-pointer ${
-                pathname === '/register' ? 'opacity-100' : 'opacity-90 hover:opacity-100'
-              }`}
-            >
-              <img
-                src="/images/figma/icon-register.png"
-                alt="ลงทะเบียน"
-                className="w-8 h-9 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.4)] transition-transform duration-200 ease-out group-hover:scale-110 group-hover:-rotate-3 group-active:scale-95"
-              />
-              <span className="font-display font-bold text-sm text-white figma-text-shadow">
-                ลงทะเบียน
-              </span>
-            </Link>
-
-            {/* Center: Elevated Glowing Pink หน้าหลัก */}
-            <Link
-              href="/"
-              className="group btn-animated relative flex flex-col items-center justify-end pb-1 rounded-2xl transition-all duration-200 ease-out hover:-translate-y-1 active:scale-95 cursor-pointer"
-            >
+          <div className="relative z-10 h-full px-4 pb-2.5">
+            <div className="relative h-full w-full grid grid-cols-3 items-end">
+              {/* Sliding Glowing Pink Active Frame */}
               <div
-                className={`relative w-[108px] h-[94px] rounded-t-[26px] rounded-b-[16px] flex flex-col items-center justify-center gap-1 overflow-hidden shadow-[0_-4px_14px_rgba(255,175,202,0.38)] transition-all duration-200 group-hover:shadow-[0_-6px_22px_rgba(255,175,202,0.62)] ${
-                  isHome ? 'ring-2 ring-white/80' : 'opacity-95 group-hover:opacity-100'
-                }`}
+                aria-hidden="true"
+                data-testid="mobile-nav-active-pill"
+                className="pointer-events-none absolute inset-y-0 left-0 w-1/3 flex items-end justify-center pb-1 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+                style={{ transform: `translate3d(${activeSlot * 100}%, 0, 0)` }}
               >
-                <img
-                  src="/images/figma/home-pill-glow.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <img
-                  src="/images/figma/icon-home.png"
-                  alt="หน้าหลัก"
-                  className="relative z-10 w-10 h-10 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.3)] transition-transform duration-200 ease-out group-hover:scale-110 group-active:scale-95"
-                />
-                <span className="relative z-10 font-display font-bold text-sm text-white figma-text-shadow">
-                  หน้าหลัก
-                </span>
+                <div className="relative w-[108px] max-w-[96%] h-[94px] rounded-t-[26px] rounded-b-[16px] overflow-hidden shadow-[0_-4px_16px_rgba(255,175,202,0.45)] ring-2 ring-white/80 transition-shadow duration-300">
+                  <img
+                    src="/images/figma/home-pill-glow.png"
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
               </div>
-            </Link>
 
-            {/* Right: รายชื่อ */}
-            <Link
-              href="/classrooms"
-              className={`group btn-animated flex flex-col items-center justify-end gap-1 pb-1 rounded-xl transition-all duration-200 ease-out hover:-translate-y-1 active:scale-95 cursor-pointer ${
-                pathname === '/classrooms' || pathname === '/departments'
-                  ? 'opacity-100'
-                  : 'opacity-90 hover:opacity-100'
-              }`}
-            >
-              <img
-                src="/images/figma/icon-directory.png"
-                alt="รายชื่อ"
-                className="w-9 h-9 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.4)] transition-transform duration-200 ease-out group-hover:scale-110 group-hover:rotate-3 group-active:scale-95"
-              />
-              <span className="font-display font-bold text-sm text-white figma-text-shadow">
-                รายชื่อ
-              </span>
-            </Link>
+              {mobileBottomTabs.map((tab) => {
+                const isActive = activeSlot === tab.slot;
+                return (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
+                    onClick={() => setOptimisticSlot(tab.slot)}
+                    className="group relative z-10 h-[94px] mb-1 flex flex-col items-center justify-center gap-1.5 rounded-2xl cursor-pointer select-none"
+                  >
+                    <img
+                      src={tab.icon}
+                      alt={tab.label}
+                      className={`${tab.iconClass} object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.4)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                        isActive
+                          ? '-translate-y-1 scale-105 opacity-100'
+                          : 'opacity-85 group-hover:opacity-100 group-hover:scale-110'
+                      } ${tab.hoverRotate} group-active:scale-95`}
+                    />
+                    <span
+                      className={`font-display font-bold text-sm text-white figma-text-shadow transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                        isActive ? '-translate-y-0.5 opacity-100' : 'opacity-85 group-hover:opacity-100'
+                      }`}
+                    >
+                      {tab.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
       </nav>
