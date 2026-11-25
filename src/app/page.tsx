@@ -81,7 +81,7 @@ export default async function HomePage() {
                   src="/images/figma/torn-stone.png"
                   alt=""
                   aria-hidden="true"
-                  className="absolute -top-24 sm:-top-28 left-0 w-full h-[180px] object-cover object-bottom drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)]"
+                  className="absolute bottom-[calc(100%-122px)] -left-[17.73%] w-[137.5%] max-w-none h-auto pointer-events-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)]"
                 />
 
                 {/* White Calligraphic "คณะ อยุธยา" Script */}
@@ -303,12 +303,12 @@ function JerseyCardInner() {
         alt="เสื้อคณะสีชมพู อยุธยา 2569"
         className="w-full h-[84%] object-cover object-top drop-shadow-[8px_14px_10px_rgba(0,0,0,0.3)] transition-transform duration-300 ease-out group-hover:scale-[1.03]"
       />
-      <div className="absolute inset-x-0 bottom-0 h-[114px] flex items-end px-7 pb-5">
+      <div className="absolute inset-x-0 bottom-0 h-[103px] flex items-end px-7 pb-5">
         <img
           src="/images/figma/torn-menu-paper.png"
           alt=""
           aria-hidden="true"
-          className="absolute -bottom-1 left-0 w-full h-[120px] object-fill pointer-events-none"
+          className="absolute top-0 -left-[4.74%] w-[117.98%] max-w-none h-auto pointer-events-none"
         />
         <div className="relative z-10 w-full flex items-center justify-between gap-3">
           <span className="font-display font-bold text-4xl sm:text-[42px] leading-none text-white figma-text-shadow">

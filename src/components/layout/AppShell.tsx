@@ -101,7 +101,7 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
             src="/images/figma/torn-menu-paper.png"
             alt=""
             aria-hidden="true"
-            className="absolute top-0 left-0 w-full h-[80px] object-fill pointer-events-none drop-shadow-[0_4px_10px_rgba(31,18,22,0.35)]"
+            className="absolute bottom-[-14px] -left-[8.18%] w-[116.36%] max-w-none h-auto pointer-events-none drop-shadow-[0_4px_10px_rgba(31,18,22,0.35)]"
           />
           <div className="relative z-10 max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
             <Link
@@ -226,7 +226,7 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
               src="/images/figma/torn-menu-paper.png"
               alt=""
               aria-hidden="true"
-              className="absolute -top-2 left-0 w-full h-24 object-fill opacity-80 pointer-events-none"
+              className="absolute bottom-[calc(100%-76px)] -left-[8.18%] w-[116.36%] max-w-none h-auto opacity-80 pointer-events-none"
             />
             <div className="relative z-10">
               <div className="flex items-center justify-between pb-4 border-b border-white/10">
@@ -322,15 +322,15 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
       {/* Figma Mobile 3-Slot Bottom Navigation (440x956 reference) */}
       <nav
         aria-label="แถบนำทางหลักมือถือ"
-        className="no-print lg:hidden fixed bottom-0 inset-x-0 z-40 h-[108px] pointer-events-none"
+        className="no-print lg:hidden fixed bottom-0 inset-x-0 z-40 h-[124px] pointer-events-none overflow-x-clip"
       >
         <div className="relative h-full w-full pointer-events-auto">
-          {/* True jagged torn-paper menu base matching Figma (full left/right/top torn edges visible) */}
+          {/* Exact Figma torn-paper menu base at 1:1 aspect ratio (-36/440, 512/440) */}
           <img
             src="/images/figma/torn-menu-paper.png"
             alt=""
             aria-hidden="true"
-            className="absolute -bottom-1 left-0 right-0 w-full h-[116px] object-fill pointer-events-none drop-shadow-[0_-4px_10px_rgba(31,18,22,0.45)]"
+            className="absolute top-0 -left-[8.18%] w-[116.36%] max-w-none h-auto pointer-events-none drop-shadow-[0_-4px_10px_rgba(31,18,22,0.45)]"
           />
 
           <div className="relative z-10 h-full w-full max-w-[480px] mx-auto px-5 pb-2.5">
