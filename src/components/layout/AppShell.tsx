@@ -101,7 +101,7 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
             src="/images/figma/torn-menu-paper.png"
             alt=""
             aria-hidden="true"
-            className="absolute -top-2 -left-[4%] w-[108%] max-w-none h-[84px] object-fill pointer-events-none drop-shadow-[0_4px_10px_rgba(31,18,22,0.35)]"
+            className="absolute top-0 left-0 w-full h-[80px] object-fill pointer-events-none drop-shadow-[0_4px_10px_rgba(31,18,22,0.35)]"
           />
           <div className="relative z-10 max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
             <Link
@@ -226,7 +226,7 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
               src="/images/figma/torn-menu-paper.png"
               alt=""
               aria-hidden="true"
-              className="absolute -top-6 -left-[6%] w-[112%] max-w-none h-24 object-cover object-bottom opacity-80 pointer-events-none"
+              className="absolute -top-2 left-0 w-full h-24 object-fill opacity-80 pointer-events-none"
             />
             <div className="relative z-10">
               <div className="flex items-center justify-between pb-4 border-b border-white/10">
@@ -322,18 +322,18 @@ export function AppShell({ initialProfile, children }: AppShellProps) {
       {/* Figma Mobile 3-Slot Bottom Navigation (440x956 reference) */}
       <nav
         aria-label="แถบนำทางหลักมือถือ"
-        className="no-print lg:hidden fixed bottom-0 inset-x-0 z-40 h-[108px] pointer-events-none overflow-x-clip"
+        className="no-print lg:hidden fixed bottom-0 inset-x-0 z-40 h-[108px] pointer-events-none"
       >
-        <div className="relative h-full w-full max-w-[480px] mx-auto pointer-events-auto overflow-x-clip">
-          {/* True jagged torn-paper menu base matching Figma */}
+        <div className="relative h-full w-full pointer-events-auto">
+          {/* True jagged torn-paper menu base matching Figma (full left/right/top torn edges visible) */}
           <img
             src="/images/figma/torn-menu-paper.png"
             alt=""
             aria-hidden="true"
-            className="absolute -bottom-6 -left-[7%] w-[114%] max-w-none h-[116px] object-cover object-top pointer-events-none drop-shadow-[0_-4px_10px_rgba(31,18,22,0.45)]"
+            className="absolute -bottom-1 left-0 right-0 w-full h-[116px] object-fill pointer-events-none drop-shadow-[0_-4px_10px_rgba(31,18,22,0.45)]"
           />
 
-          <div className="relative z-10 h-full px-4 pb-2.5">
+          <div className="relative z-10 h-full w-full max-w-[480px] mx-auto px-5 pb-2.5">
             <div className="relative h-full w-full grid grid-cols-3 items-end">
               {/* Sliding Glowing Pink Active Frame */}
               <div

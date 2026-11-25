@@ -81,7 +81,7 @@ export default async function HomePage() {
                   src="/images/figma/torn-stone.png"
                   alt=""
                   aria-hidden="true"
-                  className="absolute -top-24 sm:-top-28 inset-x-0 w-[115%] -left-[7%] max-w-none h-[180px] object-cover object-bottom drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)]"
+                  className="absolute -top-24 sm:-top-28 left-0 w-full h-[180px] object-cover object-bottom drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)]"
                 />
 
                 {/* White Calligraphic "คณะ อยุธยา" Script */}
@@ -308,7 +308,7 @@ function JerseyCardInner() {
           src="/images/figma/torn-menu-paper.png"
           alt=""
           aria-hidden="true"
-          className="absolute -bottom-4 -left-[6%] w-[112%] max-w-none h-[126px] object-cover object-top pointer-events-none"
+          className="absolute -bottom-1 left-0 w-full h-[120px] object-fill pointer-events-none"
         />
         <div className="relative z-10 w-full flex items-center justify-between gap-3">
           <span className="font-display font-bold text-4xl sm:text-[42px] leading-none text-white figma-text-shadow">
