@@ -93,12 +93,12 @@ export function UnifiedHomeWorkspace({
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
-                  className="absolute bottom-[calc(100%-86px)] min-[390px]:bottom-[calc(100%-98px)] sm:bottom-[calc(100%-122px)] -left-[17.73%] w-[137.5%] max-w-none h-auto pointer-events-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)]"
+                  className="absolute bottom-[calc(100%-44px)] min-[390px]:bottom-[calc(100%-50px)] sm:bottom-[calc(100%-64px)] lg:bottom-[calc(100%-122px)] -left-[17.73%] w-[137.5%] max-w-none h-auto pointer-events-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)]"
                 />
               </div>
 
               {/* White Calligraphic "คณะ อยุธยา" Script positioned below student faces */}
-              <div className="absolute -right-6 min-[390px]:-right-8 sm:-right-6 -bottom-8 min-[390px]:-bottom-10 sm:-bottom-12 lg:-bottom-16 z-30 pointer-events-none">
+              <div className="absolute -right-6 min-[390px]:-right-8 sm:-right-6 -bottom-14 min-[390px]:-bottom-16 sm:-bottom-20 lg:-bottom-16 z-30 pointer-events-none">
                 <img
                   src="/images/figma/calligraphy-ayutthaya.webp"
                   alt="คณะ อยุธยา"
