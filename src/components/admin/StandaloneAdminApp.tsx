@@ -3,11 +3,14 @@
 import React, { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
+  ArrowRight,
+  Building2,
   CheckCircle2,
   ClipboardCheck,
   CopyCheck,
   Download,
   Edit3,
+  ExternalLink,
   Home,
   LayoutGrid,
   LogOut,
@@ -16,6 +19,7 @@ import {
   RefreshCw,
   Search,
   Shield,
+  Shirt,
   Sliders,
   Trash2,
   Users,
@@ -37,8 +41,8 @@ import type {
 
 type AdminTab =
   | 'overview'
-  | 'checkin'
   | 'directory'
+  | 'checkin'
   | 'duplicates'
   | 'quotas'
   | 'policies';
@@ -54,6 +58,20 @@ interface StandaloneAdminAppProps {
   initialDuplicateGroups?: Record<string, LiveDuplicateEntry[]>;
   initialAuditLogs?: AuditLogRecord[];
   currentPin?: string;
+}
+
+const TAB_TITLES: Record<AdminTab, string> = {
+  overview: 'ภาพรวมสรุปผล',
+  directory: 'จัดการรายชื่อ',
+  checkin: 'เช็คชื่อวันงาน',
+  duplicates: 'คัดกรองซ้ำ',
+  quotas: 'โควตาฝ่ายงาน',
+  policies: 'ตั้งค่า & Excel',
+};
+
+function getInitialChar(name: string): string {
+  const clean = name.replace(/^(นาย|นางสาว|น\.ส\.|นาง|เด็กชาย|เด็กหญิง|ด\.ช\.|ด\.ญ\.)\s*/u, '').trim();
+  return (clean.charAt(0) || name.charAt(0) || 'ส').toUpperCase();
 }
 
 export function StandaloneAdminApp({
@@ -100,6 +118,7 @@ export function StandaloneAdminApp({
 
   // Directory filters & modals
   const [studentSearch, setStudentSearch] = useState('');
+  const [gradeFilter, setGradeFilter] = useState('ALL');
   const [roomFilter, setRoomFilter] = useState('ALL');
   const [deptFilter, setDeptFilter] = useState('ALL');
   const [editingStudent, setEditingStudent] = useState<StudentWithCheckIn | null>(null);
@@ -121,7 +140,7 @@ export function StandaloneAdminApp({
   const [sessionTitle, setSessionTitle] = useState('');
   const [sessionDate, setSessionDate] = useState(new Date().toISOString().slice(0, 10));
 
-  // Change PIN modal/input
+  // Change PIN input
   const [newPinInput, setNewPinInput] = useState('');
 
   async function submitPin(pinStr: string) {
@@ -224,9 +243,16 @@ export function StandaloneAdminApp({
 
   const dupeEntries = useMemo(() => Object.entries(duplicateGroups), [duplicateGroups]);
 
+  const availableRooms = useMemo(() => {
+    if (gradeFilter === 'ALL') return ALL_ROOMS;
+    const found = GRADES.find((g) => g.grade === gradeFilter);
+    return found ? found.rooms : ALL_ROOMS;
+  }, [gradeFilter]);
+
   const filteredStudents = useMemo(() => {
     const q = studentSearch.trim().toLowerCase();
     return students.filter((s) => {
+      if (gradeFilter !== 'ALL' && s.grade !== gradeFilter) return false;
       if (roomFilter !== 'ALL' && s.classRoom !== roomFilter) return false;
       if (deptFilter === 'CENTRAL' && s.roleCategory !== 'central') return false;
       if (deptFilter !== 'ALL' && deptFilter !== 'CENTRAL' && s.departmentName !== deptFilter) {
@@ -244,7 +270,7 @@ export function StandaloneAdminApp({
         (s.sportType || '').toLowerCase().includes(q)
       );
     });
-  }, [students, studentSearch, roomFilter, deptFilter]);
+  }, [students, studentSearch, gradeFilter, roomFilter, deptFilter]);
 
   const gradeCounts = useMemo(() => {
     const map: Record<string, number> = {};
@@ -286,7 +312,7 @@ export function StandaloneAdminApp({
     }
     setShowAddModal(false);
     setNewStudent({ ...newStudent, studentCode: '', fullName: '', nickname: '' });
-    setFeedback({ type: 'success', message: 'เพิ่มนักเรียนเรียบร้อยแล้ว' });
+    setFeedback({ type: 'success', message: 'เพิ่มรายชื่อนักเรียนเรียบร้อยแล้ว' });
     await reloadAll();
   }
 
@@ -423,20 +449,27 @@ export function StandaloneAdminApp({
     await reloadAll();
   }
 
-  // ===================== STANDALONE PIN GATE SCREEN =====================
+  function jumpToDirectory(opts: { grade?: string; dept?: string }) {
+    setGradeFilter(opts.grade ?? 'ALL');
+    setRoomFilter('ALL');
+    setDeptFilter(opts.dept ?? 'ALL');
+    setTab('directory');
+  }
+
+  // ===================== STANDALONE MINIMAL PIN GATE =====================
   if (!initialAuthenticated) {
     return (
-      <div className="min-h-dvh bg-[#F8FAFC] text-[#0F172A] flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-white border border-[#CBD5E1] rounded-xl p-7 text-center shadow-sm space-y-5">
-          <div className="w-12 h-12 rounded-xl bg-[#BE185D] text-white font-display font-bold text-lg flex items-center justify-center mx-auto">
+      <div className="min-h-dvh bg-[#FAFAFB] text-zinc-900 flex items-center justify-center p-5">
+        <div className="w-full max-w-sm bg-white border border-zinc-200/80 rounded-2xl p-8 text-center shadow-[0_12px_36px_rgba(0,0,0,0.05)] space-y-6">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-600 font-display font-bold text-base flex items-center justify-center mx-auto">
             PK
           </div>
-          <div>
-            <h1 className="font-display font-bold text-lg text-[#0F172A]">
-              เข้าสู่ระบบ Admin อยุธยาสีชมพู
+          <div className="space-y-1">
+            <h1 className="font-display font-semibold text-lg text-zinc-900">
+              Admin Studio · อยุธยาสีชมพู
             </h1>
-            <p className="text-xs text-[#64748B] mt-1">
-              ใส่รหัส PIN 4 หลักเพื่อเข้าสู่ศูนย์ควบคุมผู้ดูแลระบบ
+            <p className="text-xs text-zinc-500">
+              กรอกรหัส PIN 4 หลักเพื่อเข้าสู่ศูนย์จัดการคณะสี
             </p>
           </div>
 
@@ -455,833 +488,1127 @@ export function StandaloneAdminApp({
                 onChange={(e) => handlePinChange(idx, e.target.value)}
                 onKeyDown={(e) => handlePinKeyDown(idx, e)}
                 aria-label={`รหัส PIN หลักที่ ${idx + 1}`}
-                className="w-12 h-14 text-center text-xl font-bold border-2 border-[#CBD5E1] focus:border-[#BE185D] rounded-lg bg-white text-[#0F172A] outline-none"
+                className="w-12 h-14 text-center text-xl font-semibold border border-zinc-200 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl bg-white text-zinc-900 outline-none transition-all"
               />
             ))}
           </div>
 
-          <button
-            type="button"
-            disabled={pinBusy}
-            onClick={() => submitPin('2569')}
-            className="w-full min-h-[38px] rounded-lg bg-[#F1F5F9] hover:bg-[#E2E8F0] text-xs font-medium text-[#334155] cursor-pointer"
-          >
-            กรอก PIN ทดสอบ (2569)
-          </button>
+          <div className="space-y-2.5">
+            <button
+              type="button"
+              disabled={pinBusy}
+              onClick={() => submitPin('2569')}
+              className="w-full min-h-[42px] rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white transition-colors cursor-pointer disabled:opacity-60"
+            >
+              เข้าสู่ระบบด้วย PIN (2569)
+            </button>
 
-          <Link
-            href="/"
-            className="block w-full min-h-[40px] leading-[40px] rounded-lg border border-[#CBD5E1] text-xs font-medium text-[#334155] hover:bg-[#F8FAFC] cursor-pointer"
-          >
-            กลับสู่หน้านักเรียนทั่วไป
-          </Link>
+            <Link
+              href="/"
+              className="block w-full min-h-[40px] leading-[40px] rounded-xl border border-zinc-200 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors cursor-pointer"
+            >
+              กลับหน้าหลักคณะสี
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ===================== STANDALONE ADMIN DASHBOARD SHELL =====================
+  // ===================== NAVIGATION ITEMS =====================
   const navItems: Array<{
     id: AdminTab;
     label: string;
     icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
     badge?: number;
   }> = [
-    { id: 'overview', label: 'ภาพรวมสรุปผล', icon: LayoutGrid },
+    { id: 'overview', label: 'ภาพรวม', icon: LayoutGrid },
+    { id: 'directory', label: 'จัดการรายชื่อ', icon: Users },
     { id: 'checkin', label: 'เช็คชื่อวันงาน', icon: ClipboardCheck },
-    { id: 'directory', label: 'รายชื่อนักเรียนทั้งหมด', icon: Users },
     {
       id: 'duplicates',
-      label: 'คัดกรองคนลงซ้ำ',
+      label: 'คัดกรองซ้ำ',
       icon: CopyCheck,
       badge: dupeEntries.length > 0 ? dupeEntries.length : undefined,
     },
-    { id: 'quotas', label: 'เปิด/ปิดรับ & โควตา', icon: Sliders },
-    { id: 'policies', label: 'นโยบาย, PIN & Excel', icon: Shield },
+    { id: 'quotas', label: 'โควตาฝ่ายงาน', icon: Sliders },
+    { id: 'policies', label: 'ตั้งค่า & Excel', icon: Shield },
+  ];
+
+  const mobileBottomItems: Array<{
+    id: AdminTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  }> = [
+    { id: 'overview', label: 'ภาพรวม', icon: LayoutGrid },
+    { id: 'directory', label: 'รายชื่อ', icon: Users },
+    { id: 'checkin', label: 'เช็คชื่อ', icon: ClipboardCheck },
+    { id: 'policies', label: 'ตั้งค่า', icon: Shield },
   ];
 
   const activeSession = sessions.find((s) => s.isActive) || sessions[0] || null;
   const checkedInCount = students.filter((s) => s.checkedIn).length;
 
   return (
-    <div className="min-h-dvh bg-[#F8FAFC] text-[#0F172A]">
-      {/* Standalone Admin Sticky Header */}
-      <header className="no-print sticky top-0 z-40 bg-white border-b-2 border-[#E2E8F0]">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+    <div className="min-h-dvh bg-[#FAFAFB] text-zinc-900 flex">
+      {/* ================= DESKTOP PERSISTENT SIDEBAR ================= */}
+      <aside className="no-print hidden lg:flex w-64 shrink-0 flex-col bg-white border-r border-zinc-200/80 sticky top-0 h-dvh">
+        <div className="p-5 border-b border-zinc-100 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-rose-600 text-white font-display font-bold text-xs flex items-center justify-center shrink-0">
+            PK
+          </div>
+          <div className="min-w-0">
+            <div className="font-display font-semibold text-sm text-zinc-900 truncate">
+              อยุธยาสีชมพู 2569
+            </div>
+            <div className="text-[11px] text-zinc-500">Admin Studio</div>
+          </div>
+        </div>
+
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="เมนูผู้ดูแลระบบ">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = tab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setTab(item.id)}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                  active
+                    ? 'bg-rose-50 text-rose-700 font-semibold'
+                    : 'text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900'
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Icon
+                    className={`w-4 h-4 ${active ? 'text-rose-600' : 'text-zinc-400'}`}
+                    strokeWidth={1.75}
+                  />
+                  <span>{item.label}</span>
+                </span>
+                {item.badge !== undefined && (
+                  <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-semibold tabular-nums">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          <div className="pt-4 mt-4 border-t border-zinc-100 space-y-1">
+            <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+              หน้าสาธารณะ
+            </div>
+            <Link
+              href="/"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900 transition-colors"
+            >
+              <span className="flex items-center gap-2.5">
+                <Home className="w-4 h-4 text-zinc-400" strokeWidth={1.75} />
+                <span>หน้าหลักคณะสี</span>
+              </span>
+              <ExternalLink className="w-3.5 h-3.5 text-zinc-300" />
+            </Link>
+            <a
+              href="/shop"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900 transition-colors"
+            >
+              <span className="flex items-center gap-2.5">
+                <Shirt className="w-4 h-4 text-zinc-400" strokeWidth={1.75} />
+                <span>เว็บสั่งจองเสื้อ</span>
+              </span>
+              <ExternalLink className="w-3.5 h-3.5 text-zinc-300" />
+            </a>
+          </div>
+        </nav>
+
+        <div className="p-3 border-t border-zinc-100 space-y-2">
+          <button
+            type="button"
+            onClick={() => reloadAll(true)}
+            disabled={refreshing}
+            className="w-full min-h-[38px] flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-medium text-zinc-700 transition-colors cursor-pointer disabled:opacity-60"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+            <span>{refreshing ? 'กำลังซิงก์...' : 'ซิงก์ Google Sheets'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full min-h-[38px] flex items-center justify-center gap-2 rounded-xl text-xs font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" strokeWidth={1.75} />
+            <span>ออกจากระบบ Admin</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* ================= MAIN WORKSPACE ================= */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Mobile Sticky Top Header */}
+        <header className="no-print lg:hidden sticky top-0 z-40 h-14 bg-white/90 backdrop-blur-md border-b border-zinc-200/80 px-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
               aria-label="เปิดเมนู Admin"
-              className="lg:hidden w-9 h-9 rounded-lg border border-[#CBD5E1] flex items-center justify-center text-[#334155] hover:bg-[#F1F5F9] cursor-pointer"
+              className="w-9 h-9 rounded-xl border border-zinc-200 bg-white flex items-center justify-center text-zinc-700 hover:bg-zinc-50 cursor-pointer shrink-0"
             >
-              <Menu className="w-4 h-4" strokeWidth={1.5} />
+              <Menu className="w-4 h-4" strokeWidth={1.75} />
             </button>
-            <div className="w-8 h-8 rounded-lg bg-[#BE185D] text-white font-display font-bold text-xs flex items-center justify-center shrink-0">
-              PK
-            </div>
             <div className="min-w-0">
-              <div className="font-display font-bold text-sm text-[#0F172A] truncate">
-                อยุธยาสีชมพู 2569 · ศูนย์ควบคุม Admin
+              <div className="font-display font-semibold text-sm text-zinc-900 truncate">
+                {TAB_TITLES[tab]}
               </div>
-              <div className="text-[11px] text-[#64748B] truncate tabular-nums">
+              <div className="text-[11px] text-zinc-500 truncate tabular-nums">
                 สมาชิก {students.length} คน · เช็คชื่อ {checkedInCount} คน
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href="/"
-              className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-white text-xs font-medium text-[#334155] hover:bg-[#F1F5F9] cursor-pointer"
-            >
-              <Home className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span className="hidden sm:inline">หน้านักเรียน</span>
-            </Link>
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={() => reloadAll(true)}
               disabled={refreshing}
               aria-label="รีเฟรชข้อมูล"
-              className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-white text-xs font-medium text-[#334155] hover:bg-[#F1F5F9] cursor-pointer"
+              className="w-9 h-9 rounded-xl border border-zinc-200 bg-white flex items-center justify-center text-zinc-600 hover:bg-zinc-50 cursor-pointer"
             >
-              <RefreshCw
-                className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`}
-                strokeWidth={1.5}
-              />
-              <span className="hidden sm:inline">รีเฟรช</span>
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} strokeWidth={1.75} />
             </button>
             <button
               type="button"
-              onClick={handleLogout}
-              className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FEF2F2] border border-[#FECACA] text-xs font-medium text-[#B91C1C] hover:bg-[#FEE2E2] cursor-pointer"
+              onClick={() => setShowAddModal(true)}
+              className="h-9 inline-flex items-center gap-1 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white cursor-pointer"
             >
-              <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span className="hidden sm:inline">ออก</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>เพิ่ม</span>
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Desktop Admin Sub-navigation */}
-        <div className="hidden lg:block bg-[#F1F5F9] border-t border-[#E2E8F0]">
-          <div className="max-w-6xl mx-auto px-4 flex items-center gap-1 overflow-x-auto py-1.5">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = tab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setTab(item.id)}
-                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
-                    active
-                      ? 'bg-[#BE185D] text-white'
-                      : 'text-[#334155] hover:bg-white'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" strokeWidth={1.5} />
-                  <span>{item.label}</span>
-                  {item.badge !== undefined && (
-                    <span className="px-1.5 py-0.5 rounded bg-amber-500 text-white text-[10px] font-bold">
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+        {/* Desktop Minimal Top Header */}
+        <header className="no-print hidden lg:flex sticky top-0 z-30 h-16 bg-[#FAFAFB]/90 backdrop-blur-md border-b border-zinc-200/70 px-8 items-center justify-between">
+          <div>
+            <h1 className="font-display font-semibold text-lg text-zinc-900">{TAB_TITLES[tab]}</h1>
+            <p className="text-xs text-zinc-500 tabular-nums">
+              สมาชิกทั้งหมด {students.length} คน · เช็คชื่อแล้ว {checkedInCount} คน
+            </p>
           </div>
-        </div>
-      </header>
-
-      {/* Mobile Slide-Out Drawer (matching admin.html) */}
-      {drawerOpen && (
-        <div className="no-print fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-slate-900/45"
-            onClick={() => setDrawerOpen(false)}
-          />
-          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-white border-r border-[#CBD5E1] flex flex-col justify-between p-4 shadow-xl">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#BE185D] text-white font-bold text-xs flex items-center justify-center">
-                    PK
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm">อยุธยาสีชมพู</div>
-                    <div className="text-[11px] text-[#64748B]">Admin Menu</div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setDrawerOpen(false)}
-                  aria-label="ปิดเมนู Admin"
-                  className="p-1.5 rounded-lg border border-[#CBD5E1] cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <nav className="mt-3 space-y-1">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = tab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        setTab(item.id);
-                        setDrawerOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold cursor-pointer ${
-                        active
-                          ? 'bg-[#FDF2F8] text-[#BE185D] border-l-4 border-[#BE185D]'
-                          : 'text-[#334155] hover:bg-[#F1F5F9]'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <Icon className="w-4 h-4" strokeWidth={1.5} />
-                        {item.label}
-                      </span>
-                      {item.badge !== undefined && (
-                        <span className="px-1.5 py-0.5 rounded bg-amber-500 text-white text-[10px]">
-                          {item.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={handleLogout}
-              className="w-full min-h-[40px] rounded-lg bg-[#FEF2F2] border border-[#FECACA] text-[#B91C1C] text-xs font-semibold cursor-pointer"
+              onClick={() => setShowAddModal(true)}
+              className="h-9 inline-flex items-center gap-1.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm transition-colors cursor-pointer"
             >
-              ออกจากระบบ Admin
+              <Plus className="w-4 h-4" />
+              <span>เพิ่มรายชื่อนักเรียน</span>
             </button>
-          </aside>
-        </div>
-      )}
-
-      <main className="max-w-6xl mx-auto px-4 py-5 space-y-4">
-        {feedback &&
-          (feedback.type === 'success' ? (
-            <SuccessBanner message={feedback.message} />
-          ) : (
-            <ErrorState message={feedback.message} />
-          ))}
-
-        {/* TAB 1: OVERVIEW (matching PinkAdmin.renderDashboard) */}
-        {tab === 'overview' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              <div className="bg-white border border-[#E2E8F0] rounded-xl p-4">
-                <div className="text-xs font-semibold text-[#64748B]">ผู้ลงทะเบียนทั้งหมด</div>
-                <div className="mt-1 text-2xl font-extrabold text-[#0F172A] tabular-nums">
-                  {students.length} <span className="text-sm font-medium text-[#64748B]">คน</span>
-                </div>
-                <div className="text-[11px] text-[#64748B] mt-1">
-                  {stats?.sourceMode === 'supabase' ? 'ฐานข้อมูล Supabase' : 'ซิงก์สดจาก Google Sheets'}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setTab('duplicates')}
-                className="text-left bg-white border border-[#E2E8F0] rounded-xl p-4 hover:border-[#BE185D] cursor-pointer"
-              >
-                <div className="text-xs font-semibold text-[#64748B]">พบลงทะเบียนซ้ำ</div>
-                <div
-                  className={`mt-1 text-2xl font-extrabold tabular-nums ${
-                    dupeEntries.length > 0 ? 'text-amber-600' : 'text-[#047857]'
-                  }`}
-                >
-                  {dupeEntries.length}{' '}
-                  <span className="text-sm font-medium text-[#64748B]">คน</span>
-                </div>
-                <div className="text-[11px] text-[#64748B] mt-1">
-                  {dupeEntries.length > 0 ? 'กดเพื่อไปจัดการคนลงซ้ำ' : 'ข้อมูลสมบูรณ์'}
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab('checkin')}
-                className="col-span-2 lg:col-span-1 text-left bg-white border border-[#E2E8F0] rounded-xl p-4 hover:border-[#BE185D] cursor-pointer"
-              >
-                <div className="text-xs font-semibold text-[#64748B]">เช็คชื่อรอบปัจจุบัน</div>
-                <div className="mt-1 text-2xl font-extrabold text-[#BE185D] tabular-nums">
-                  {checkedInCount}{' '}
-                  <span className="text-sm font-medium text-[#64748B]">/ {students.length} คน</span>
-                </div>
-                <div className="text-[11px] text-[#64748B] mt-1 truncate">
-                  {activeSession?.title || 'รอบหลัก'}
-                </div>
-              </button>
-            </div>
-
-            <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 space-y-2.5">
-              <div className="text-xs font-bold text-[#64748B]">สัดส่วนจำนวนนักเรียนรายชั้น</div>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                {Object.entries(gradeCounts).map(([grade, count]) => (
-                  <div
-                    key={grade}
-                    className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg p-2.5 text-center"
-                  >
-                    <div className="text-xs text-[#64748B]">{grade}</div>
-                    <div className="text-lg font-extrabold text-[#0F172A] tabular-nums">
-                      {count}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-sm text-[#0F172A]">สถานะโควตารายฝ่ายงาน</h2>
-              <button
-                type="button"
-                onClick={() => setTab('quotas')}
-                className="px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-white text-xs font-semibold text-[#334155] cursor-pointer"
-              >
-                ปรับแต่งโควตา
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {departments.map((d) => {
-                const count = students.filter((s) => s.departmentName === d.name).length;
-                const max = d.maxCapacity;
-                const isFull = typeof max === 'number' && count >= max;
-                const pct =
-                  typeof max === 'number' && max > 0
-                    ? Math.min(100, Math.round((count / max) * 100))
-                    : 100;
-                const badgeText = d.isClosed
-                  ? 'ปิดรับชั่วคราว'
-                  : isFull
-                    ? 'เต็มโควตา'
-                    : 'เปิดรับ';
-                const badgeCls =
-                  d.isClosed || isFull
-                    ? 'bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]'
-                    : 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]';
-                const barColor =
-                  d.isClosed || isFull
-                    ? '#EF4444'
-                    : typeof max === 'number' && pct > 80
-                      ? '#F59E0B'
-                      : '#10B981';
-
-                return (
-                  <div key={d.id} className="bg-white border border-[#E2E8F0] rounded-xl p-4 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <div className="font-bold text-sm text-[#0F172A]">{d.name}</div>
-                        <div className="text-xs text-[#64748B]">
-                          {typeof max === 'number' ? `โควตา: ${max} คน` : 'ไม่จำกัดโควตา'}
-                        </div>
-                      </div>
-                      <span className={`px-2 py-0.5 rounded border text-[11px] font-bold ${badgeCls}`}>
-                        {badgeText}
-                      </span>
-                    </div>
-                    <div className="w-full h-2 rounded bg-[#F1F5F9] overflow-hidden">
-                      <div className="h-full" style={{ width: `${pct}%`, background: barColor }} />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-[#64748B] tabular-nums">
-                      <span>ลงทะเบียนแล้ว {count} คน</span>
-                      <span>
-                        {typeof max === 'number'
-                          ? `เหลือ ${Math.max(0, max - count)} ที่ (${pct}%)`
-                          : 'ไม่จำกัด'}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
-        )}
+        </header>
 
-        {/* TAB 2: EVENT CHECK-IN WORKSPACE */}
-        {tab === 'checkin' && (
-          <div className="space-y-4">
-            <form
-              onSubmit={handleCreateSession}
-              className="bg-white border border-[#E2E8F0] rounded-xl p-4 flex flex-wrap items-end gap-3"
-            >
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-xs font-semibold text-[#334155] mb-1">
-                  เปิดรอบเช็คชื่อใหม่ (เช่น ซ้อมวันจริงช่วงเช้า)
-                </label>
-                <input
-                  type="text"
-                  value={sessionTitle}
-                  onChange={(e) => setSessionTitle(e.target.value)}
-                  placeholder="ชื่อรอบเช็คชื่อ"
-                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#334155] mb-1">วันที่</label>
-                <input
-                  type="date"
-                  value={sessionDate}
-                  onChange={(e) => setSessionDate(e.target.value)}
-                  className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="min-h-[38px] px-4 py-1.5 rounded-lg bg-[#BE185D] text-white text-xs font-semibold cursor-pointer"
-              >
-                สร้างรอบใหม่
-              </button>
-            </form>
-
-            <CheckInWorkspace
-              initialStudents={students}
-              sessions={sessions}
-              activeSession={activeSession}
-              departments={departments}
-              profile={profile}
-              sourceMode={stats?.sourceMode || 'legacy-readonly'}
+        {/* Mobile Slide-Over Drawer */}
+        {drawerOpen && (
+          <div className="no-print fixed inset-0 z-50 lg:hidden">
+            <div
+              className="absolute inset-0 bg-zinc-950/30 backdrop-blur-[2px]"
+              onClick={() => setDrawerOpen(false)}
             />
-          </div>
-        )}
-
-        {/* TAB 3: STUDENT DIRECTORY & CRUD */}
-        {tab === 'directory' && (
-          <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 sm:p-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="font-bold text-base text-[#0F172A]">
-                  จัดการรายชื่อสมาชิกคณะสีชมพู ({filteredStudents.length} / {students.length} คน)
-                </h2>
-                <p className="text-xs text-[#64748B]">
-                  เพิ่ม ลบ แก้ไขชื่อ-นามสกุล ย้ายห้องเรียน หรือย้ายฝ่ายงาน/ตำแหน่ง/ชนิดกีฬาของนักเรียนได้ทุกส่วน
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative">
-                  <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={studentSearch}
-                    onChange={(e) => setStudentSearch(e.target.value)}
-                    placeholder="ค้นหาชื่อ, ห้อง, เลขที่ หรือฝ่าย"
-                    className="min-h-[38px] pl-9 pr-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm w-52"
-                  />
-                </div>
-                <select
-                  value={roomFilter}
-                  onChange={(e) => setRoomFilter(e.target.value)}
-                  className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-xs font-medium bg-white"
-                >
-                  <option value="ALL">ทุกห้องเรียน ({ALL_ROOMS.length} ห้อง)</option>
-                  {ALL_ROOMS.map((r) => (
-                    <option key={r} value={r}>
-                      ห้อง {r}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={deptFilter}
-                  onChange={(e) => setDeptFilter(e.target.value)}
-                  className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-xs font-medium bg-white"
-                >
-                  <option value="ALL">ทุกฝ่ายงาน</option>
-                  <option value="CENTRAL">คณะกรรมการบริหารส่วนกลาง</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.name}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(true)}
-                  className="min-h-[38px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#BE185D] text-white text-xs font-semibold cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  เพิ่มนักเรียน
-                </button>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto border border-[#E2E8F0] rounded-lg">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#F1F5F9] text-[#0F172A] border-b border-[#E2E8F0]">
-                  <tr>
-                    <th className="py-2.5 px-3">ชื่อ-นามสกุล</th>
-                    <th className="py-2.5 px-3">ห้อง</th>
-                    <th className="py-2.5 px-3">เลขที่</th>
-                    <th className="py-2.5 px-3">ฝ่ายงาน / ตำแหน่ง</th>
-                    <th className="py-2.5 px-3 text-right">จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E2E8F0]">
-                  {filteredStudents.map((s) => (
-                    <tr key={s.id} className="hover:bg-[#F8FAFC]">
-                      <td className="py-2.5 px-3 font-medium text-[#0F172A]">
-                        {s.fullName}{' '}
-                        {s.nickname && <span className="text-[#64748B]">({s.nickname})</span>}
-                      </td>
-                      <td className="py-2.5 px-3 tabular-nums">{s.classRoom}</td>
-                      <td className="py-2.5 px-3 tabular-nums">{s.numberLabel}</td>
-                      <td className="py-2.5 px-3">
-                        {s.roleCategory === 'central' ? (
-                          <span className="font-semibold text-[#BE185D]">
-                            คณะกรรมการกลาง · {s.centralPosition || s.position}
-                          </span>
-                        ) : (
-                          <span>
-                            <strong>{s.departmentName || '-'}</strong>
-                            {s.sportType ? ` (${s.sportType})` : ''} · {s.position}
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 text-right whitespace-nowrap space-x-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setEditingStudent(s)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-[#CBD5E1] bg-white text-[#334155] hover:bg-[#F1F5F9] cursor-pointer"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          แก้ไข
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteStudent(s.id, s.fullName)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C] cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 4: DUPLICATES RESOLUTION (matching PinkAdmin.renderDuplicates) */}
-        {tab === 'duplicates' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-bold text-base text-[#0F172A]">
-                  ศูนย์จัดการนักเรียนลงทะเบียนซ้ำซ้อน
-                </h2>
-                <p className="text-xs text-[#64748B]">
-                  พบรายการซ้ำ {dupeEntries.length} คน สามารถกด &quot;คงฝ่ายนี้&quot; เพื่อเลือกสิทธิ์ที่ถูกต้อง
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => reloadAll(true)}
-                className="px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-white text-xs font-semibold cursor-pointer"
-              >
-                รีเฟรชข้อมูล
-              </button>
-            </div>
-
-            {dupeEntries.length === 0 ? (
-              <div className="bg-white border border-[#E2E8F0] rounded-xl p-10 text-center space-y-2">
-                <CheckCircle2 className="w-8 h-8 text-[#047857] mx-auto" />
-                <div className="font-bold text-base text-[#0F172A]">ไม่พบรายการลงทะเบียนซ้ำซ้อน</div>
-                <p className="text-xs text-[#64748B]">
-                  นักเรียนทุกคนในระบบลงทะเบียนเพียง 1 สิทธิ์ 1 ฝ่ายงานอย่างถูกต้อง
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {dupeEntries.map(([key, records]) => {
-                  const first = records[0];
-                  return (
-                    <div
-                      key={key}
-                      className="bg-white border border-[#E2E8F0] border-l-4 border-l-amber-500 rounded-xl p-4 space-y-3"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="font-bold text-sm text-[#0F172A]">
-                            {first.fullName} {first.nickname ? `(${first.nickname})` : ''}
-                          </div>
-                          <div className="text-xs text-[#64748B] tabular-nums">
-                            ห้อง {first.classRoom} · เลขที่ {first.numberLabel}
-                          </div>
-                        </div>
-                        <span className="px-2.5 py-1 rounded bg-amber-100 text-amber-800 text-xs font-bold">
-                          ลงซ้ำ {records.length} รายการ
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        {records.map((rec) => (
-                          <div
-                            key={rec.id}
-                            className="flex items-center justify-between gap-3 bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg px-3 py-2 text-xs"
-                          >
-                            <div>
-                              <div className="font-semibold text-[#0F172A]">
-                                {rec.roleCategory === 'central'
-                                  ? rec.centralPosition || rec.position
-                                  : `${rec.department || '-'}${rec.sportType ? ` (${rec.sportType})` : ''} · ${rec.position}`}
-                              </div>
-                              <div className="text-[11px] text-[#64748B] tabular-nums">
-                                {rec.timestamp
-                                  ? new Date(rec.timestamp).toLocaleString('th-TH')
-                                  : 'ไม่ระบุเวลา'}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleResolveDuplicate(key, rec)}
-                              className="px-3 py-1.5 rounded-lg bg-[#BE185D] text-white text-xs font-semibold cursor-pointer shrink-0"
-                            >
-                              คงฝ่ายนี้
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+            <aside className="absolute left-0 top-0 bottom-0 w-72 bg-white border-r border-zinc-200 flex flex-col justify-between p-4 shadow-2xl">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-rose-600 text-white font-bold text-xs flex items-center justify-center">
+                      PK
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB 5: QUOTAS CONTROL */}
-        {tab === 'quotas' && (
-          <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 sm:p-5 space-y-3">
-            <div>
-              <h2 className="font-bold text-base text-[#0F172A]">
-                ตั้งค่าโควตาและการเปิด/ปิดรับสมัครรายฝ่าย
-              </h2>
-              <p className="text-xs text-[#64748B]">
-                การเปลี่ยนแปลงมีผลทันทีกับหน้าลงทะเบียนของนักเรียนทุกคน
-              </p>
-            </div>
-            <div className="divide-y divide-[#E2E8F0]">
-              {departments.map((d) => {
-                const count = students.filter((s) => s.departmentName === d.name).length;
-                return (
-                  <div
-                    key={d.id}
-                    className="py-3 flex flex-wrap items-center justify-between gap-3"
-                  >
                     <div>
-                      <div className="font-semibold text-sm text-[#0F172A]">{d.name}</div>
-                      <div className="text-xs text-[#64748B] tabular-nums">
-                        ลงทะเบียนแล้ว {count} คน
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <label className="text-xs text-[#64748B] flex items-center gap-2">
-                        โควตา:
-                        <input
-                          type="number"
-                          min={1}
-                          placeholder="ไม่จำกัด"
-                          defaultValue={d.maxCapacity ?? ''}
-                          onBlur={(e) => {
-                            const raw = e.target.value.trim();
-                            const nextVal = raw === '' ? null : parseInt(raw, 10);
-                            if (nextVal !== d.maxCapacity) {
-                              handleUpdateDepartment(d.id, {
-                                maxCapacity: Number.isNaN(nextVal) ? null : nextVal,
-                              });
-                            }
-                          }}
-                          className="w-24 min-h-[36px] px-2.5 py-1 rounded-lg border border-[#CBD5E1] text-center text-sm tabular-nums"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateDepartment(d.id, { isClosed: !d.isClosed })}
-                        className={`min-h-[36px] px-3 py-1 rounded-lg text-xs font-semibold border cursor-pointer ${
-                          d.isClosed
-                            ? 'bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]'
-                            : 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]'
-                        }`}
-                      >
-                        {d.isClosed ? 'ปิดรับอยู่ (คลิกเปิด)' : 'เปิดรับอยู่ (คลิกปิด)'}
-                      </button>
+                      <div className="font-semibold text-sm text-zinc-900">อยุธยาสีชมพู</div>
+                      <div className="text-[11px] text-zinc-500">Admin Studio</div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 6: POLICIES, PIN, EXCEL & AUDIT LOG */}
-        {tab === 'policies' && (
-          <div className="space-y-4">
-            <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 sm:p-5 space-y-3">
-              <h2 className="font-bold text-base text-[#0F172A]">
-                นโยบายและกฎการลงทะเบียน
-              </h2>
-              <div className="divide-y divide-[#E2E8F0]">
-                {(
-                  [
-                    {
-                      key: 'strictOnePerson',
-                      title: 'ล็อกสิทธิ์ 1 คนต่อ 1 ฝ่ายงาน (Strict 1-Person Policy)',
-                      desc: 'ป้องกันไม่ให้นักเรียนที่มีห้องและเลขที่เดียวกันลงทะเบียนซ้ำข้ามฝ่าย',
-                    },
-                    {
-                      key: 'lockM1Registration',
-                      title: 'ล็อก ม.1 เข้าฝ่ายสแตนเชียร์อัตโนมัติ',
-                      desc: 'เมื่อน้อง ม.1/2, ม.1/9, ม.1/12 เลือกลงทะเบียนจะถูกจัดเข้าฝ่ายสแตนเชียร์ทันที',
-                    },
-                    {
-                      key: 'm1StandOnly',
-                      title: 'ฝ่ายสแตนเชียร์สงวนสิทธิ์เฉพาะ ม.1 เท่านั้น',
-                      desc: 'ซ่อนตัวเลือกฝ่ายสแตนเชียร์สำหรับพี่ ม.2 – ม.6',
-                    },
-                  ] as const
-                ).map((item) => {
-                  const enabled = policies[item.key];
-                  return (
-                    <div
-                      key={item.key}
-                      className="py-3 flex items-center justify-between gap-4"
-                    >
-                      <div>
-                        <div className="font-semibold text-sm text-[#0F172A]">{item.title}</div>
-                        <div className="text-xs text-[#64748B]">{item.desc}</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleTogglePolicy(item.key, !enabled)}
-                        className={`min-h-[36px] px-3.5 py-1 rounded-lg text-xs font-semibold shrink-0 cursor-pointer ${
-                          enabled
-                            ? 'bg-[#047857] text-white'
-                            : 'bg-[#F1F5F9] text-[#334155] border border-[#CBD5E1]'
-                        }`}
-                      >
-                        {enabled ? 'เปิดใช้งาน' : 'ปิดอยู่'}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <form
-                onSubmit={handleUpdatePin}
-                className="bg-white border border-[#E2E8F0] rounded-xl p-4 sm:p-5 space-y-3"
-              >
-                <div className="font-bold text-sm text-[#0F172A]">เปลี่ยนรหัส PIN Admin</div>
-                <p className="text-xs text-[#64748B]">
-                  รหัส PIN ปัจจุบัน: <strong className="text-[#BE185D]">{pinDisplay}</strong>
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={4}
-                    value={newPinInput}
-                    onChange={(e) => setNewPinInput(e.target.value.replace(/\D/g, ''))}
-                    placeholder="กรอก PIN 4 หลักใหม่"
-                    className="flex-1 min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-                    required
-                  />
                   <button
-                    type="submit"
-                    className="min-h-[38px] px-4 py-1.5 rounded-lg bg-[#0F172A] text-white text-xs font-semibold cursor-pointer"
+                    type="button"
+                    onClick={() => setDrawerOpen(false)}
+                    aria-label="ปิดเมนู Admin"
+                    className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-50 cursor-pointer"
                   >
-                    บันทึก PIN
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
-              </form>
 
-              <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 sm:p-5 flex flex-col justify-between gap-3">
-                <div>
-                  <div className="font-bold text-sm text-[#0F172A]">ส่งออกรายงาน Excel (.xlsx)</div>
-                  <p className="text-xs text-[#64748B] mt-0.5">
-                    รวมสรุปภาพรวม รายชื่อทั้งหมด สรุปตามห้อง ฝ่าย และประวัติเช็คชื่อ 5 ชีต
-                  </p>
-                </div>
-                <a
-                  href="/api/admin/export-excel"
-                  className="min-h-[40px] inline-flex items-center justify-center gap-2 rounded-lg bg-[#047857] text-white text-xs font-semibold cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  ดาวน์โหลดไฟล์ Excel (.xlsx)
-                </a>
-              </div>
-            </div>
+                <nav className="space-y-1">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = tab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setTab(item.id);
+                          setDrawerOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium cursor-pointer ${
+                          active
+                            ? 'bg-rose-50 text-rose-700 font-semibold'
+                            : 'text-zinc-600 hover:bg-zinc-100/70'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Icon className={`w-4 h-4 ${active ? 'text-rose-600' : 'text-zinc-400'}`} />
+                          <span>{item.label}</span>
+                        </span>
+                        {item.badge !== undefined && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-semibold">
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </nav>
 
-            {auditLogs.length > 0 && (
-              <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 space-y-2">
-                <div className="font-bold text-sm text-[#0F172A]">ประวัติการทำงานล่าสุด (Audit Log)</div>
-                <div className="max-h-56 overflow-y-auto divide-y divide-[#E2E8F0] text-xs">
-                  {auditLogs.slice(0, 20).map((log) => (
-                    <div key={log.id} className="py-2 flex items-center justify-between gap-2">
-                      <span className="font-medium text-[#0F172A]">
-                        {log.action} · {log.actorName || 'System'}
-                      </span>
-                      <span className="text-[#64748B] tabular-nums shrink-0">
-                        {new Date(log.createdAt).toLocaleString('th-TH')}
-                      </span>
-                    </div>
-                  ))}
+                <div className="pt-3 border-t border-zinc-100 space-y-1">
+                  <Link
+                    href="/"
+                    onClick={() => setDrawerOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-zinc-600 hover:bg-zinc-100/70"
+                  >
+                    <Home className="w-4 h-4 text-zinc-400" />
+                    <span>หน้าหลักคณะสี</span>
+                  </Link>
+                  <a
+                    href="/shop"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-zinc-600 hover:bg-zinc-100/70"
+                  >
+                    <Shirt className="w-4 h-4 text-zinc-400" />
+                    <span>เว็บสั่งจองเสื้อ (/shop)</span>
+                  </a>
                 </div>
               </div>
-            )}
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full min-h-[42px] rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold cursor-pointer"
+              >
+                ออกจากระบบ Admin
+              </button>
+            </aside>
           </div>
         )}
-      </main>
 
-      {/* Add Student Modal */}
+        {/* Main Content Container */}
+        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 pb-24 lg:pb-12 space-y-5">
+          {feedback &&
+            (feedback.type === 'success' ? (
+              <SuccessBanner message={feedback.message} />
+            ) : (
+              <ErrorState message={feedback.message} />
+            ))}
+
+          {/* ================= TAB 1: OVERVIEW ================= */}
+          {tab === 'overview' && (
+            <div className="space-y-6">
+              {/* 4 KPI Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                  <div className="text-xs font-medium text-zinc-500">สมาชิกทั้งหมด</div>
+                  <div className="mt-1.5 font-display font-semibold text-2xl sm:text-3xl text-zinc-900 tabular-nums">
+                    {students.length}
+                  </div>
+                  <div className="text-[11px] text-zinc-400 mt-1">
+                    {stats?.sourceMode === 'supabase' ? 'Supabase DB' : 'ซิงก์ Google Sheets'}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setTab('checkin')}
+                  className="text-left bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-rose-300 transition-colors cursor-pointer"
+                >
+                  <div className="text-xs font-medium text-zinc-500">เช็คชื่อแล้ว</div>
+                  <div className="mt-1.5 font-display font-semibold text-2xl sm:text-3xl text-emerald-600 tabular-nums">
+                    {checkedInCount}
+                  </div>
+                  <div className="text-[11px] text-zinc-400 mt-1">แตะเพื่อเปิดเช็คชื่อ</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTab('quotas')}
+                  className="text-left bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-rose-300 transition-colors cursor-pointer"
+                >
+                  <div className="text-xs font-medium text-zinc-500">ฝ่ายงานหลัก</div>
+                  <div className="mt-1.5 font-display font-semibold text-2xl sm:text-3xl text-rose-600 tabular-nums">
+                    {departments.length}
+                  </div>
+                  <div className="text-[11px] text-zinc-400 mt-1">คลิกตั้งค่าโควตา</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTab('duplicates')}
+                  className="text-left bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-rose-300 transition-colors cursor-pointer"
+                >
+                  <div className="text-xs font-medium text-zinc-500">รายการซ้ำซ้อน</div>
+                  <div
+                    className={`mt-1.5 font-display font-semibold text-2xl sm:text-3xl tabular-nums ${
+                      dupeEntries.length > 0 ? 'text-amber-600' : 'text-zinc-900'
+                    }`}
+                  >
+                    {dupeEntries.length}
+                  </div>
+                  <div className="text-[11px] text-zinc-400 mt-1">คลิกตรวจสอบรายชื่อ</div>
+                </button>
+              </div>
+
+              {/* Grade Breakdown */}
+              <section className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display font-semibold text-sm text-zinc-900">
+                    สัดส่วนสมาชิกตามระดับชั้น (แตะเพื่อดูรายชื่อ)
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => jumpToDirectory({})}
+                    className="text-xs font-medium text-rose-600 hover:text-rose-700 inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>ดูทั้งหมด</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+                  {Object.entries(gradeCounts).map(([grade, count]) => (
+                    <button
+                      key={grade}
+                      type="button"
+                      onClick={() => jumpToDirectory({ grade })}
+                      className="rounded-xl border border-zinc-200/80 bg-[#FAFAFB] hover:bg-rose-50 hover:border-rose-200 p-3 text-center transition-colors cursor-pointer"
+                    >
+                      <div className="text-xs font-medium text-zinc-500">{grade}</div>
+                      <div className="mt-0.5 text-lg font-semibold text-zinc-900 tabular-nums">
+                        {count}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Department Roster & Quotas Summary */}
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display font-semibold text-sm text-zinc-900">
+                    จำนวนสมาชิกและสถานะแต่ละฝ่ายงาน
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setTab('quotas')}
+                    className="px-3 py-1.5 rounded-xl border border-zinc-200 bg-white text-xs font-medium text-zinc-700 hover:bg-zinc-50 cursor-pointer"
+                  >
+                    จัดการโควตา
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {departments.map((d) => {
+                    const count = students.filter((s) => s.departmentName === d.name).length;
+                    const max = d.maxCapacity;
+                    const isFull = typeof max === 'number' && count >= max;
+                    const pct =
+                      typeof max === 'number' && max > 0
+                        ? Math.min(100, Math.round((count / max) * 100))
+                        : 100;
+
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => jumpToDirectory({ dept: d.name })}
+                        className="text-left bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-rose-300 transition-colors space-y-3 cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-sm text-zinc-900">{d.name}</div>
+                            <div className="text-xs text-zinc-500 mt-0.5 tabular-nums">
+                              สมาชิก {count} คน{typeof max === 'number' ? ` / โควตา ${max}` : ''}
+                            </div>
+                          </div>
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                              d.isClosed || isFull
+                                ? 'bg-red-50 text-red-700 border border-red-200/70'
+                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200/70'
+                            }`}
+                          >
+                            {d.isClosed ? 'ปิดรับ' : isFull ? 'เต็ม' : 'เปิดรับ'}
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              d.isClosed || isFull ? 'bg-rose-500' : 'bg-emerald-500'
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* ================= TAB 2: DIRECTORY (MOBILE CARDS + DESKTOP TABLE) ================= */}
+          {tab === 'directory' && (
+            <div className="space-y-4">
+              {/* Minimal Search & Filters Card */}
+              <div className="bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h2 className="font-display font-semibold text-base text-zinc-900">
+                      รายชื่อสมาชิกคณะสีชมพู
+                    </h2>
+                    <p className="text-xs text-zinc-500 tabular-nums">
+                      แสดง {filteredStudents.length} จากทั้งหมด {students.length} คน
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(true)}
+                    className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>เพิ่มนักเรียน</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
+                      placeholder="ค้นหาชื่อ, ชื่อเล่น, รหัส..."
+                      className="w-full h-10 pl-9 pr-3 rounded-xl border border-zinc-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/10 outline-none text-sm bg-white"
+                    />
+                  </div>
+
+                  <select
+                    value={gradeFilter}
+                    onChange={(e) => {
+                      setGradeFilter(e.target.value);
+                      setRoomFilter('ALL');
+                    }}
+                    className="h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-xs font-medium bg-white text-zinc-700"
+                  >
+                    <option value="ALL">ทุกระดับชั้น (ม.1 – ม.6)</option>
+                    {GRADES.map((g) => (
+                      <option key={g.grade} value={g.grade}>
+                        ระดับชั้น {g.grade}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={roomFilter}
+                    onChange={(e) => setRoomFilter(e.target.value)}
+                    className="h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-xs font-medium bg-white text-zinc-700"
+                  >
+                    <option value="ALL">ทุกห้องเรียน ({availableRooms.length} ห้อง)</option>
+                    {availableRooms.map((r) => (
+                      <option key={r} value={r}>
+                        ห้อง {r}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={deptFilter}
+                    onChange={(e) => setDeptFilter(e.target.value)}
+                    className="h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-xs font-medium bg-white text-zinc-700"
+                  >
+                    <option value="ALL">ทุกฝ่ายงาน</option>
+                    <option value="CENTRAL">คณะกรรมการบริหารส่วนกลาง</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Empty State */}
+              {filteredStudents.length === 0 ? (
+                <div className="bg-white border border-zinc-200/80 rounded-2xl p-10 text-center space-y-2">
+                  <Users className="w-8 h-8 text-zinc-300 mx-auto" />
+                  <div className="font-medium text-sm text-zinc-900">ไม่พบรายชื่อที่ตรงกับตัวกรอง</div>
+                  <p className="text-xs text-zinc-500">
+                    ลองล้างคำค้นหา หรือเปลี่ยนระดับชั้น/ห้องเรียน/ฝ่ายงาน
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* MOBILE-FIRST CARD LIST (< 768px) */}
+                  <div className="md:hidden space-y-3" data-testid="admin-mobile-cards">
+                    {filteredStudents.map((s) => {
+                      const isCentral = s.roleCategory === 'central';
+                      const roleText = isCentral
+                        ? `คณะกรรมการกลาง · ${s.centralPosition || s.position}`
+                        : `${s.departmentName || '-'}${s.sportType ? ` (${s.sportType})` : ''} · ${s.position}`;
+
+                      return (
+                        <div
+                          key={s.id}
+                          className="bg-white border border-zinc-200/80 rounded-2xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] space-y-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-100 text-rose-700 font-semibold text-sm flex items-center justify-center shrink-0">
+                                {getInitialChar(s.fullName)}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-semibold text-sm text-zinc-900 truncate">
+                                  {s.fullName}
+                                </div>
+                                <div className="text-xs text-zinc-500 truncate">
+                                  {s.nickname ? `ชื่อเล่น ${s.nickname}` : 'ไม่ระบุชื่อเล่น'}
+                                  {s.studentCode ? ` · รหัส ${s.studentCode}` : ''}
+                                </div>
+                              </div>
+                            </div>
+                            <span className="shrink-0 px-2.5 py-1 rounded-lg bg-zinc-100 text-zinc-700 text-[11px] font-semibold tabular-nums whitespace-nowrap">
+                              {s.classRoom} · {s.numberLabel}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${
+                                isCentral
+                                  ? 'bg-rose-50 text-rose-700 border border-rose-200/70'
+                                  : 'bg-zinc-50 text-zinc-700 border border-zinc-200/70'
+                              }`}
+                            >
+                              <Building2 className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                              <span>{roleText}</span>
+                            </span>
+                          </div>
+
+                          <div className="pt-2.5 border-t border-zinc-100 flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setEditingStudent(s)}
+                              className="flex-1 min-h-[38px] inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition-colors cursor-pointer"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>แก้ไข / ย้ายฝ่าย</span>
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`ลบ ${s.fullName}`}
+                              onClick={() => handleDeleteStudent(s.id, s.fullName)}
+                              className="min-h-[38px] px-3 inline-flex items-center justify-center rounded-xl border border-zinc-200 text-zinc-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* DESKTOP NOTION-STYLE TABLE (>= 768px) */}
+                  <div
+                    className="hidden md:block bg-white border border-zinc-200/80 rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.03)] overflow-hidden"
+                    data-testid="admin-desktop-table"
+                  >
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-zinc-50/80 text-zinc-500 border-b border-zinc-200/80">
+                        <tr>
+                          <th className="py-3 px-4 font-semibold">ชื่อ-นามสกุล</th>
+                          <th className="py-3 px-4 font-semibold">ห้อง · เลขที่</th>
+                          <th className="py-3 px-4 font-semibold">ฝ่ายงาน / ตำแหน่ง</th>
+                          <th className="py-3 px-4 font-semibold text-right">จัดการ</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100">
+                        {filteredStudents.map((s) => {
+                          const isCentral = s.roleCategory === 'central';
+                          return (
+                            <tr key={s.id} className="hover:bg-rose-50/30 transition-colors">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-rose-50 text-rose-700 font-semibold text-xs flex items-center justify-center shrink-0">
+                                    {getInitialChar(s.fullName)}
+                                  </div>
+                                  <div>
+                                    <div className="font-semibold text-sm text-zinc-900">
+                                      {s.fullName}{' '}
+                                      {s.nickname && (
+                                        <span className="font-normal text-zinc-500">
+                                          ({s.nickname})
+                                        </span>
+                                      )}
+                                    </div>
+                                    {s.studentCode && (
+                                      <div className="text-[11px] text-zinc-400 tabular-nums">
+                                        รหัส {s.studentCode}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 whitespace-nowrap">
+                                <span className="px-2.5 py-1 rounded-lg bg-zinc-100 text-zinc-700 font-medium tabular-nums">
+                                  {s.classRoom} · {s.numberLabel}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4">
+                                {isCentral ? (
+                                  <span className="inline-flex px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200/70 font-semibold">
+                                    คณะกรรมการกลาง · {s.centralPosition || s.position}
+                                  </span>
+                                ) : (
+                                  <span className="text-zinc-700">
+                                    <strong className="text-zinc-900">{s.departmentName || '-'}</strong>
+                                    {s.sportType ? ` (${s.sportType})` : ''} · {s.position}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 text-right whitespace-nowrap space-x-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingStudent(s)}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:border-rose-300 hover:text-rose-700 font-medium transition-colors cursor-pointer"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                  <span>แก้ไข</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label={`ลบ ${s.fullName}`}
+                                  onClick={() => handleDeleteStudent(s.id, s.fullName)}
+                                  className="inline-flex items-center justify-center p-1.5 rounded-lg border border-zinc-200 text-zinc-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ================= TAB 3: EVENT CHECK-IN ================= */}
+          {tab === 'checkin' && (
+            <div className="space-y-4">
+              <form
+                onSubmit={handleCreateSession}
+                className="bg-white border border-zinc-200/80 rounded-2xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-wrap items-end gap-3"
+              >
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
+                    เปิดรอบเช็คชื่อใหม่
+                  </label>
+                  <input
+                    type="text"
+                    value={sessionTitle}
+                    onChange={(e) => setSessionTitle(e.target.value)}
+                    placeholder="เช่น ซ้อมสแตนเชียร์วันจริงช่วงเช้า"
+                    className="w-full h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1.5">วันที่</label>
+                  <input
+                    type="date"
+                    value={sessionDate}
+                    onChange={(e) => setSessionDate(e.target.value)}
+                    className="h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="h-10 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer"
+                >
+                  สร้างรอบใหม่
+                </button>
+              </form>
+
+              <CheckInWorkspace
+                initialStudents={students}
+                sessions={sessions}
+                activeSession={activeSession}
+                departments={departments}
+                profile={profile}
+                sourceMode={stats?.sourceMode || 'legacy-readonly'}
+              />
+            </div>
+          )}
+
+          {/* ================= TAB 4: DUPLICATES ================= */}
+          {tab === 'duplicates' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-display font-semibold text-base text-zinc-900">
+                    ศูนย์ตรวจสอบรายชื่อซ้ำซ้อน
+                  </h2>
+                  <p className="text-xs text-zinc-500">
+                    พบรายการซ้ำ {dupeEntries.length} คน สามารถกด &quot;คงฝ่ายนี้&quot; เพื่อเก็บสิทธิ์ที่ถูกต้อง
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => reloadAll(true)}
+                  className="h-9 px-3.5 rounded-xl border border-zinc-200 bg-white text-xs font-medium text-zinc-700 hover:bg-zinc-50 cursor-pointer"
+                >
+                  รีเฟรชข้อมูล
+                </button>
+              </div>
+
+              {dupeEntries.length === 0 ? (
+                <div className="bg-white border border-zinc-200/80 rounded-2xl p-10 text-center space-y-2">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                  <div className="font-semibold text-sm text-zinc-900">ไม่พบรายการซ้ำซ้อน</div>
+                  <p className="text-xs text-zinc-500">
+                    สมาชิกทุกคนมีรายชื่ออยู่เพียงฝ่ายเดียวอย่างถูกต้อง
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {dupeEntries.map(([key, records]) => {
+                    const first = records[0];
+                    return (
+                      <div
+                        key={key}
+                        className="bg-white border border-zinc-200/80 border-l-4 border-l-amber-500 rounded-2xl p-4 space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-sm text-zinc-900">
+                              {first.fullName} {first.nickname ? `(${first.nickname})` : ''}
+                            </div>
+                            <div className="text-xs text-zinc-500 tabular-nums">
+                              ห้อง {first.classRoom} · เลขที่ {first.numberLabel}
+                            </div>
+                          </div>
+                          <span className="px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold">
+                            ซ้ำ {records.length} รายการ
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {records.map((rec) => (
+                            <div
+                              key={rec.id}
+                              className="flex items-center justify-between gap-3 bg-[#FAFAFB] border border-zinc-200/70 rounded-xl px-3.5 py-2.5 text-xs"
+                            >
+                              <div>
+                                <div className="font-semibold text-zinc-900">
+                                  {rec.roleCategory === 'central'
+                                    ? rec.centralPosition || rec.position
+                                    : `${rec.department || '-'}${rec.sportType ? ` (${rec.sportType})` : ''} · ${rec.position}`}
+                                </div>
+                                <div className="text-[11px] text-zinc-500 tabular-nums">
+                                  {rec.timestamp
+                                    ? new Date(rec.timestamp).toLocaleString('th-TH')
+                                    : 'ไม่ระบุเวลา'}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleResolveDuplicate(key, rec)}
+                                className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer shrink-0"
+                              >
+                                คงฝ่ายนี้
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ================= TAB 5: QUOTAS ================= */}
+          {tab === 'quotas' && (
+            <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] space-y-4">
+              <div>
+                <h2 className="font-display font-semibold text-base text-zinc-900">
+                  ตั้งค่าโควตาและสถานะรายฝ่ายงาน
+                </h2>
+                <p className="text-xs text-zinc-500">
+                  กำหนดจำนวนคนสูงสุดหรือสลับสถานะเปิด/ปิดของแต่ละฝ่ายงาน
+                </p>
+              </div>
+              <div className="divide-y divide-zinc-100">
+                {departments.map((d) => {
+                  const count = students.filter((s) => s.departmentName === d.name).length;
+                  return (
+                    <div
+                      key={d.id}
+                      className="py-3.5 flex flex-wrap items-center justify-between gap-3"
+                    >
+                      <div>
+                        <div className="font-semibold text-sm text-zinc-900">{d.name}</div>
+                        <div className="text-xs text-zinc-500 tabular-nums">
+                          สมาชิกปัจจุบัน {count} คน
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <label className="text-xs text-zinc-500 flex items-center gap-2">
+                          โควตา:
+                          <input
+                            type="number"
+                            min={1}
+                            placeholder="ไม่จำกัด"
+                            defaultValue={d.maxCapacity ?? ''}
+                            onBlur={(e) => {
+                              const raw = e.target.value.trim();
+                              const nextVal = raw === '' ? null : parseInt(raw, 10);
+                              if (nextVal !== d.maxCapacity) {
+                                handleUpdateDepartment(d.id, {
+                                  maxCapacity: Number.isNaN(nextVal) ? null : nextVal,
+                                });
+                              }
+                            }}
+                            className="w-24 h-9 px-2.5 rounded-xl border border-zinc-200 text-center text-sm tabular-nums outline-none focus:border-rose-500"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateDepartment(d.id, { isClosed: !d.isClosed })}
+                          className={`h-9 px-3.5 rounded-xl text-xs font-semibold border cursor-pointer transition-colors ${
+                            d.isClosed
+                              ? 'bg-red-50 text-red-700 border-red-200'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          }`}
+                        >
+                          {d.isClosed ? 'ปิดอยู่ (แตะเปิด)' : 'เปิดอยู่ (แตะปิด)'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ================= TAB 6: POLICIES, PIN & EXCEL ================= */}
+          {tab === 'policies' && (
+            <div className="space-y-4">
+              <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] space-y-3">
+                <h2 className="font-display font-semibold text-base text-zinc-900">
+                  กฎการจัดการข้อมูลคณะสี
+                </h2>
+                <div className="divide-y divide-zinc-100">
+                  {(
+                    [
+                      {
+                        key: 'strictOnePerson',
+                        title: 'ล็อกสิทธิ์ 1 คนต่อ 1 ฝ่ายงาน (Strict 1-Person Policy)',
+                        desc: 'ป้องกันไม่ให้มีรายชื่อห้องและเลขที่เดียวกันอยู่ข้ามฝ่าย',
+                      },
+                      {
+                        key: 'lockM1Registration',
+                        title: 'จัดน้อง ม.1 ประจำฝ่ายสแตนเชียร์อัตโนมัติ',
+                        desc: 'ระบุฝ่ายสแตนเชียร์เป็นค่าตั้งต้นสำหรับนักเรียนชั้น ม.1',
+                      },
+                      {
+                        key: 'm1StandOnly',
+                        title: 'สงวนสิทธิ์ฝ่ายสแตนเชียร์เฉพาะ ม.1',
+                        desc: 'แสดงสถานะฝ่ายสแตนเชียร์สำหรับน้อง ม.1 เป็นหลัก',
+                      },
+                    ] as const
+                  ).map((item) => {
+                    const enabled = policies[item.key];
+                    return (
+                      <div
+                        key={item.key}
+                        className="py-3.5 flex items-center justify-between gap-4"
+                      >
+                        <div>
+                          <div className="font-semibold text-sm text-zinc-900">{item.title}</div>
+                          <div className="text-xs text-zinc-500 mt-0.5">{item.desc}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePolicy(item.key, !enabled)}
+                          className={`h-9 px-3.5 rounded-xl text-xs font-semibold shrink-0 cursor-pointer transition-colors ${
+                            enabled
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+                          }`}
+                        >
+                          {enabled ? 'เปิดใช้งาน' : 'ปิดอยู่'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form
+                  onSubmit={handleUpdatePin}
+                  className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] space-y-3"
+                >
+                  <div className="font-semibold text-sm text-zinc-900">เปลี่ยนรหัส PIN Admin</div>
+                  <p className="text-xs text-zinc-500">
+                    รหัส PIN ปัจจุบัน: <strong className="text-rose-600">{pinDisplay}</strong>
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={newPinInput}
+                      onChange={(e) => setNewPinInput(e.target.value.replace(/\D/g, ''))}
+                      placeholder="กรอก PIN 4 หลักใหม่"
+                      className="flex-1 h-10 px-3 rounded-xl border border-zinc-200 text-sm outline-none focus:border-rose-500"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      className="h-10 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold cursor-pointer"
+                    >
+                      บันทึก PIN
+                    </button>
+                  </div>
+                </form>
+
+                <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-col justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-sm text-zinc-900">ส่งออกรายงาน Excel (.xlsx)</div>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      ดาวน์โหลดรายชื่อทั้งหมด สรุปตามห้อง ฝ่าย และประวัติเช็คชื่อ 5 ชีต
+                    </p>
+                  </div>
+                  <a
+                    href="/api/admin/export-excel"
+                    className="h-10 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>ดาวน์โหลดไฟล์ Excel (.xlsx)</span>
+                  </a>
+                </div>
+              </div>
+
+              {auditLogs.length > 0 && (
+                <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] space-y-2.5">
+                  <div className="font-semibold text-sm text-zinc-900">ประวัติการแก้ไขล่าสุด</div>
+                  <div className="max-h-56 overflow-y-auto divide-y divide-zinc-100 text-xs">
+                    {auditLogs.slice(0, 20).map((log) => (
+                      <div key={log.id} className="py-2.5 flex items-center justify-between gap-2">
+                        <span className="font-medium text-zinc-800">
+                          {log.action} · {log.actorName || 'System'}
+                        </span>
+                        <span className="text-zinc-400 tabular-nums shrink-0">
+                          {new Date(log.createdAt).toLocaleString('th-TH')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* ================= MOBILE FIXED BOTTOM TAB BAR ================= */}
+      <nav
+        aria-label="แถบนำทาง Admin มือถือ"
+        className="no-print lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-zinc-200/80 grid grid-cols-4 h-16"
+      >
+        {mobileBottomItems.map((item) => {
+          const Icon = item.icon;
+          const active = tab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setTab(item.id)}
+              className={`flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors cursor-pointer ${
+                active ? 'text-rose-600 font-semibold' : 'text-zinc-500'
+              }`}
+            >
+              <Icon className="w-4 h-4" strokeWidth={active ? 2 : 1.75} />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* ================= ADD STUDENT MODAL ================= */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-[2px] flex items-end sm:items-center justify-center sm:p-4">
           <form
             onSubmit={handleAddStudent}
-            className="w-full max-w-lg bg-white rounded-xl border border-[#CBD5E1] p-5 space-y-3 shadow-xl"
+            className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl border border-zinc-200 p-5 sm:p-6 space-y-3.5 shadow-2xl max-h-[90dvh] overflow-y-auto"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
-              <h3 className="font-bold text-base">เพิ่มรายชื่อนักเรียนใหม่ (Admin)</h3>
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+              <h3 className="font-display font-semibold text-base text-zinc-900">
+                เพิ่มรายชื่อนักเรียนใหม่
+              </h3>
               <button
                 type="button"
                 aria-label="ปิดหน้าต่างเพิ่มนักเรียน"
                 onClick={() => setShowAddModal(false)}
-                className="cursor-pointer"
+                className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <input
-                type="text"
-                placeholder="ชื่อ-นามสกุล *"
-                value={newStudent.fullName}
-                onChange={(e) => setNewStudent({ ...newStudent, fullName: e.target.value })}
-                className="sm:col-span-2 min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-                required
-              />
-              <input
-                type="text"
-                placeholder="ชื่อเล่น"
-                value={newStudent.nickname}
-                onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })}
-                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-2">
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="sm:col-span-2">
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">
+                  ชื่อ-นามสกุล *
+                </label>
+                <input
+                  type="text"
+                  placeholder="ระบุชื่อ-นามสกุล"
+                  value={newStudent.fullName}
+                  onChange={(e) => setNewStudent({ ...newStudent, fullName: e.target.value })}
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm"
+                  required
+                />
+              </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ห้องเรียน</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">ชื่อเล่น</label>
+                <input
+                  type="text"
+                  placeholder="ชื่อเล่น"
+                  value={newStudent.nickname}
+                  onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })}
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5">
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">ห้องเรียน</label>
                 <select
                   value={newStudent.classRoom}
                   onChange={(e) => setNewStudent({ ...newStudent, classRoom: e.target.value })}
-                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                 >
                   {ALL_ROOMS.map((r) => (
                     <option key={r} value={r}>
@@ -1291,11 +1618,11 @@ export function StandaloneAdminApp({
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">เลขที่</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">เลขที่</label>
                 <select
                   value={newStudent.numberLabel}
                   onChange={(e) => setNewStudent({ ...newStudent, numberLabel: e.target.value })}
-                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                 >
                   {NUMBERS.map((n) => (
                     <option key={n} value={n}>
@@ -1305,20 +1632,20 @@ export function StandaloneAdminApp({
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">รหัสนักเรียน (ถ้ามี)</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">รหัส (ถ้ามี)</label>
                 <input
                   type="text"
-                  placeholder="เช่น 69001"
+                  placeholder="69001"
                   value={newStudent.studentCode}
                   onChange={(e) => setNewStudent({ ...newStudent, studentCode: e.target.value })}
-                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">หมวดบทบาท</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">หมวดบทบาท</label>
                 <select
                   value={newStudent.roleCategory}
                   onChange={(e) =>
@@ -1327,22 +1654,24 @@ export function StandaloneAdminApp({
                       roleCategory: e.target.value as 'department' | 'central',
                     })
                   }
-                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                 >
                   <option value="department">คณะทำงานฝ่าย (8 ฝ่าย)</option>
-                  <option value="central">คณะกรรมการบริหารส่วนกลาง</option>
+                  <option value="central">คณะกรรมการส่วนกลาง</option>
                 </select>
               </div>
 
               {newStudent.roleCategory === 'central' ? (
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ตำแหน่งส่วนกลาง</label>
+                  <label className="block text-[11px] font-semibold text-zinc-500 mb-1">
+                    ตำแหน่งส่วนกลาง
+                  </label>
                   <select
                     value={newStudent.centralPosition}
                     onChange={(e) =>
                       setNewStudent({ ...newStudent, centralPosition: e.target.value })
                     }
-                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                    className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                   >
                     {CENTRAL_POSITIONS.map((pos) => (
                       <option key={pos} value={pos}>
@@ -1353,13 +1682,13 @@ export function StandaloneAdminApp({
                 </div>
               ) : (
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ฝ่ายงาน</label>
+                  <label className="block text-[11px] font-semibold text-zinc-500 mb-1">ฝ่ายงาน</label>
                   <select
                     value={newStudent.departmentName}
                     onChange={(e) =>
                       setNewStudent({ ...newStudent, departmentName: e.target.value })
                     }
-                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                    className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                   >
                     {departments.map((d) => (
                       <option key={d.id} value={d.name}>
@@ -1372,13 +1701,15 @@ export function StandaloneAdminApp({
             </div>
 
             {newStudent.roleCategory === 'department' && (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ตำแหน่งในฝ่าย</label>
+                  <label className="block text-[11px] font-semibold text-zinc-500 mb-1">
+                    ตำแหน่งในฝ่าย
+                  </label>
                   <select
                     value={newStudent.position}
                     onChange={(e) => setNewStudent({ ...newStudent, position: e.target.value })}
-                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                    className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                   >
                     <option value="ประธานฝ่าย">ประธานฝ่าย</option>
                     <option value="รองประธานฝ่ายสวัสดิการ">รองประธานฝ่ายสวัสดิการ</option>
@@ -1391,11 +1722,13 @@ export function StandaloneAdminApp({
                 </div>
                 {newStudent.departmentName === 'ฝ่ายกีฬา' && (
                   <div>
-                    <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ประเภทกีฬา</label>
+                    <label className="block text-[11px] font-semibold text-zinc-500 mb-1">
+                      ประเภทกีฬา
+                    </label>
                     <select
                       value={newStudent.sportType}
                       onChange={(e) => setNewStudent({ ...newStudent, sportType: e.target.value })}
-                      className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                      className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                     >
                       {SPORT_TYPES.map((sp) => (
                         <option key={sp} value={sp}>
@@ -1410,58 +1743,74 @@ export function StandaloneAdminApp({
 
             <button
               type="submit"
-              className="w-full min-h-[40px] rounded-lg bg-[#BE185D] text-white text-sm font-semibold cursor-pointer"
+              className="w-full h-11 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition-colors cursor-pointer"
             >
-              บันทึกนักเรียน
+              บันทึกนักเรียนใหม่
             </button>
           </form>
         </div>
       )}
 
-      {/* Edit Student Modal */}
+      {/* ================= EDIT STUDENT MODAL ================= */}
       {editingStudent && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-[2px] flex items-end sm:items-center justify-center sm:p-4">
           <form
             onSubmit={handleSaveEditStudent}
-            className="w-full max-w-lg bg-white rounded-xl border border-[#CBD5E1] p-5 space-y-3 shadow-xl"
+            className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl border border-zinc-200 p-5 sm:p-6 space-y-3.5 shadow-2xl max-h-[90dvh] overflow-y-auto"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
-              <h3 className="font-bold text-base">แก้ไขข้อมูลและฝ่ายงานนักเรียน</h3>
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+              <h3 className="font-display font-semibold text-base text-zinc-900">
+                แก้ไขข้อมูลและฝ่ายงานนักเรียน
+              </h3>
               <button
                 type="button"
                 aria-label="ปิดหน้าต่างแก้ไขนักเรียน"
                 onClick={() => setEditingStudent(null)}
-                className="cursor-pointer"
+                className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <input
-                type="text"
-                value={editingStudent.fullName}
-                onChange={(e) => setEditingStudent({ ...editingStudent, fullName: e.target.value })}
-                placeholder="ชื่อ-นามสกุล *"
-                className="sm:col-span-2 min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-                required
-              />
-              <input
-                type="text"
-                value={editingStudent.nickname}
-                onChange={(e) => setEditingStudent({ ...editingStudent, nickname: e.target.value })}
-                placeholder="ชื่อเล่น"
-                className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-2">
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="sm:col-span-2">
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">
+                  ชื่อ-นามสกุล *
+                </label>
+                <input
+                  type="text"
+                  value={editingStudent.fullName}
+                  onChange={(e) =>
+                    setEditingStudent({ ...editingStudent, fullName: e.target.value })
+                  }
+                  placeholder="ชื่อ-นามสกุล *"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm"
+                  required
+                />
+              </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ห้องเรียน</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">ชื่อเล่น</label>
+                <input
+                  type="text"
+                  value={editingStudent.nickname}
+                  onChange={(e) =>
+                    setEditingStudent({ ...editingStudent, nickname: e.target.value })
+                  }
+                  placeholder="ชื่อเล่น"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5">
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">ห้องเรียน</label>
                 <select
                   value={editingStudent.classRoom}
                   onChange={(e) =>
                     setEditingStudent({ ...editingStudent, classRoom: e.target.value })
                   }
-                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                 >
                   {ALL_ROOMS.map((r) => (
                     <option key={r} value={r}>
@@ -1471,13 +1820,13 @@ export function StandaloneAdminApp({
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">เลขที่</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">เลขที่</label>
                 <select
                   value={editingStudent.numberLabel}
                   onChange={(e) =>
                     setEditingStudent({ ...editingStudent, numberLabel: e.target.value })
                   }
-                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                 >
                   {NUMBERS.map((n) => (
                     <option key={n} value={n}>
@@ -1487,21 +1836,23 @@ export function StandaloneAdminApp({
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">รหัสนักเรียน</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">รหัส</label>
                 <input
                   type="text"
                   value={editingStudent.studentCode || ''}
                   onChange={(e) =>
                     setEditingStudent({ ...editingStudent, studentCode: e.target.value })
                   }
-                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ฝ่ายงาน / ส่วนกลาง</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 mb-1">
+                  ฝ่ายงาน / ส่วนกลาง
+                </label>
                 <select
                   value={
                     editingStudent.roleCategory === 'central'
@@ -1527,7 +1878,7 @@ export function StandaloneAdminApp({
                       });
                     }
                   }}
-                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                  className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                 >
                   <option value="__CENTRAL__">คณะกรรมการบริหารส่วนกลาง</option>
                   {departments.map((d) => (
@@ -1540,7 +1891,9 @@ export function StandaloneAdminApp({
 
               {editingStudent.roleCategory === 'central' ? (
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ตำแหน่งส่วนกลาง</label>
+                  <label className="block text-[11px] font-semibold text-zinc-500 mb-1">
+                    ตำแหน่งส่วนกลาง
+                  </label>
                   <select
                     value={editingStudent.centralPosition || editingStudent.position}
                     onChange={(e) =>
@@ -1550,7 +1903,7 @@ export function StandaloneAdminApp({
                         position: e.target.value,
                       })
                     }
-                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                    className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                   >
                     {CENTRAL_POSITIONS.map((pos) => (
                       <option key={pos} value={pos}>
@@ -1561,7 +1914,9 @@ export function StandaloneAdminApp({
                 </div>
               ) : (
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ตำแหน่งในฝ่าย</label>
+                  <label className="block text-[11px] font-semibold text-zinc-500 mb-1">
+                    ตำแหน่งในฝ่าย
+                  </label>
                   <input
                     type="text"
                     list="admin-role-suggestions"
@@ -1569,7 +1924,7 @@ export function StandaloneAdminApp({
                     onChange={(e) =>
                       setEditingStudent({ ...editingStudent, position: e.target.value })
                     }
-                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                    className="w-full h-10 px-3 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm"
                     required
                   />
                   <datalist id="admin-role-suggestions">
@@ -1588,13 +1943,15 @@ export function StandaloneAdminApp({
             {editingStudent.roleCategory === 'department' &&
               editingStudent.departmentName === 'ฝ่ายกีฬา' && (
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#64748B] mb-1">ประเภทกีฬา</label>
+                  <label className="block text-[11px] font-semibold text-zinc-500 mb-1">
+                    ประเภทกีฬา
+                  </label>
                   <select
                     value={editingStudent.sportType || SPORT_TYPES[0]}
                     onChange={(e) =>
                       setEditingStudent({ ...editingStudent, sportType: e.target.value })
                     }
-                    className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-sm"
+                    className="w-full h-10 px-2.5 rounded-xl border border-zinc-200 focus:border-rose-500 outline-none text-sm bg-white"
                   >
                     {SPORT_TYPES.map((sp) => (
                       <option key={sp} value={sp}>
@@ -1607,7 +1964,7 @@ export function StandaloneAdminApp({
 
             <button
               type="submit"
-              className="w-full min-h-[40px] rounded-lg bg-[#BE185D] text-white text-sm font-semibold cursor-pointer"
+              className="w-full h-11 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition-colors cursor-pointer"
             >
               บันทึกการแก้ไข
             </button>
