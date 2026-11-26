@@ -368,7 +368,7 @@ export async function syncLegacyStudentsIntoStore(force = false): Promise<LiveSt
     try {
       const res = await fetch(LEGACY_GAS_API_URL, {
         headers: { Accept: 'application/json' },
-        cache: 'no-store',
+        ...(force ? { cache: 'no-store' as const } : { next: { revalidate: 60 } }),
       });
       if (!res.ok) return;
       const raw = await res.json();

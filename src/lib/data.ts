@@ -54,7 +54,7 @@ async function fetchLegacyStudentsReadOnly(): Promise<StudentRecord[]> {
   try {
     const res = await fetch(LEGACY_GAS_API_URL, {
       headers: { Accept: 'application/json' },
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (!res.ok) return legacyCache?.students ?? [];
     const raw = await res.json();

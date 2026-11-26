@@ -1,13 +1,22 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { ArrowUpRight } from 'lucide-react';
-import { ClassroomsBrowser } from '@/components/classrooms/ClassroomsBrowser';
-import { DepartmentsBrowser } from '@/components/departments/DepartmentsBrowser';
 import { HomeLegacyTabs } from '@/components/home/HomeLegacyTabs';
 import { useHomeView } from '@/components/home/HomeViewContext';
 import { SHOP_URL } from '@/lib/constants';
 import type { CheckInSessionRecord, DepartmentRecord, StudentWithCheckIn } from '@/lib/types';
+
+const DepartmentsBrowser = dynamic(
+  () => import('@/components/departments/DepartmentsBrowser').then((m) => m.DepartmentsBrowser),
+  { ssr: false }
+);
+
+const ClassroomsBrowser = dynamic(
+  () => import('@/components/classrooms/ClassroomsBrowser').then((m) => m.ClassroomsBrowser),
+  { ssr: false }
+);
 
 interface UnifiedHomeWorkspaceProps {
   students: StudentWithCheckIn[];
@@ -92,7 +101,6 @@ export function UnifiedHomeWorkspace({
                   aria-hidden="true"
                   loading="eager"
                   decoding="async"
-                  fetchPriority="high"
                   className="absolute bottom-[calc(100%-44px)] min-[390px]:bottom-[calc(100%-50px)] sm:bottom-[calc(100%-64px)] lg:bottom-[calc(100%-122px)] -left-[17.73%] w-[137.5%] max-w-none h-auto pointer-events-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)]"
                 />
               </div>
@@ -139,7 +147,6 @@ function JerseyCardInner() {
         alt="เสื้อคณะสีชมพู อยุธยา 2569"
         loading="eager"
         decoding="async"
-        fetchPriority="high"
         className="w-full h-[84%] object-cover object-top drop-shadow-[8px_14px_10px_rgba(0,0,0,0.3)] transition-transform duration-300 ease-out group-hover:scale-[1.03]"
       />
       <div className="absolute inset-x-0 bottom-0 h-[82px] min-[390px]:h-[92px] sm:h-[103px] flex items-end px-5 min-[390px]:px-7 pb-4 min-[390px]:pb-5">

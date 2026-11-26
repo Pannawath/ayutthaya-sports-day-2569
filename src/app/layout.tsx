@@ -2,19 +2,18 @@ import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans_Thai, Prompt } from 'next/font/google';
 import { HomeViewProvider } from '@/components/home/HomeViewContext';
 import { AppShell } from '@/components/layout/AppShell';
-import { getCurrentUserProfile } from '@/lib/auth';
 import './globals.css';
 
 const prompt = Prompt({
   subsets: ['thai', 'latin'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['500', '600', '700'],
   variable: '--font-prompt',
   display: 'swap',
 });
 
 const ibmThai = IBM_Plex_Sans_Thai({
   subsets: ['thai', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-ibm-thai',
   display: 'swap',
 });
@@ -31,18 +30,16 @@ export const viewport: Viewport = {
   themeColor: '#B32151',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const initialProfile = await getCurrentUserProfile();
-
   return (
     <html lang="th" className={`${prompt.variable} ${ibmThai.variable}`}>
       <body className="antialiased selection:bg-pinkteam-magenta selection:text-white">
         <HomeViewProvider>
-          <AppShell initialProfile={initialProfile}>{children}</AppShell>
+          <AppShell>{children}</AppShell>
         </HomeViewProvider>
       </body>
     </html>
