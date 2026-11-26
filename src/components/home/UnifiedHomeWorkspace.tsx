@@ -112,15 +112,15 @@ export function UnifiedHomeWorkspace({
 
             {/* Right / Center Featured "สั่งจองเสื้อ" Card matching Figma Arch Geometry */}
             <div className="lg:col-span-5 relative z-10 px-5 min-[390px]:px-7 sm:px-8 lg:px-0 mt-2.5 min-[390px]:mt-3 lg:mt-0">
-              {/* Mobile White Calligraphic "คณะ อยุธยา" floating directly in top-right dark space of card */}
-              <div className="lg:hidden absolute -top-12 min-[390px]:-top-14 sm:-top-16 right-0 min-[390px]:-right-2 z-30 pointer-events-none">
+              {/* Mobile White Calligraphic "คณะ อยุธยา" floating across hero-card seam */}
+              <div className="lg:hidden absolute -top-[116px] min-[390px]:-top-[128px] sm:-top-[146px] -right-4 min-[390px]:-right-6 sm:-right-4 z-30 pointer-events-none">
                 <img
                   src="/images/figma/calligraphy-ayutthaya.webp"
                   alt="คณะ อยุธยา"
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
-                  className="w-[290px] min-[390px]:w-[330px] sm:w-[390px] max-w-none h-auto object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.75)] drop-shadow-[0_16px_28px_rgba(31,18,22,0.7)]"
+                  className="w-[345px] min-[390px]:w-[385px] sm:w-[440px] max-w-none h-auto object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.75)] drop-shadow-[0_16px_28px_rgba(31,18,22,0.7)]"
                 />
               </div>
               <a
