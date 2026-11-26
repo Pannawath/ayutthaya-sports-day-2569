@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import React, { useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Building2,
@@ -12,6 +11,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { useHomeView, type HomeView } from '@/components/home/HomeViewContext';
 import type { UserProfile } from '@/lib/types';
 
 interface AppShellProps {
@@ -19,43 +19,45 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
-const STUDENT_NAV_LINKS = [
-  { href: '/', label: 'หน้าหลัก', icon: Home, fullPage: false },
-  { href: '/departments', label: 'ฝ่ายงาน', icon: Building2, fullPage: false },
-  { href: '/classrooms', label: 'ห้องเรียน', icon: Users, fullPage: false },
+const STUDENT_NAV_LINKS: Array<
+  | { view: HomeView; label: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; fullPage?: false }
+  | { href: string; label: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; fullPage: true }
+> = [
+  { view: 'home', label: 'หน้าหลัก', icon: Home },
+  { view: 'departments', label: 'ฝ่ายงาน', icon: Building2 },
+  { view: 'classrooms', label: 'ห้องเรียน', icon: Users },
   { href: '/shop', label: 'สั่งจองเสื้อ', icon: Shirt, fullPage: true },
 ];
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { activeView, openView } = useHomeView();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [optimisticSlot, setOptimisticSlot] = useState<number | null>(null);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setOptimisticSlot(null);
-  }, [pathname]);
 
   // Separate standalone /admin website completely from the public student shell
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     return <>{children}</>;
   }
 
-  const isHome = pathname === '/';
-  const routeSlot = pathname.startsWith('/departments')
-    ? 0
-    : pathname.startsWith('/classrooms')
-      ? 2
-      : 1;
-  const activeSlot = optimisticSlot ?? routeSlot;
+  const isHomeRoute = pathname === '/';
+  const activeSlot =
+    activeView === 'departments' ? 0 : activeView === 'classrooms' ? 2 : 1;
 
-  const mobileBottomTabs = [
+  const mobileBottomTabs: Array<{
+    slot: number;
+    view: HomeView;
+    label: string;
+    icon: string;
+    iconClass: string;
+    hoverRotate: string;
+  }> = [
     {
       slot: 0,
-      href: '/departments',
+      view: 'departments',
       label: 'ฝ่ายงาน',
       icon: '/images/figma/icon-register.webp',
       iconClass: 'w-8 h-9',
@@ -63,7 +65,7 @@ export function AppShell({ children }: AppShellProps) {
     },
     {
       slot: 1,
-      href: '/',
+      view: 'home',
       label: 'หน้าหลัก',
       icon: '/images/figma/icon-home.webp',
       iconClass: 'w-10 h-10',
@@ -71,7 +73,7 @@ export function AppShell({ children }: AppShellProps) {
     },
     {
       slot: 2,
-      href: '/classrooms',
+      view: 'classrooms',
       label: 'ห้องเรียน',
       icon: '/images/figma/icon-directory.webp',
       iconClass: 'w-9 h-9',
@@ -91,8 +93,8 @@ export function AppShell({ children }: AppShellProps) {
     tapTimerRef.current = setTimeout(() => {
       tapCountRef.current = 0;
     }, 1200);
-    if (goHomeIfNotHome && !isHome) {
-      router.push('/');
+    if (goHomeIfNotHome && (!isHomeRoute || activeView !== 'home')) {
+      openView('home');
     }
   }
 
@@ -144,26 +146,40 @@ export function AppShell({ children }: AppShellProps) {
 
             <nav className="flex items-center gap-1" aria-label="เมนูหลัก">
               {STUDENT_NAV_LINKS.map((item) => {
-                const active =
-                  item.href === '/'
-                    ? pathname === '/'
-                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 const Icon = item.icon;
-                const cls = `inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer ${
-                  active
-                    ? 'bg-pinkteam-magenta text-white'
-                    : 'text-white/90 hover:text-white hover:bg-white/10'
-                }`;
-                return item.fullPage ? (
-                  <a key={item.href} href={item.href} className={cls}>
+                if (item.fullPage) {
+                  const active = pathname === item.href;
+                  return (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer ${
+                        active
+                          ? 'bg-pinkteam-magenta text-white'
+                          : 'text-white/90 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                      <span>{item.label}</span>
+                    </a>
+                  );
+                }
+
+                const active = isHomeRoute && activeView === item.view;
+                return (
+                  <button
+                    key={item.view}
+                    type="button"
+                    onClick={() => openView(item.view)}
+                    className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer ${
+                      active
+                        ? 'bg-pinkteam-magenta text-white'
+                        : 'text-white/90 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
                     <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
                     <span>{item.label}</span>
-                  </a>
-                ) : (
-                  <Link key={item.href} href={item.href} className={cls}>
-                    <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                    <span>{item.label}</span>
-                  </Link>
+                  </button>
                 );
               })}
             </nav>
@@ -240,32 +256,43 @@ export function AppShell({ children }: AppShellProps) {
               <nav className="mt-4 flex flex-col gap-1">
                 {STUDENT_NAV_LINKS.map((item) => {
                   const Icon = item.icon;
-                  const active = pathname === item.href;
-                  const cls = `flex items-center gap-3 min-h-[42px] px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer ${
-                    active
-                      ? 'bg-pinkteam-magenta text-white'
-                      : 'text-white/85 hover:bg-white/10'
-                  }`;
-                  return item.fullPage ? (
-                    <a
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setDrawerOpen(false)}
-                      className={cls}
+                  if (item.fullPage) {
+                    const active = pathname === item.href;
+                    return (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setDrawerOpen(false)}
+                        className={`flex items-center gap-3 min-h-[42px] px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer ${
+                          active
+                            ? 'bg-pinkteam-magenta text-white'
+                            : 'text-white/85 hover:bg-white/10'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                        <span>{item.label}</span>
+                      </a>
+                    );
+                  }
+
+                  const active = isHomeRoute && activeView === item.view;
+                  return (
+                    <button
+                      key={item.view}
+                      type="button"
+                      onClick={() => {
+                        openView(item.view);
+                        setDrawerOpen(false);
+                      }}
+                      className={`flex items-center gap-3 min-h-[42px] px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer text-left ${
+                        active
+                          ? 'bg-pinkteam-magenta text-white'
+                          : 'text-white/85 hover:bg-white/10'
+                      }`}
                     >
                       <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
                       <span>{item.label}</span>
-                    </a>
-                  ) : (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setDrawerOpen(false)}
-                      className={cls}
-                    >
-                      <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                      <span>{item.label}</span>
-                    </Link>
+                    </button>
                   );
                 })}
               </nav>
@@ -333,15 +360,16 @@ export function AppShell({ children }: AppShellProps) {
               {mobileBottomTabs.map((tab) => {
                 const isActive = activeSlot === tab.slot;
                 return (
-                  <Link
-                    key={tab.href}
-                    href={tab.href}
-                    onClick={() => setOptimisticSlot(tab.slot)}
+                  <button
+                    key={tab.view}
+                    type="button"
+                    onClick={() => openView(tab.view)}
                     className="group relative z-10 h-[94px] mb-1 flex flex-col items-center justify-center gap-1.5 rounded-2xl cursor-pointer select-none"
                   >
                     <img
                       src={tab.icon}
                       alt={tab.label}
+                      decoding="async"
                       className={`${tab.iconClass} object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.4)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                         isActive
                           ? '-translate-y-1 scale-105 opacity-100'
@@ -355,7 +383,7 @@ export function AppShell({ children }: AppShellProps) {
                     >
                       {tab.label}
                     </span>
-                  </Link>
+                  </button>
                 );
               })}
             </div>

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans_Thai, Prompt } from 'next/font/google';
+import { HomeViewProvider } from '@/components/home/HomeViewContext';
 import { AppShell } from '@/components/layout/AppShell';
 import { getCurrentUserProfile } from '@/lib/auth';
 import './globals.css';
@@ -40,7 +41,9 @@ export default async function RootLayout({
   return (
     <html lang="th" className={`${prompt.variable} ${ibmThai.variable}`}>
       <body className="antialiased selection:bg-pinkteam-magenta selection:text-white">
-        <AppShell initialProfile={initialProfile}>{children}</AppShell>
+        <HomeViewProvider>
+          <AppShell initialProfile={initialProfile}>{children}</AppShell>
+        </HomeViewProvider>
       </body>
     </html>
   );

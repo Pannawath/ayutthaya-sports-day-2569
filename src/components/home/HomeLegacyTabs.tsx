@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import Link from 'next/link';
 import { ArrowUpRight, Building2, Search } from 'lucide-react';
+import { useHomeView } from '@/components/home/HomeViewContext';
 import { CENTRAL_POSITIONS, GRADES, NO_STAFF_DEPARTMENTS, SPORT_TYPES } from '@/lib/constants';
 import type { DepartmentRecord, StudentRecord } from '@/lib/types';
 
@@ -14,6 +14,7 @@ interface HomeLegacyTabsProps {
 }
 
 export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
+  const { openView } = useHomeView();
   const [activeTab, setActiveTab] = useState<HomeSubTab>('overview');
 
   const tabIndex = activeTab === 'overview' ? 0 : activeTab === 'structure' ? 1 : 2;
@@ -50,7 +51,7 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Intro Heading + Directory Shortcuts + 4 Stat Pills (No Registration CTA) */}
+      {/* Intro Heading + Directory Shortcuts + 4 Stat Pills */}
       <section className="editorial-panel rounded-2xl p-5 sm:p-6 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -62,20 +63,22 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <Link
-              href="/departments"
+            <button
+              type="button"
+              onClick={() => openView('departments', { dept: null })}
               className="btn-animated min-h-[42px] inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-display font-medium text-sm cursor-pointer"
             >
               <Building2 className="w-4 h-4" strokeWidth={1.5} />
               <span>ดูรายชื่อตามฝ่าย</span>
-            </Link>
-            <Link
-              href="/classrooms"
+            </button>
+            <button
+              type="button"
+              onClick={() => openView('classrooms', { grade: 'ALL', room: '' })}
               className="btn-animated min-h-[42px] inline-flex items-center gap-2 px-4 py-2 rounded-lg editorial-raised hover:bg-black/5 text-pinkteam-charcoal font-display font-medium text-sm cursor-pointer"
             >
               <Search className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
               <span>ดูรายชื่อตามห้อง</span>
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -162,13 +165,14 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <Link
-                      href={`/classrooms?grade=${encodeURIComponent(g.grade)}`}
-                      className="font-display font-semibold text-base text-pinkteam-charcoal hover:text-pinkteam-magenta inline-flex items-center gap-1.5"
+                    <button
+                      type="button"
+                      onClick={() => openView('classrooms', { grade: g.grade, room: '' })}
+                      className="font-display font-semibold text-base text-pinkteam-charcoal hover:text-pinkteam-magenta inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <span>ระดับชั้น {g.grade}</span>
                       <ArrowUpRight className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
-                    </Link>
+                    </button>
                     <span className="text-xs text-pinkteam-secondary tabular-nums">
                       {g.rooms.length} ห้อง
                     </span>
@@ -177,14 +181,15 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
                     {g.rooms.map((room) => {
                       const count = roomCounts.get(room) ?? 0;
                       return (
-                        <Link
+                        <button
                           key={room}
-                          href={`/classrooms?grade=${encodeURIComponent(g.grade)}&room=${encodeURIComponent(room)}`}
-                          className="btn-animated px-2.5 py-1.5 rounded-md editorial-raised hover:border-pinkteam-magenta/40 text-xs font-medium text-pinkteam-charcoal tabular-nums inline-flex items-center gap-1.5"
+                          type="button"
+                          onClick={() => openView('classrooms', { grade: g.grade, room })}
+                          className="btn-animated px-2.5 py-1.5 rounded-md editorial-raised hover:border-pinkteam-magenta/40 text-xs font-medium text-pinkteam-charcoal tabular-nums inline-flex items-center gap-1.5 cursor-pointer"
                         >
                           <span>{room}</span>
                           <span className="text-pinkteam-magenta font-semibold">({count})</span>
-                        </Link>
+                        </button>
                       );
                     })}
                   </div>
@@ -212,13 +217,14 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
                 แตะที่การ์ดฝ่ายงานเพื่อเปิดดูรายชื่อประธาน สตาฟ และสมาชิกทั้งหมดในฝ่ายนั้น
               </p>
             </div>
-            <Link
-              href="/departments"
-              className="text-xs font-semibold text-pinkteam-magenta hover:underline inline-flex items-center gap-1"
+            <button
+              type="button"
+              onClick={() => openView('departments', { dept: null })}
+              className="text-xs font-semibold text-pinkteam-magenta hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
               <span>ดูรายชื่อครบทุกฝ่าย</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
+            </button>
           </div>
 
           <div className="editorial-panel rounded-xl p-4 sm:p-5 space-y-2.5">
@@ -253,12 +259,13 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
                 (s) => s.departmentName === dept.name && s.position === 'ประธานฝ่าย'
               );
               return (
-                <Link
+                <button
                   key={dept.id}
-                  href={`/departments?dept=${encodeURIComponent(dept.name)}`}
-                  className="btn-animated editorial-panel rounded-xl p-4 hover:border-pinkteam-magenta/35 space-y-2 cursor-pointer flex flex-col justify-between"
+                  type="button"
+                  onClick={() => openView('departments', { dept: dept.name })}
+                  className="btn-animated editorial-panel rounded-xl p-4 hover:border-pinkteam-magenta/35 space-y-2 cursor-pointer flex flex-col justify-between text-left"
                 >
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 w-full">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-mono text-pinkteam-muted tabular-nums">
                         {String(idx + 1).padStart(2, '0')}
@@ -274,7 +281,7 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
                       {noStaff ? 'ประธานฝ่าย · สมาชิกฝ่าย' : 'ประธานฝ่าย · สตาฟ · สมาชิก'}
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-black/5 text-xs text-pinkteam-secondary truncate">
+                  <div className="pt-2 border-t border-black/5 text-xs text-pinkteam-secondary truncate w-full">
                     ประธาน:{' '}
                     <strong className="text-pinkteam-charcoal">
                       {president
@@ -282,7 +289,7 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
                         : 'ดูรายชื่อในฝ่าย'}
                     </strong>
                   </div>
-                </Link>
+                </button>
               );
             })}
           </div>
@@ -298,13 +305,14 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
             </div>
             <div className="flex flex-wrap gap-2">
               {SPORT_TYPES.map((sport) => (
-                <Link
+                <button
                   key={sport}
-                  href={`/departments?dept=${encodeURIComponent('ฝ่ายกีฬา')}`}
-                  className="px-3 py-1.5 rounded-lg editorial-raised hover:border-pinkteam-magenta/35 text-xs font-medium text-pinkteam-charcoal"
+                  type="button"
+                  onClick={() => openView('departments', { dept: 'ฝ่ายกีฬา' })}
+                  className="px-3 py-1.5 rounded-lg editorial-raised hover:border-pinkteam-magenta/35 text-xs font-medium text-pinkteam-charcoal cursor-pointer"
                 >
                   {sport}
-                </Link>
+                </button>
               ))}
             </div>
           </div>
@@ -332,17 +340,18 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
                 {departments.map((dept) => {
                   const count = deptCounts.get(dept.name) ?? 0;
                   return (
-                    <Link
+                    <button
                       key={dept.id}
-                      href={`/departments?dept=${encodeURIComponent(dept.name)}`}
-                      className="py-2 flex items-center justify-between text-sm tabular-nums hover:text-pinkteam-magenta"
+                      type="button"
+                      onClick={() => openView('departments', { dept: dept.name })}
+                      className="w-full py-2 flex items-center justify-between text-sm tabular-nums hover:text-pinkteam-magenta cursor-pointer text-left"
                     >
                       <span className="text-pinkteam-charcoal">{dept.name}</span>
                       <span className="font-semibold text-pinkteam-magenta">
                         {count} คน
                         {typeof dept.maxCapacity === 'number' ? ` / ${dept.maxCapacity}` : ''}
                       </span>
-                    </Link>
+                    </button>
                   );
                 })}
               </div>
