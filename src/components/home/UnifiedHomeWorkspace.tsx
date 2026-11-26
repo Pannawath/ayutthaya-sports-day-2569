@@ -97,32 +97,21 @@ export function UnifiedHomeWorkspace({
                 />
               </div>
 
-              {/* Desktop White Calligraphic "คณะ อยุธยา" Script floating on top layer (z-30) */}
-              <div className="hidden lg:block absolute -right-6 -bottom-14 z-30 pointer-events-none">
+              {/* White Calligraphic "คณะ อยุธยา" Script at original Hero position, lifted higher (z-30) */}
+              <div className="absolute -right-6 min-[390px]:-right-8 sm:-right-6 -bottom-4 min-[390px]:-bottom-6 sm:-bottom-10 lg:-bottom-14 z-30 pointer-events-none">
                 <img
                   src="/images/figma/calligraphy-ayutthaya.webp"
                   alt="คณะ อยุธยา"
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
-                  className="w-[510px] max-w-none h-auto object-contain drop-shadow-[0_4px_6px_rgba(31,18,22,0.82)] drop-shadow-[0_14px_24px_rgba(31,18,22,0.55)]"
+                  className="w-[345px] min-[390px]:w-[390px] sm:w-[450px] lg:w-[510px] max-w-none h-auto object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.75)] drop-shadow-[0_16px_28px_rgba(31,18,22,0.7)]"
                 />
               </div>
             </div>
 
             {/* Right / Center Featured "สั่งจองเสื้อ" Card matching Figma Arch Geometry */}
             <div className="lg:col-span-5 relative z-10 px-5 min-[390px]:px-7 sm:px-8 lg:px-0 mt-2.5 min-[390px]:mt-3 lg:mt-0">
-              {/* Mobile White Calligraphic "คณะ อยุธยา" floating across hero-card seam */}
-              <div className="lg:hidden absolute -top-[180px] min-[390px]:-top-[198px] sm:-top-[225px] -right-6 min-[390px]:-right-8 sm:-right-6 z-30 pointer-events-none">
-                <img
-                  src="/images/figma/calligraphy-ayutthaya.webp"
-                  alt="คณะ อยุธยา"
-                  loading="eager"
-                  decoding="async"
-                  fetchPriority="high"
-                  className="w-[400px] min-[390px]:w-[445px] sm:w-[510px] max-w-none h-auto object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.75)] drop-shadow-[0_16px_28px_rgba(31,18,22,0.7)]"
-                />
-              </div>
               <a
                 href={SHOP_URL}
                 className="btn-animated block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[265px] min-[390px]:h-[305px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(31,18,22,0.42)] active:scale-[0.985] cursor-pointer"
