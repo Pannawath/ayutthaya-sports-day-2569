@@ -1,21 +1,18 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
-  Camera,
   CheckCheck,
   ListChecks,
   LogIn,
   Printer,
-  QrCode,
   RotateCcw,
   Search,
   UserCheck,
-  XCircle,
+  X,
 } from 'lucide-react';
 import { PrintableAttendanceSheet } from '@/components/print/PrintableAttendanceSheet';
-import { QrPassModal } from '@/components/qr/QrPassModal';
 import {
   EmptyState,
   ErrorState,
@@ -26,7 +23,6 @@ import { ALL_ROOMS } from '@/lib/constants';
 import type {
   CheckInSessionRecord,
   DepartmentRecord,
-  StudentRecord,
   StudentWithCheckIn,
   UserProfile,
 } from '@/lib/types';
@@ -40,7 +36,7 @@ interface CheckInWorkspaceProps {
   sourceMode: 'supabase' | 'legacy-readonly';
 }
 
-type CheckInTab = 'search' | 'qr' | 'paper';
+type CheckInTab = 'search' | 'paper';
 
 export function CheckInWorkspace({
   initialStudents,
@@ -64,14 +60,6 @@ export function CheckInWorkspace({
     type: 'success' | 'error';
     message: string;
   } | null>(null);
-  const [qrModalStudent, setQrModalStudent] = useState<StudentRecord | null>(null);
-
-  // QR Scanner states
-  const [scannerActive, setScannerActive] = useState(false);
-  const [manualToken, setManualToken] = useState('');
-  const [scannedStudent, setScannedStudent] = useState<StudentWithCheckIn | null>(null);
-  const [autoCheckInOnScan, setAutoCheckInOnScan] = useState(false);
-  const scannerRef = useRef<{ stop: () => Promise<void>; clear: () => void } | null>(null);
 
   // Paper-Sync Bulk Tick states
   const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(new Set());
@@ -90,14 +78,6 @@ export function CheckInWorkspace({
       setStudents(data.students);
     }
   }
-
-  useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => undefined);
-      }
-    };
-  }, []);
 
   const filteredStudents = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -133,13 +113,6 @@ export function CheckInWorkspace({
       }
       setFeedback({ type: 'success', message: `ยกเลิกเช็คชื่อ ${student.fullName} แล้ว` });
       await reloadSessionStudents(selectedSessionId);
-      if (scannedStudent?.id === student.id) {
-        setScannedStudent({
-          ...student,
-          checkedIn: false,
-          checkIn: null,
-        });
-      }
     } catch {
       setFeedback({ type: 'error', message: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' });
     } finally {
@@ -181,75 +154,10 @@ export function CheckInWorkspace({
 
       setFeedback({ type: 'success', message: json.message });
       await reloadSessionStudents(selectedSessionId);
-      if (scannedStudent?.id === student.id) {
-        setScannedStudent({
-          ...student,
-          checkedIn: true,
-          checkIn: json.checkIn,
-        });
-      }
     } catch {
       setFeedback({ type: 'error', message: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' });
     } finally {
       setSubmittingId(null);
-    }
-  }
-
-  async function verifyAndHandleToken(token: string) {
-    setFeedback(null);
-    try {
-      const res = await fetch(
-        `/api/qr/verify?token=${encodeURIComponent(token)}${
-          selectedSessionId ? `&sessionId=${encodeURIComponent(selectedSessionId)}` : ''
-        }`
-      );
-      const data = await res.json();
-      if (!res.ok || !data.valid) {
-        setScannedStudent(null);
-        setFeedback({ type: 'error', message: data.error || 'QR Code ไม่ถูกต้อง' });
-        return;
-      }
-
-      setScannedStudent(data.student);
-      if (autoCheckInOnScan && canCheckIn && !data.student.checkedIn) {
-        await handleConfirmCheckIn(data.student, 'QR');
-      }
-    } catch {
-      setFeedback({ type: 'error', message: 'ไม่สามารถตรวจสอบ QR Code ได้' });
-    }
-  }
-
-  async function startCameraScanner() {
-    setFeedback(null);
-    try {
-      const { Html5Qrcode } = await import('html5-qrcode');
-      const qr = new Html5Qrcode('qr-reader-region');
-      scannerRef.current = qr;
-      setScannerActive(true);
-      await qr.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
-        async (decodedText) => {
-          await qr.stop().catch(() => undefined);
-          setScannerActive(false);
-          setManualToken(decodedText);
-          await verifyAndHandleToken(decodedText);
-        },
-        () => undefined
-      );
-    } catch {
-      setScannerActive(false);
-      setFeedback({
-        type: 'error',
-        message: 'ไม่สามารถเปิดกล้องได้ กรุณาตรวจสอบสิทธิ์กล้องหรือวาง Token QR ด้านล่าง',
-      });
-    }
-  }
-
-  async function stopCameraScanner() {
-    if (scannerRef.current) {
-      await scannerRef.current.stop().catch(() => undefined);
-      setScannerActive(false);
     }
   }
 
@@ -367,8 +275,8 @@ export function CheckInWorkspace({
             <ErrorState message={feedback.message} />
           ))}
 
-        {/* 3 Check-in Method Tabs */}
-        <div className="grid grid-cols-3 gap-1.5 editorial-raised p-1.5 rounded-xl">
+        {/* 2 Check-in Method Tabs */}
+        <div className="grid grid-cols-2 gap-1.5 editorial-raised p-1.5 rounded-xl">
           <button
             type="button"
             onClick={() => {
@@ -387,21 +295,6 @@ export function CheckInWorkspace({
           <button
             type="button"
             onClick={() => {
-              setTab('qr');
-              setFeedback(null);
-            }}
-            className={`min-h-[40px] flex items-center justify-center gap-2 px-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer ${
-              tab === 'qr'
-                ? 'bg-pinkteam-magenta text-white'
-                : 'text-pinkteam-charcoal hover:bg-white/70'
-            }`}
-          >
-            <QrCode className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-            <span>สแกน QR</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
               setTab('paper');
               setFeedback(null);
             }}
@@ -416,153 +309,7 @@ export function CheckInWorkspace({
           </button>
         </div>
 
-        {/* TAB 2: QR SCANNER */}
-        {tab === 'qr' && (
-          <div className="editorial-panel rounded-2xl p-5 sm:p-6 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="font-display font-semibold text-base text-pinkteam-charcoal">
-                  สแกน QR Code ประจำตัวนักเรียน
-                </h2>
-                <p className="text-xs text-pinkteam-secondary">
-                  ตรวจสอบลายเซ็น Token ก่อนเช็คชื่อทุกครั้ง
-                </p>
-              </div>
-              <label className="inline-flex items-center gap-2 text-xs font-medium text-pinkteam-charcoal cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={autoCheckInOnScan}
-                  onChange={(e) => setAutoCheckInOnScan(e.target.checked)}
-                  className="rounded border-black/20 text-pinkteam-magenta"
-                />
-                บันทึกอัตโนมัติหลังสแกนผ่าน
-              </label>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <div className="space-y-3">
-                <div
-                  id="qr-reader-region"
-                  className="w-full min-h-[240px] rounded-xl editorial-raised flex items-center justify-center overflow-hidden"
-                >
-                  {!scannerActive && (
-                    <div className="text-center p-6">
-                      <Camera className="w-5 h-5 text-pinkteam-muted mx-auto mb-2" strokeWidth={1.5} />
-                      <p className="text-xs text-pinkteam-secondary">กดเปิดกล้องเพื่อสแกน QR Code</p>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  {!scannerActive ? (
-                    <button
-                      type="button"
-                      onClick={startCameraScanner}
-                      className="flex-1 min-h-[42px] inline-flex items-center justify-center gap-2 rounded-lg bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-medium text-sm transition-colors duration-150 cursor-pointer"
-                    >
-                      <Camera className="w-4 h-4" strokeWidth={1.5} />
-                      เปิดกล้องสแกน QR
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={stopCameraScanner}
-                      className="flex-1 min-h-[42px] inline-flex items-center justify-center gap-2 rounded-lg bg-pinkteam-charcoal text-white font-medium text-sm cursor-pointer"
-                    >
-                      <XCircle className="w-4 h-4" strokeWidth={1.5} />
-                      หยุดกล้อง
-                    </button>
-                  )}
-                </div>
-
-                <div className="pt-3 border-t border-black/5">
-                  <label className="text-xs font-medium text-pinkteam-secondary block mb-1.5">
-                    ตรวจสอบด้วยรหัส QR Token
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={manualToken}
-                      onChange={(e) => setManualToken(e.target.value)}
-                      placeholder="ASTD2569."
-                      className="flex-1 min-h-[40px] px-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => verifyAndHandleToken(manualToken)}
-                      className="min-h-[40px] px-4 rounded-lg bg-pinkteam-charcoal text-white text-xs font-medium cursor-pointer"
-                    >
-                      ตรวจสอบ
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                {scannedStudent ? (
-                  <div className="rounded-xl editorial-panel p-5 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <span className="text-xs font-medium text-pinkteam-magenta">
-                          ยืนยัน QR สำเร็จ
-                        </span>
-                        <h3 className="font-display font-semibold text-lg text-pinkteam-charcoal mt-0.5">
-                          {scannedStudent.fullName}
-                        </h3>
-                        <p className="text-sm text-pinkteam-secondary tabular-nums">
-                          {scannedStudent.nickname ? `${scannedStudent.nickname} · ` : ''}
-                          ห้อง {scannedStudent.classRoom} · เลขที่ {scannedStudent.numberLabel}
-                        </p>
-                      </div>
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-pinkteam-charcoal">
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            scannedStudent.checkedIn ? 'bg-emerald-600' : 'bg-amber-500'
-                          }`}
-                        />
-                        {scannedStudent.checkedIn ? 'มาแล้ว' : 'ยังไม่มา'}
-                      </span>
-                    </div>
-                    <div className="text-xs text-pinkteam-secondary editorial-raised rounded-lg p-3">
-                      สังกัด:{' '}
-                      <strong className="font-medium text-pinkteam-charcoal">
-                        {scannedStudent.roleCategory === 'central'
-                          ? scannedStudent.centralPosition
-                          : `${scannedStudent.departmentName || '-'} · ${scannedStudent.position}`}
-                      </strong>
-                    </div>
-
-                    {!scannedStudent.checkedIn ? (
-                      <button
-                        type="button"
-                        disabled={!canCheckIn || submittingId === scannedStudent.id}
-                        onClick={() => handleConfirmCheckIn(scannedStudent, 'QR')}
-                        className="w-full min-h-[44px] rounded-lg bg-pinkteam-magenta text-white font-medium text-sm hover:bg-pinkteam-deep disabled:opacity-50 cursor-pointer"
-                      >
-                        {submittingId === scannedStudent.id
-                          ? 'กำลังบันทึก'
-                          : 'ยืนยันเช็คชื่อด้วย QR'}
-                      </button>
-                    ) : (
-                      <div className="text-xs text-emerald-700 font-medium tabular-nums">
-                        เช็คชื่อแล้วเวลา{' '}
-                        {scannedStudent.checkIn
-                          ? new Date(scannedStudent.checkIn.checkedInAt).toLocaleTimeString('th-TH')
-                          : ''}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <EmptyState
-                    title="รอสแกน QR Code"
-                    description="ส่องกล้องที่บัตร QR นักเรียนหรือวาง Token เพื่อตรวจสอบ"
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 1 & TAB 3 SHARED FILTERS */}
+        {/* TAB 1 & TAB 2 SHARED FILTERS */}
         {(tab === 'search' || tab === 'paper') && (
           <div className="editorial-panel rounded-2xl p-4 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -585,7 +332,7 @@ export function CheckInWorkspace({
                     aria-label="ล้างคำค้นหา"
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-pinkteam-muted hover:text-pinkteam-charcoal hover:bg-black/5 cursor-pointer"
                   >
-                    <XCircle className="w-4 h-4" strokeWidth={1.5} />
+                    <X className="w-4 h-4" strokeWidth={1.5} />
                   </button>
                 )}
               </div>
@@ -777,14 +524,6 @@ export function CheckInWorkspace({
                           )}
                         </div>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => setQrModalStudent(s)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md editorial-raised text-xs font-medium text-pinkteam-charcoal hover:bg-black/5 cursor-pointer"
-                      >
-                        <QrCode className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
-                        บัตร QR
-                      </button>
                     </div>
                   </div>
                 );
@@ -804,8 +543,6 @@ export function CheckInWorkspace({
         sessionTitle={currentSessionObj?.title}
         students={filteredStudents}
       />
-
-      <QrPassModal student={qrModalStudent} onClose={() => setQrModalStudent(null)} />
     </div>
   );
 }

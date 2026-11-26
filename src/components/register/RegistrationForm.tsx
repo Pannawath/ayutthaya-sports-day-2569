@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { QrCode, Search, UserPlus } from 'lucide-react';
-import { QrPassModal } from '@/components/qr/QrPassModal';
+import { Search, UserPlus } from 'lucide-react';
 import { ErrorState, SourceModeBanner, SuccessBanner } from '@/components/ui/States';
 import {
   CENTRAL_POSITIONS,
@@ -210,14 +209,6 @@ export function RegistrationForm({
                       {s.roleCategory === 'central' ? s.centralPosition : s.departmentName || '-'}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setQrStudent(s)}
-                    className="shrink-0 min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pinkteam-charcoal text-white text-xs font-medium cursor-pointer"
-                  >
-                    <QrCode className="w-4 h-4" strokeWidth={1.5} />
-                    เปิดบัตร QR
-                  </button>
                 </div>
               ))
             )}
@@ -237,27 +228,7 @@ export function RegistrationForm({
 
         <div className="space-y-3 mb-5">
           {errorMsg && <ErrorState message={errorMsg} />}
-          {successInfo && (
-            <div className="space-y-3">
-              <SuccessBanner message={successInfo.message} />
-              <div className="rounded-xl bg-pinkteam-charcoal text-white p-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="font-display font-medium text-sm">บัตร QR ประจำตัวพร้อมใช้งาน</div>
-                  <div className="text-xs text-white/75">
-                    บันทึกภาพไว้สแกนเข้างานได้ทันที
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setQrStudent(successInfo.student)}
-                  className="min-h-[40px] inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-pinkteam-charcoal text-xs font-medium cursor-pointer"
-                >
-                  <QrCode className="w-4 h-4" strokeWidth={1.5} />
-                  เปิดบัตร QR Code
-                </button>
-              </div>
-            </div>
-          )}
+          {successInfo && <SuccessBanner message={successInfo.message} />}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -576,8 +547,6 @@ export function RegistrationForm({
           </button>
         </form>
       </div>
-
-      <QrPassModal student={qrStudent} onClose={() => setQrStudent(null)} />
     </div>
   );
 }

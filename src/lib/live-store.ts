@@ -256,7 +256,7 @@ function buildDefaultStore(): LiveStoreData {
       category: 'NEWS',
       content:
         'สมาชิกคณะสีชมพูสามารถเลือกไซส์ SS - 5XL พร้อมออกแบบชื่อและเบอร์สกรีนเสื้อประจำคณะได้ที่เมนู สั่งจองเสื้อ บนหน้าหลัก หรือตรวจสอบสถานะคำสั่งจองได้ตลอด 24 ชั่วโมง',
-      image_url: '/images/figma/jersey-models.png',
+      image_url: '/images/figma/jersey-models.webp',
       is_published: true,
       created_by: adminId,
       created_by_name: 'ผู้ดูแลระบบ คณะอยุธยา',

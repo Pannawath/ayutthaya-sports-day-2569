@@ -57,7 +57,7 @@ export function AppShell({ children }: AppShellProps) {
       slot: 0,
       href: '/departments',
       label: 'ฝ่ายงาน',
-      icon: '/images/figma/icon-register.png',
+      icon: '/images/figma/icon-register.webp',
       iconClass: 'w-8 h-9',
       hoverRotate: 'group-hover:-rotate-3',
     },
@@ -65,7 +65,7 @@ export function AppShell({ children }: AppShellProps) {
       slot: 1,
       href: '/',
       label: 'หน้าหลัก',
-      icon: '/images/figma/icon-home.png',
+      icon: '/images/figma/icon-home.webp',
       iconClass: 'w-10 h-10',
       hoverRotate: '',
     },
@@ -73,7 +73,7 @@ export function AppShell({ children }: AppShellProps) {
       slot: 2,
       href: '/classrooms',
       label: 'ห้องเรียน',
-      icon: '/images/figma/icon-directory.png',
+      icon: '/images/figma/icon-directory.webp',
       iconClass: 'w-9 h-9',
       hoverRotate: 'group-hover:rotate-3',
     },
@@ -113,9 +113,10 @@ export function AppShell({ children }: AppShellProps) {
       <header className="no-print hidden lg:block sticky top-0 z-40 text-white overflow-x-clip">
         <div className="relative bg-[#22161A]">
           <img
-            src="/images/figma/torn-menu-paper.png"
+            src="/images/figma/torn-menu-paper.webp"
             alt=""
             aria-hidden="true"
+            decoding="async"
             className="absolute bottom-[-28px] -left-[8.18%] w-[116.36%] max-w-none h-auto pointer-events-none drop-shadow-[0_4px_10px_rgba(31,18,22,0.35)]"
           />
           <div className="relative z-10 max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
@@ -126,8 +127,9 @@ export function AppShell({ children }: AppShellProps) {
               title="อยุธยาสีชมพู 2569"
             >
               <img
-                src="/images/figma/calligraphy-ayutthaya.png"
+                src="/images/figma/calligraphy-ayutthaya.webp"
                 alt="คณะ อยุธยา"
+                decoding="async"
                 className="h-9 w-auto object-contain"
               />
               <div className="leading-tight">
@@ -207,9 +209,10 @@ export function AppShell({ children }: AppShellProps) {
           />
           <aside className="absolute right-0 top-0 bottom-0 w-72 max-w-[85vw] bg-pinkteam-charcoal text-white p-5 flex flex-col justify-between shadow-2xl border-l border-white/10 overflow-hidden">
             <img
-              src="/images/figma/torn-menu-paper.png"
+              src="/images/figma/torn-menu-paper.webp"
               alt=""
               aria-hidden="true"
+              decoding="async"
               className="absolute bottom-[calc(100%-76px)] -left-[8.18%] w-[116.36%] max-w-none h-auto opacity-80 pointer-events-none"
             />
             <div className="relative z-10">
@@ -300,9 +303,11 @@ export function AppShell({ children }: AppShellProps) {
         <div className="relative h-full w-full pointer-events-auto">
           {/* Exact Figma torn-paper menu base at 1:1 aspect ratio (-36/440, 512/440) */}
           <img
-            src="/images/figma/torn-menu-paper.png"
+            src="/images/figma/torn-menu-paper.webp"
             alt=""
             aria-hidden="true"
+            loading="eager"
+            decoding="async"
             className="absolute top-0 -left-[8.18%] w-[116.36%] max-w-none h-auto pointer-events-none drop-shadow-[0_-4px_10px_rgba(31,18,22,0.45)]"
           />
 
@@ -317,8 +322,9 @@ export function AppShell({ children }: AppShellProps) {
               >
                 <div className="relative w-[108px] max-w-[96%] h-[94px] rounded-t-[26px] rounded-b-[16px] overflow-hidden shadow-[0_-4px_16px_rgba(255,175,202,0.45)] ring-2 ring-white/80 transition-shadow duration-300">
                   <img
-                    src="/images/figma/home-pill-glow.png"
+                    src="/images/figma/home-pill-glow.webp"
                     alt=""
+                    decoding="async"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 </div>

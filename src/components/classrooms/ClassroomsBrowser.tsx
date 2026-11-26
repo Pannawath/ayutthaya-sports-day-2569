@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Printer, QrCode, Search } from 'lucide-react';
+import { Printer, Search } from 'lucide-react';
 import { PrintableAttendanceSheet } from '@/components/print/PrintableAttendanceSheet';
-import { QrPassModal } from '@/components/qr/QrPassModal';
 import { EmptyState, SourceModeBanner } from '@/components/ui/States';
 import { GRADES } from '@/lib/constants';
-import type { CheckInSessionRecord, StudentRecord, StudentWithCheckIn } from '@/lib/types';
+import type { CheckInSessionRecord, StudentWithCheckIn } from '@/lib/types';
 
 interface ClassroomsBrowserProps {
   students: StudentWithCheckIn[];
@@ -26,7 +25,6 @@ export function ClassroomsBrowser({
   const [gradeFilter, setGradeFilter] = useState<string>(initialGrade);
   const [roomFilter, setRoomFilter] = useState<string>(initialRoom);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [qrStudent, setQrStudent] = useState<StudentRecord | null>(null);
 
   const selectedGradeObj = GRADES.find((g) => g.grade === gradeFilter);
 
@@ -204,15 +202,6 @@ export function ClassroomsBrowser({
                       </span>
                     </div>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setQrStudent(s)}
-                    className="shrink-0 min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg editorial-raised hover:bg-black/5 text-xs font-medium text-pinkteam-charcoal cursor-pointer"
-                  >
-                    <QrCode className="w-4 h-4 text-pinkteam-muted" strokeWidth={1.5} />
-                    บัตร QR
-                  </button>
                 </div>
               );
             })}
@@ -231,8 +220,6 @@ export function ClassroomsBrowser({
         sessionTitle={activeSession?.title}
         students={filtered}
       />
-
-      <QrPassModal student={qrStudent} onClose={() => setQrStudent(null)} />
     </div>
   );
 }

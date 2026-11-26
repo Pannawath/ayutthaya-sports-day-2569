@@ -24,9 +24,12 @@ export default async function HomePage() {
             <div className="lg:col-span-7 relative">
               <div className="relative h-[340px] sm:h-[380px] lg:h-[440px] w-full overflow-hidden lg:rounded-2xl">
                 <img
-                  src="/images/figma/hero-bg-1.png"
+                  src="/images/figma/hero-bg-1.webp"
                   alt=""
                   aria-hidden="true"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                   className="absolute inset-0 w-full h-full object-cover object-center scale-105"
                 />
                 <div
@@ -37,22 +40,31 @@ export default async function HomePage() {
                   }}
                 />
                 <img
-                  src="/images/figma/hero-bg-4.png"
+                  src="/images/figma/hero-bg-4.webp"
                   alt="คณะกรรมการสีชมพู อยุธยา 2569"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                   className="absolute inset-x-0 bottom-4 w-full h-[82%] object-contain object-bottom"
                 />
                 <img
-                  src="/images/figma/torn-stone.png"
+                  src="/images/figma/torn-stone.webp"
                   alt=""
                   aria-hidden="true"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                   className="absolute bottom-[calc(100%-122px)] -left-[17.73%] w-[137.5%] max-w-none h-auto pointer-events-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)]"
                 />
 
                 {/* White Calligraphic "คณะ อยุธยา" Script */}
                 <div className="absolute -right-8 sm:-right-6 lg:-right-4 -bottom-14 sm:-bottom-16 z-20 pointer-events-none">
                   <img
-                    src="/images/figma/calligraphy-ayutthaya.png"
+                    src="/images/figma/calligraphy-ayutthaya.webp"
                     alt="คณะ อยุธยา"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
                     className="w-[390px] sm:w-[443px] lg:w-[490px] max-w-none h-auto object-contain drop-shadow-[0_2px_3px_rgba(31,18,22,0.85)] drop-shadow-[0_8px_16px_rgba(31,18,22,0.55)]"
                   />
                 </div>
@@ -84,15 +96,20 @@ function JerseyCardInner() {
   return (
     <>
       <img
-        src="/images/figma/jersey-models.png"
+        src="/images/figma/jersey-models.webp"
         alt="เสื้อคณะสีชมพู อยุธยา 2569"
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
         className="w-full h-[84%] object-cover object-top drop-shadow-[8px_14px_10px_rgba(0,0,0,0.3)] transition-transform duration-300 ease-out group-hover:scale-[1.03]"
       />
       <div className="absolute inset-x-0 bottom-0 h-[103px] flex items-end px-7 pb-5">
         <img
-          src="/images/figma/torn-menu-paper.png"
+          src="/images/figma/torn-menu-paper.webp"
           alt=""
           aria-hidden="true"
+          loading="eager"
+          decoding="async"
           className="absolute top-0 -left-[4.74%] w-[117.98%] max-w-none h-auto pointer-events-none"
         />
         <div className="relative z-10 w-full flex items-center justify-between gap-3">

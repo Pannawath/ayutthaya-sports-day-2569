@@ -2,10 +2,9 @@
 
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
-import { QrPassModal } from '@/components/qr/QrPassModal';
 import { SourceModeBanner } from '@/components/ui/States';
 import { CENTRAL_POSITIONS, NO_STAFF_DEPARTMENTS, SPORT_TYPES } from '@/lib/constants';
-import type { DepartmentRecord, StudentRecord, StudentWithCheckIn } from '@/lib/types';
+import type { DepartmentRecord, StudentWithCheckIn } from '@/lib/types';
 
 interface DepartmentsBrowserProps {
   students: StudentWithCheckIn[];
@@ -24,7 +23,6 @@ export function DepartmentsBrowser({
     () => initialDeptName || departments[0]?.name || 'ฝ่ายอุปกรณ์'
   );
   const [searchQuery, setSearchQuery] = useState('');
-  const [qrStudent, setQrStudent] = useState<StudentRecord | null>(null);
 
   const centralMembers = useMemo(
     () => students.filter((s) => s.roleCategory === 'central'),
@@ -83,15 +81,6 @@ export function DepartmentsBrowser({
                       : 'ว่าง'}
                   </div>
                 </div>
-                {holder && (
-                  <button
-                    type="button"
-                    onClick={() => setQrStudent(holder)}
-                    className="shrink-0 px-2.5 py-1 rounded-md bg-white border border-black/10 text-xs font-medium text-pinkteam-charcoal hover:border-pinkteam-magenta/40 cursor-pointer"
-                  >
-                    QR
-                  </button>
-                )}
               </div>
             );
           })}
@@ -163,15 +152,14 @@ export function DepartmentsBrowser({
               {isOpen && (
                 <div className="px-5 pb-5 pt-2 border-t border-black/5 space-y-4">
                   {dept.hasSports ? (
-                    <SportsDeptDetail members={filteredMembers} onSelectQr={setQrStudent} />
+                    <SportsDeptDetail members={filteredMembers} />
                   ) : dept.isStand ? (
-                    <StandDeptDetail members={filteredMembers} onSelectQr={setQrStudent} />
+                    <StandDeptDetail members={filteredMembers} />
                   ) : (
                     <GeneralDeptDetail
                       dept={dept}
                       members={filteredMembers}
                       noStaff={noStaff}
-                      onSelectQr={setQrStudent}
                     />
                   )}
                 </div>
@@ -180,8 +168,6 @@ export function DepartmentsBrowser({
           );
         })}
       </div>
-
-      <QrPassModal student={qrStudent} onClose={() => setQrStudent(null)} />
     </div>
   );
 }
@@ -190,22 +176,17 @@ function StudentNameChip({
   member,
   suffix,
   highlight = false,
-  onSelect,
 }: {
   member: StudentWithCheckIn;
   suffix?: string;
   highlight?: boolean;
-  onSelect: (s: StudentRecord) => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(member)}
-      title={`กดเพื่อดูบัตร QR ของ ${member.fullName}`}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+    <span
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border ${
         highlight
-          ? 'bg-pinkteam-blush/80 border-pinkteam-magenta/25 text-pinkteam-magenta hover:bg-pinkteam-blush'
-          : 'bg-white border-black/10 text-pinkteam-charcoal hover:border-pinkteam-magenta/35'
+          ? 'bg-pinkteam-blush/80 border-pinkteam-magenta/25 text-pinkteam-magenta'
+          : 'bg-white border-black/10 text-pinkteam-charcoal'
       }`}
     >
       <span>
@@ -213,7 +194,7 @@ function StudentNameChip({
         {member.nickname ? ` (${member.nickname})` : ''}
         {suffix ? ` · ${suffix}` : ''}
       </span>
-    </button>
+    </span>
   );
 }
 
@@ -221,12 +202,10 @@ function GeneralDeptDetail({
   dept,
   members,
   noStaff,
-  onSelectQr,
 }: {
   dept: DepartmentRecord;
   members: StudentWithCheckIn[];
   noStaff: boolean;
-  onSelectQr: (s: StudentRecord) => void;
 }) {
   const president = members.find((m) => m.position === 'ประธานฝ่าย');
   const deputy = dept.deputyLabel ? members.find((m) => m.position === dept.deputyLabel) : null;
@@ -244,7 +223,7 @@ function GeneralDeptDetail({
         <h3 className="text-xs font-semibold text-pinkteam-secondary mb-1.5">ประธานฝ่าย</h3>
         <div className="flex flex-wrap gap-2">
           {president ? (
-            <StudentNameChip member={president} highlight onSelect={onSelectQr} />
+            <StudentNameChip member={president} highlight />
           ) : (
             <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
               ยังไม่มีผู้ดำรงตำแหน่ง
@@ -260,7 +239,7 @@ function GeneralDeptDetail({
           </h3>
           <div className="flex flex-wrap gap-2">
             {deputy ? (
-              <StudentNameChip member={deputy} highlight onSelect={onSelectQr} />
+              <StudentNameChip member={deputy} highlight />
             ) : (
               <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
                 ยังไม่มีผู้ดำรงตำแหน่ง
@@ -278,7 +257,7 @@ function GeneralDeptDetail({
           <div className="flex flex-wrap gap-2">
             {staff.length > 0 ? (
               staff.map((m) => (
-                <StudentNameChip key={m.id} member={m} suffix={m.classRoom} onSelect={onSelectQr} />
+                <StudentNameChip key={m.id} member={m} suffix={m.classRoom} />
               ))
             ) : (
               <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
@@ -296,7 +275,7 @@ function GeneralDeptDetail({
         <div className="flex flex-wrap gap-2">
           {regular.length > 0 ? (
             regular.map((m) => (
-              <StudentNameChip key={m.id} member={m} suffix={m.classRoom} onSelect={onSelectQr} />
+              <StudentNameChip key={m.id} member={m} suffix={m.classRoom} />
             ))
           ) : (
             <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
@@ -311,10 +290,8 @@ function GeneralDeptDetail({
 
 function StandDeptDetail({
   members,
-  onSelectQr,
 }: {
   members: StudentWithCheckIn[];
-  onSelectQr: (s: StudentRecord) => void;
 }) {
   const mentors = members.filter((m) => !m.autoAssigned && !m.classRoom.startsWith('ม.1'));
   const m1Students = members.filter((m) => m.autoAssigned || m.classRoom.startsWith('ม.1'));
@@ -333,7 +310,6 @@ function StandDeptDetail({
                 member={m}
                 suffix={`${m.classRoom} · ${m.position}`}
                 highlight={m.position === 'ประธานฝ่าย'}
-                onSelect={onSelectQr}
               />
             ))
           ) : (
@@ -351,7 +327,7 @@ function StandDeptDetail({
         <div className="flex flex-wrap gap-2">
           {m1Students.length > 0 ? (
             m1Students.map((m) => (
-              <StudentNameChip key={m.id} member={m} suffix={m.classRoom} onSelect={onSelectQr} />
+              <StudentNameChip key={m.id} member={m} suffix={m.classRoom} />
             ))
           ) : (
             <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
@@ -366,10 +342,8 @@ function StandDeptDetail({
 
 function SportsDeptDetail({
   members,
-  onSelectQr,
 }: {
   members: StudentWithCheckIn[];
-  onSelectQr: (s: StudentRecord) => void;
 }) {
   const president = members.find((m) => m.position === 'ประธานฝ่าย');
 
@@ -381,7 +355,7 @@ function SportsDeptDetail({
         </h3>
         <div className="flex flex-wrap gap-2">
           {president ? (
-            <StudentNameChip member={president} highlight onSelect={onSelectQr} />
+            <StudentNameChip member={president} highlight />
           ) : (
             <span className="px-3 py-1.5 rounded-lg editorial-raised text-xs text-pinkteam-muted">
               ยังไม่มีผู้ดำรงตำแหน่ง
@@ -411,7 +385,6 @@ function SportsDeptDetail({
                     member={captain}
                     suffix="หัวหน้า"
                     highlight
-                    onSelect={onSelectQr}
                   />
                 ) : (
                   <span className="px-2.5 py-1 rounded-md bg-white border border-black/10 text-xs text-pinkteam-muted">
@@ -419,14 +392,13 @@ function SportsDeptDetail({
                   </span>
                 )}
                 {staff.map((m) => (
-                  <StudentNameChip key={m.id} member={m} suffix="สตาฟ" onSelect={onSelectQr} />
+                  <StudentNameChip key={m.id} member={m} suffix="สตาฟ" />
                 ))}
                 {athletes.map((m) => (
                   <StudentNameChip
                     key={m.id}
                     member={m}
                     suffix="นักกีฬา"
-                    onSelect={onSelectQr}
                   />
                 ))}
               </div>
