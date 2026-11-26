@@ -95,23 +95,23 @@ export function UnifiedHomeWorkspace({
                   fetchPriority="high"
                   className="absolute bottom-[calc(100%-86px)] min-[390px]:bottom-[calc(100%-98px)] sm:bottom-[calc(100%-122px)] -left-[17.73%] w-[137.5%] max-w-none h-auto pointer-events-none drop-shadow-[0_6px_12px_rgba(0,0,0,0.4)]"
                 />
+              </div>
 
-                {/* White Calligraphic "คณะ อยุธยา" Script */}
-                <div className="absolute -right-6 min-[390px]:-right-8 sm:-right-6 lg:-right-4 -bottom-9 min-[390px]:-bottom-11 sm:-bottom-16 z-20 pointer-events-none">
-                  <img
-                    src="/images/figma/calligraphy-ayutthaya.webp"
-                    alt="คณะ อยุธยา"
-                    loading="eager"
-                    decoding="async"
-                    fetchPriority="high"
-                    className="w-[290px] min-[390px]:w-[340px] sm:w-[443px] lg:w-[490px] max-w-none h-auto object-contain drop-shadow-[0_2px_3px_rgba(31,18,22,0.85)] drop-shadow-[0_8px_16px_rgba(31,18,22,0.55)]"
-                  />
-                </div>
+              {/* White Calligraphic "คณะ อยุธยา" Script floating on top layer (z-30) */}
+              <div className="absolute left-1/2 -translate-x-[54%] -bottom-[90px] min-[390px]:-bottom-[104px] sm:-bottom-[120px] lg:left-auto lg:translate-x-0 lg:-right-6 lg:-bottom-14 z-30 pointer-events-none">
+                <img
+                  src="/images/figma/calligraphy-ayutthaya.webp"
+                  alt="คณะ อยุธยา"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  className="w-[330px] min-[390px]:w-[375px] sm:w-[460px] lg:w-[510px] max-w-none h-auto object-contain drop-shadow-[0_4px_6px_rgba(31,18,22,0.82)] drop-shadow-[0_14px_24px_rgba(31,18,22,0.55)]"
+                />
               </div>
             </div>
 
             {/* Right / Center Featured "สั่งจองเสื้อ" Card matching Figma Arch Geometry */}
-            <div className="lg:col-span-5 px-5 min-[390px]:px-7 sm:px-8 lg:px-0 mt-2.5 min-[390px]:mt-3 lg:mt-0">
+            <div className="lg:col-span-5 relative z-10 px-5 min-[390px]:px-7 sm:px-8 lg:px-0 mt-2.5 min-[390px]:mt-3 lg:mt-0">
               <a
                 href={SHOP_URL}
                 className="btn-animated block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[265px] min-[390px]:h-[305px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(31,18,22,0.42)] active:scale-[0.985] cursor-pointer"
