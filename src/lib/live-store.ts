@@ -157,9 +157,13 @@ type TableName = Exclude<
   'lastSyncedAt' | 'admin_pin' | 'raw_duplicates' | 'resolved_duplicates'
 >;
 
-const DATA_DIR = path.join(process.cwd(), '.data');
+const DATA_DIR = process.env.VERCEL
+  ? path.join('/tmp', 'ayutthaya-data')
+  : path.join(process.cwd(), '.data');
 const DATA_FILE = path.join(DATA_DIR, 'live-store.json');
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'announcements');
+const UPLOAD_DIR = process.env.VERCEL
+  ? path.join('/tmp', 'ayutthaya-uploads')
+  : path.join(process.cwd(), 'public', 'uploads', 'announcements');
 const SYNC_INTERVAL_MS = 60_000;
 
 export function hashPassword(password: string): string {
