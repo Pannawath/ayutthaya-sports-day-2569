@@ -97,15 +97,15 @@ export function UnifiedHomeWorkspace({
                 />
               </div>
 
-              {/* White Calligraphic "คณะ อยุธยา" Script at original Hero position, lifted higher (z-30) */}
-              <div className="absolute -right-6 min-[390px]:-right-8 sm:-right-6 -bottom-4 min-[390px]:-bottom-6 sm:-bottom-10 lg:-bottom-14 z-30 pointer-events-none">
+              {/* White Calligraphic "คณะ อยุธยา" Script positioned below student faces */}
+              <div className="absolute -right-6 min-[390px]:-right-8 sm:-right-6 -bottom-8 min-[390px]:-bottom-10 sm:-bottom-12 lg:-bottom-16 z-30 pointer-events-none">
                 <img
                   src="/images/figma/calligraphy-ayutthaya.webp"
                   alt="คณะ อยุธยา"
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
-                  className="w-[345px] min-[390px]:w-[390px] sm:w-[450px] lg:w-[510px] max-w-none h-auto object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.75)] drop-shadow-[0_16px_28px_rgba(31,18,22,0.7)]"
+                  className="w-[320px] min-[390px]:w-[360px] sm:w-[440px] lg:w-[500px] max-w-none h-auto object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.75)] drop-shadow-[0_16px_28px_rgba(31,18,22,0.7)]"
                 />
               </div>
             </div>
