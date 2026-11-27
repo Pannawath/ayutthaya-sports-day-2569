@@ -129,8 +129,6 @@ export async function POST(req: NextRequest) {
     const text = await resp.text().catch(() => '');
     return NextResponse.json({
       ok: resp.ok || resp.status === 302,
-      raw: text ? undefined : null,
-      order: payload,
       message:
         parsed.data.mode === 'edit'
           ? 'บันทึกการแก้ไขข้อมูลสั่งจองเรียบร้อยแล้ว'
