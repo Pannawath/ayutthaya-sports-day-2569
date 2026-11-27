@@ -207,7 +207,7 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
 
       {/* Sub-Tab 2: รายชื่อฝ่ายงาน */}
       {activeTab === 'structure' && (
-        <section className="space-y-4">
+        <section key="tab-structure" className="space-y-4 motion-enter">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="font-display font-semibold text-lg text-pinkteam-charcoal">
@@ -321,7 +321,7 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
 
       {/* Sub-Tab 3: สรุปภาพรวม */}
       {activeTab === 'stats' && (
-        <section className="space-y-4">
+        <section key="tab-stats" className="space-y-4 motion-enter">
           <div>
             <h2 className="font-display font-semibold text-lg text-pinkteam-charcoal">
               สรุปจำนวนสมาชิกแต่ละฝ่ายงานและคณะกรรมการ

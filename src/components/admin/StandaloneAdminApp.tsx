@@ -1560,7 +1560,7 @@ export function StandaloneAdminApp({
         <div className="fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-[2px] flex items-end sm:items-center justify-center sm:p-4">
           <form
             onSubmit={handleAddStudent}
-            className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl border border-zinc-200 p-5 sm:p-6 space-y-3.5 shadow-2xl max-h-[90dvh] overflow-y-auto"
+            className="motion-enter w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl border border-zinc-200 p-5 sm:p-6 space-y-3.5 shadow-2xl max-h-[90dvh] overflow-y-auto"
           >
             <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
               <h3 className="font-display font-semibold text-base text-zinc-900">
@@ -1756,7 +1756,7 @@ export function StandaloneAdminApp({
         <div className="fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-[2px] flex items-end sm:items-center justify-center sm:p-4">
           <form
             onSubmit={handleSaveEditStudent}
-            className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl border border-zinc-200 p-5 sm:p-6 space-y-3.5 shadow-2xl max-h-[90dvh] overflow-y-auto"
+            className="motion-enter w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl border border-zinc-200 p-5 sm:p-6 space-y-3.5 shadow-2xl max-h-[90dvh] overflow-y-auto"
           >
             <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
               <h3 className="font-display font-semibold text-base text-zinc-900">

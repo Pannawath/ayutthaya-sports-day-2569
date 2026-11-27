@@ -977,7 +977,9 @@ export function JerseyShopWorkspace() {
                   <img
                     src="/assets/images/qr-code.png"
                     alt="QR PromptPay น.ส. ภัททิยา เมืองวงษ์"
-                    className={`${showQrModal ? 'w-52 h-52' : 'w-32 h-32'} object-contain bg-white rounded-xl p-2 shadow-sm transition-[width,height] duration-200`}
+                    className={`w-44 h-44 object-contain bg-white rounded-xl p-2 shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      showQrModal ? 'scale-110' : 'scale-100'
+                    }`}
                   />
                   <div className="text-center">
                     <div className="text-xs font-semibold text-pinkteam-charcoal">

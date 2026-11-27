@@ -188,8 +188,8 @@ export function StatisticsDashboard({
                   </div>
                   <div className="w-full h-2 bg-pinkteam-raised rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-pinkteam-magenta transition-[width] duration-300"
-                      style={{ width: `${Math.min(100, g.rate)}%` }}
+                      className="h-full w-full bg-pinkteam-magenta origin-left transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                      style={{ transform: `scaleX(${Math.min(1, Math.max(0, g.rate / 100))})` }}
                     />
                   </div>
                 </div>
