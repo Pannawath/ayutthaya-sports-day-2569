@@ -22,10 +22,6 @@ export const metadata: Metadata = {
   title: 'AYUTTHAYA SPORTS DAY 2569 · คณะสีชมพู (อยุธยา)',
   description:
     'ระบบลงทะเบียน เช็คชื่อ จัดสรรฝ่ายงาน และติดตามสถิติคณะสีชมพู อยุธยา 2569 โรงเรียนสารคามพิทยาคม',
-  icons: {
-    icon: '/icon.svg',
-    apple: '/assets/images/logo_ayutthaya_icon_1024.png',
-  },
 };
 
 export const viewport: Viewport = {
