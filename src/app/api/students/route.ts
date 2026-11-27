@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireSupabaseAdmin } from '@/lib/api-helpers';
-import { requireRole, writeAuditLog } from '@/lib/auth';
+import { getCurrentUserProfile, requireRole, writeAuditLog } from '@/lib/auth';
 import {
   getDepartmentsData,
   getPoliciesData,
@@ -44,8 +44,14 @@ export async function GET(req: NextRequest) {
     );
   });
 
+  const profile = await getCurrentUserProfile();
+  const isStaffOrAdmin = profile?.role === 'ADMIN' || profile?.role === 'STAFF';
+  const safeStudents = isStaffOrAdmin
+    ? filtered
+    : filtered.map((s) => ({ ...s, studentCode: null, qrToken: '' }));
+
   return NextResponse.json({
-    students: filtered,
+    students: safeStudents,
     totalCount: data.students.length,
     sessions: data.sessions,
     activeSession: data.activeSession,

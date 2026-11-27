@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireSupabaseAdmin } from '@/lib/api-helpers';
-import { requireRole, writeAuditLog } from '@/lib/auth';
+import { getCurrentUserProfile, requireRole, writeAuditLog } from '@/lib/auth';
 import { ALL_ROOMS, NUMBERS, extractGradeFromRoom } from '@/lib/constants';
 import { getDepartmentsData, getStudentsData } from '@/lib/data';
 
@@ -28,7 +28,11 @@ export async function GET(
   if (!student) {
     return NextResponse.json({ error: 'ไม่พบข้อมูลนักเรียน' }, { status: 404 });
   }
-  return NextResponse.json({ student });
+  const profile = await getCurrentUserProfile();
+  const isStaffOrAdmin = profile?.role === 'ADMIN' || profile?.role === 'STAFF';
+  return NextResponse.json({
+    student: isStaffOrAdmin ? student : { ...student, studentCode: null, qrToken: '' },
+  });
 }
 
 export async function PATCH(

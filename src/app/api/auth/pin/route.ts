@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
+import { getClientIp } from '@/lib/api-helpers';
 import { requireRole, writeAuditLog } from '@/lib/auth';
 import { updateAdminPin, verifyAdminPin } from '@/lib/live-store';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { SESSION_COOKIE_NAME, signSessionCookie } from '@/lib/session-cookie';
 
 const verifyPinSchema = z.object({
@@ -13,6 +15,14 @@ const updatePinSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const limit = checkRateLimit(`pin:${getClientIp(req)}`, 5, 300_000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: `ลองรหัส PIN ผิดหลายครั้ง กรุณารอ ${limit.retryAfterSec} วินาที` },
+      { status: 429 }
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();

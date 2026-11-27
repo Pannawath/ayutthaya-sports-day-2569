@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getClientIp, requireSupabaseAdmin } from '@/lib/api-helpers';
-import { writeAuditLog } from '@/lib/auth';
+import { requireRole, writeAuditLog } from '@/lib/auth';
 import { ALL_ROOMS, NUMBERS } from '@/lib/constants';
 import { createLiveStoreClient, type LiveJerseyOrderRow } from '@/lib/live-store';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -30,6 +30,9 @@ const createOrderSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  const auth = await requireRole(['ADMIN', 'STAFF']);
+  if ('errorResponse' in auth) return auth.errorResponse;
+
   const q = (req.nextUrl.searchParams.get('query') || '').trim().toLowerCase();
   const db = createLiveStoreClient();
   const { data } = await db

@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
+import { getClientIp } from '@/lib/api-helpers';
 import { writeAuditLog } from '@/lib/auth';
 import { authenticateLiveUser } from '@/lib/live-store';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { SESSION_COOKIE_NAME, signSessionCookie } from '@/lib/session-cookie';
 
 const loginSchema = z.object({
@@ -10,6 +12,14 @@ const loginSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const limit = checkRateLimit(`login:${getClientIp(req)}`, 10, 300_000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: `ส่งคำขอเข้าสู่ระบบถี่เกินไป กรุณารอ ${limit.retryAfterSec} วินาที` },
+      { status: 429 }
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();

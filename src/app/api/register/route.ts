@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { getClientIp, requireSupabaseAdmin } from '@/lib/api-helpers';
+import { requireRole } from '@/lib/auth';
 import { getDepartmentsData, getPoliciesData, getStudentsData } from '@/lib/data';
 import { signQrToken } from '@/lib/qr';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -10,6 +11,9 @@ import {
 } from '@/lib/validation';
 
 export async function POST(req: NextRequest) {
+  const auth = await requireRole(['ADMIN']);
+  if ('errorResponse' in auth) return auth.errorResponse;
+
   const ip = getClientIp(req);
   const limit = checkRateLimit(`register:${ip}`, 20, 60_000);
   if (!limit.allowed) {

@@ -16,6 +16,9 @@ const patchSessionSchema = z.object({
 });
 
 export async function GET() {
+  const auth = await requireRole(['ADMIN', 'STAFF']);
+  if ('errorResponse' in auth) return auth.errorResponse;
+
   const sessions = await getSessionsData();
   return NextResponse.json({ sessions });
 }

@@ -5,10 +5,15 @@ export const revalidate = 60;
 
 export default async function HomePage() {
   const data = await getStudentsWithCheckIn();
+  const publicStudents = data.students.map((s) => ({
+    ...s,
+    studentCode: null,
+    qrToken: '',
+  }));
 
   return (
     <UnifiedHomeWorkspace
-      students={data.students}
+      students={publicStudents}
       departments={data.departments}
       activeSession={data.activeSession}
       sourceMode={data.sourceMode}

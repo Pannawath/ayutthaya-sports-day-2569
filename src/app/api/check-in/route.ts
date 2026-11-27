@@ -16,6 +16,9 @@ const checkInSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  const auth = await requireRole(['ADMIN', 'STAFF']);
+  if ('errorResponse' in auth) return auth.errorResponse;
+
   const sessionId = req.nextUrl.searchParams.get('sessionId') || undefined;
   const activeSession = await getActiveSession();
   const targetSessionId = sessionId || activeSession?.id;
