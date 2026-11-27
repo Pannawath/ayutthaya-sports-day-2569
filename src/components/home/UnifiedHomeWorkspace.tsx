@@ -63,14 +63,20 @@ export function UnifiedHomeWorkspace({
   }
 
   return (
-    <div className="w-full">
-      {/* ================= ABOVE THE FOLD: FIGMA HERO + FEATURED JERSEY CARD ================= */}
-      <section className="figma-pink-backdrop relative overflow-hidden pb-6 min-[390px]:pb-8 lg:pb-12">
+    <div className="w-full relative">
+      {/* ================= ABOVE THE FOLD: STICKY FIGMA HERO + FEATURED JERSEY CARD ================= */}
+      <section className="figma-pink-backdrop sticky top-0 lg:top-16 z-0 overflow-hidden pb-8 min-[390px]:pb-10 lg:pb-14">
         <div className="lg:max-w-7xl lg:mx-auto lg:px-6 lg:pt-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-8 lg:items-center">
             {/* Left / Top Editorial Hero Collage */}
             <div className="lg:col-span-7 relative">
-              <div className="relative h-[250px] min-[390px]:h-[285px] sm:h-[360px] lg:h-[440px] w-full overflow-hidden lg:rounded-2xl">
+              <div
+                className="relative h-[250px] min-[390px]:h-[285px] sm:h-[360px] lg:h-[440px] w-full overflow-hidden lg:rounded-2xl"
+                style={{
+                  WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, #000 66%, transparent 100%)',
+                  maskImage: 'linear-gradient(to bottom, #000 0%, #000 66%, transparent 100%)',
+                }}
+              >
                 <img
                   src="/images/figma/hero-bg-1.webp"
                   alt=""
@@ -131,9 +137,11 @@ export function UnifiedHomeWorkspace({
         </div>
       </section>
 
-      {/* ================= BELOW THE FOLD: LEGACY HOME TABS & REAL-TIME DIRECTORY ================= */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-5 sm:mt-6 pb-8">
-        <HomeLegacyTabs students={students} departments={departments} />
+      {/* ================= BELOW THE FOLD: CURTAIN SHEET SLIDING OVER STICKY HERO ================= */}
+      <div className="relative z-10 -mt-3 sm:-mt-4 bg-pinkteam-paper rounded-t-[28px] sm:rounded-t-[36px] shadow-[0_-14px_40px_rgba(31,18,22,0.22)] pt-5 sm:pt-7 pb-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <HomeLegacyTabs students={students} departments={departments} />
+        </div>
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { ChevronDown, Search } from 'lucide-react';
-import { SourceModeBanner } from '@/components/ui/States';
+import { ChevronDown, Search, X } from 'lucide-react';
+import { EmptyState, SourceModeBanner } from '@/components/ui/States';
 import { CENTRAL_POSITIONS, NO_STAFF_DEPARTMENTS, SPORT_TYPES } from '@/lib/constants';
 import type { DepartmentRecord, StudentWithCheckIn } from '@/lib/types';
 
@@ -31,6 +31,47 @@ export function DepartmentsBrowser({
 
   const query = searchQuery.trim().toLowerCase();
 
+  const matchesQuery = (m: StudentWithCheckIn, extra = '') => {
+    if (!query) return true;
+    return (
+      m.fullName.toLowerCase().includes(query) ||
+      m.nickname.toLowerCase().includes(query) ||
+      m.classRoom.toLowerCase().includes(query) ||
+      m.numberLabel.toLowerCase().includes(query) ||
+      m.position.toLowerCase().includes(query) ||
+      (m.departmentName || '').toLowerCase().includes(query) ||
+      (m.sportType || '').toLowerCase().includes(query) ||
+      extra.toLowerCase().includes(query)
+    );
+  };
+
+  const visibleCentralPositions = useMemo(() => {
+    if (!query) return CENTRAL_POSITIONS;
+    return CENTRAL_POSITIONS.filter((pos) => {
+      const holder = centralMembers.find((m) => m.centralPosition === pos);
+      if (pos.toLowerCase().includes(query)) return true;
+      return holder ? matchesQuery(holder, pos) : false;
+    });
+  }, [centralMembers, query]);
+
+  const deptSearchCounts = useMemo(() => {
+    return departments.map((dept) => {
+      const allMembers = students.filter((s) => s.departmentName === dept.name);
+      const filteredMembers = query
+        ? allMembers.filter((m) => matchesQuery(m, dept.name))
+        : allMembers;
+      return { dept, allMembers, filteredMembers };
+    });
+  }, [departments, students, query]);
+
+  const visibleDepartments = query
+    ? deptSearchCounts.filter((d) => d.filteredMembers.length > 0)
+    : deptSearchCounts;
+
+  const totalMatches =
+    (query ? visibleCentralPositions.length : centralMembers.length) +
+    visibleDepartments.reduce((sum, d) => sum + d.filteredMembers.length, 0);
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-16 lg:pt-8 space-y-4">
       <SourceModeBanner sourceMode={sourceMode} />
@@ -42,66 +83,77 @@ export function DepartmentsBrowser({
             รายชื่อสมาชิกแยกตามฝ่ายงาน
           </h1>
           <p className="text-sm text-pinkteam-secondary mt-1">
-            แตะเพื่อเปิดดูรายชื่อประธาน สตาฟ และสมาชิกในแต่ละฝ่าย
+            {query
+              ? `พบผลการค้นหา "${searchQuery.trim()}" ทั้งหมด ${totalMatches} รายการ`
+              : 'แตะเพื่อเปิดดูรายชื่อประธาน สตาฟ และสมาชิกในแต่ละฝ่าย'}
           </p>
         </div>
-        <div className="relative w-full sm:w-64">
+        <div className="relative w-full sm:w-72">
           <Search
-            className="w-4 h-4 text-pinkteam-muted absolute left-3 top-1/2 -translate-y-1/2"
+            className="w-4 h-4 text-pinkteam-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
             strokeWidth={1.5}
           />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ค้นหาชื่อ, ชื่อเล่น หรือห้อง..."
-            className="w-full min-h-[40px] pl-9 pr-3 py-2 rounded-lg border border-black/15 bg-white text-sm"
+            placeholder="ค้นหาชื่อ, ชื่อเล่น, ห้อง หรือฝ่าย..."
+            className="w-full min-h-[40px] pl-9 pr-8 py-2 rounded-lg border border-black/15 bg-white text-sm"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="ล้างคำค้นหา"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-pinkteam-muted hover:text-pinkteam-charcoal cursor-pointer"
+            >
+              <X className="w-4 h-4" strokeWidth={1.75} />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Central Committee Overview */}
-      <div className="editorial-panel rounded-2xl p-5">
-        <h2 className="font-display font-medium text-base text-pinkteam-charcoal mb-3 tabular-nums">
-          คณะกรรมการบริหารส่วนกลาง ({centralMembers.length} / {CENTRAL_POSITIONS.length})
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-          {CENTRAL_POSITIONS.map((pos) => {
-            const holder = centralMembers.find((m) => m.centralPosition === pos);
-            return (
-              <div
-                key={pos}
-                className="rounded-xl editorial-raised p-3 flex items-center justify-between gap-2"
-              >
-                <div className="min-w-0">
-                  <div className="text-xs font-medium text-pinkteam-magenta">{pos}</div>
-                  <div className="text-sm font-medium text-pinkteam-charcoal truncate mt-0.5">
-                    {holder
-                      ? `${holder.fullName}${holder.nickname ? ` (${holder.nickname})` : ''}`
-                      : 'ว่าง'}
+      {(!query || visibleCentralPositions.length > 0) && (
+        <div className="editorial-panel rounded-2xl p-5">
+          <h2 className="font-display font-medium text-base text-pinkteam-charcoal mb-3 tabular-nums">
+            คณะกรรมการบริหารส่วนกลาง ({centralMembers.length} / {CENTRAL_POSITIONS.length})
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            {visibleCentralPositions.map((pos) => {
+              const holder = centralMembers.find((m) => m.centralPosition === pos);
+              return (
+                <div
+                  key={pos}
+                  className="rounded-xl editorial-raised p-3 flex items-center justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-pinkteam-magenta">{pos}</div>
+                    <div className="text-sm font-medium text-pinkteam-charcoal truncate mt-0.5">
+                      {holder
+                        ? `${holder.fullName}${holder.nickname ? ` (${holder.nickname})` : ''}${holder.classRoom ? ` · ${holder.classRoom}` : ''}`
+                        : 'ว่าง'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
+
+      {query && visibleCentralPositions.length === 0 && visibleDepartments.length === 0 && (
+        <EmptyState
+          title="ไม่พบรายชื่อที่ตรงกับคำค้นหา"
+          description={`ไม่พบ "${searchQuery.trim()}" ลองค้นหาด้วยชื่อจริง ชื่อเล่น หรือห้อง เช่น ม.5/1`}
+        />
+      )}
 
       {/* 8 Legacy Expandable Department Accordions */}
       <div className="space-y-3">
-        {departments.map((dept, deptIndex) => {
-          const isOpen = openDeptName === dept.name;
+        {visibleDepartments.map(({ dept, allMembers, filteredMembers }, deptIndex) => {
+          const isOpen = query ? filteredMembers.length > 0 : openDeptName === dept.name;
           const noStaff = NO_STAFF_DEPARTMENTS.includes(dept.name) || dept.noStaff;
-          const allMembers = students.filter((s) => s.departmentName === dept.name);
-          const filteredMembers = query
-            ? allMembers.filter(
-                (m) =>
-                  m.fullName.toLowerCase().includes(query) ||
-                  m.nickname.toLowerCase().includes(query) ||
-                  m.classRoom.toLowerCase().includes(query) ||
-                  m.position.toLowerCase().includes(query)
-              )
-            : allMembers;
 
           return (
             <div key={dept.id} className="editorial-panel rounded-2xl overflow-hidden">
@@ -138,7 +190,7 @@ export function DepartmentsBrowser({
 
                 <div className="flex items-center gap-2.5 shrink-0">
                   <span className="px-2.5 py-1 rounded-full bg-pinkteam-blush text-pinkteam-magenta text-xs font-semibold tabular-nums">
-                    {allMembers.length} คน
+                    {query ? `${filteredMembers.length} / ${allMembers.length} คน` : `${allMembers.length} คน`}
                   </span>
                   <ChevronDown
                     className={`w-4 h-4 text-pinkteam-muted transition-transform duration-200 ${
