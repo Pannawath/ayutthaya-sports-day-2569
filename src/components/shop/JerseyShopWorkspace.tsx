@@ -11,6 +11,7 @@ import {
   Plus,
   QrCode,
   RefreshCw,
+  Ruler,
   Search,
   Shuffle,
   Sparkles,
@@ -104,6 +105,95 @@ function compressImageToDataUrl(file: File): Promise<string> {
   });
 }
 
+function recommendJerseySize(
+  heightCm: number,
+  weightKg: number,
+  fit: 'slim' | 'regular' | 'oversize'
+): JerseySize {
+  // Estimate base index (0 = SS .. 8 = 5XL) from weight and height
+  let idx = 3; // L default
+  if (weightKg < 44 && heightCm < 156) idx = 0; // SS
+  else if (weightKg < 52 && heightCm < 164) idx = 1; // S
+  else if (weightKg < 60 && heightCm < 170) idx = 2; // M
+  else if (weightKg < 68 && heightCm < 176) idx = 3; // L
+  else if (weightKg < 78 && heightCm < 182) idx = 4; // XL
+  else if (weightKg < 88) idx = 5; // 2XL
+  else if (weightKg < 98) idx = 6; // 3XL
+  else if (weightKg < 110) idx = 7; // 4XL
+  else idx = 8; // 5XL
+
+  if (fit === 'slim' && idx > 0) idx -= 1;
+  if (fit === 'oversize' && idx < SIZE_SPECS.length - 1) idx += 1;
+  return SIZE_SPECS[idx].size;
+}
+
+function firePinkConfetti(canvas: HTMLCanvasElement | null) {
+  if (!canvas || typeof window === 'undefined') return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const colors = ['#FFAFCA', '#E91E63', '#B32151', '#FFFFFF', '#FDE047', '#F472B6'];
+  const particles = Array.from({ length: 85 }, (_, i) => {
+    const fromLeft = i % 2 === 0;
+    const angle = fromLeft
+      ? (-Math.PI / 4) + (Math.random() - 0.5) * 0.7
+      : (-3 * Math.PI) / 4 + (Math.random() - 0.5) * 0.7;
+    const speed = 9 + Math.random() * 11;
+    return {
+      x: fromLeft ? w * 0.12 : w * 0.88,
+      y: h * 0.72,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 3,
+      size: 6 + Math.random() * 6,
+      rot: Math.random() * Math.PI * 2,
+      vRot: (Math.random() - 0.5) * 0.25,
+      color: colors[i % colors.length],
+      life: 1,
+    };
+  });
+
+  let frameId = 0;
+  const tick = () => {
+    ctx.clearRect(0, 0, w, h);
+    let alive = false;
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.34;
+      p.vx *= 0.99;
+      p.rot += p.vRot;
+      p.life -= 0.012;
+      if (p.life > 0 && p.y < h + 40) {
+        alive = true;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 3, p.size, p.size * 0.65);
+        ctx.restore();
+      }
+    }
+    if (alive) {
+      frameId = requestAnimationFrame(tick);
+    } else {
+      ctx.clearRect(0, 0, w, h);
+    }
+  };
+  frameId = requestAnimationFrame(tick);
+  setTimeout(() => {
+    cancelAnimationFrame(frameId);
+    ctx.clearRect(0, 0, w, h);
+  }, 2800);
+}
+
 function BackJerseySvg({
   screenName,
   screenNumber,
@@ -115,7 +205,8 @@ function BackJerseySvg({
 }) {
   const displayName = (screenName.trim() || 'AYUTTHAYA').toUpperCase();
   const displayNumber = screenNumber.trim() || '69';
-  const nameFontSize = displayName.length > 12 ? 54 : displayName.length > 8 ? 62 : 70;
+  const nameFontSize = displayName.length > 13 ? 52 : displayName.length > 9 ? 60 : 70;
+  const numberFontSize = displayNumber.length >= 3 ? 280 : 380;
 
   return (
     <svg
@@ -128,8 +219,8 @@ function BackJerseySvg({
         <path id={`arc-${uid}`} d="M 160 310 Q 390 235 620 310" fill="none" />
       </defs>
       <text
-        fontFamily="Georgia, 'Times New Roman', serif"
-        fontWeight="700"
+        fontFamily="'Computer Modern Serif', 'CMU Serif', Georgia, serif"
+        fontWeight="normal"
         fontSize={nameFontSize}
         fill="#5C3C2B"
         letterSpacing="4"
@@ -141,9 +232,9 @@ function BackJerseySvg({
       <text
         x="390"
         y="505"
-        fontFamily="Georgia, 'Times New Roman', serif"
-        fontWeight="800"
-        fontSize="330"
+        fontFamily="var(--font-lobster), 'Lobster', cursive"
+        fontWeight="normal"
+        fontSize={numberFontSize}
         fill="#5C3C2B"
         letterSpacing="0.02em"
         textAnchor="middle"
@@ -180,6 +271,19 @@ export function JerseyShopWorkspace() {
   const [existingSlipUrl, setExistingSlipUrl] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const confettiCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Smart Size Helper
+  const [showSizeHelper, setShowSizeHelper] = useState(false);
+  const [helperHeight, setHelperHeight] = useState('165');
+  const [helperWeight, setHelperWeight] = useState('55');
+  const [helperFit, setHelperFit] = useState<'slim' | 'regular' | 'oversize'>('regular');
+
+  const recommendedSize = useMemo(() => {
+    const h = Number(helperHeight) || 165;
+    const w = Number(helperWeight) || 55;
+    return recommendJerseySize(h, w, helperFit);
+  }, [helperHeight, helperWeight, helperFit]);
 
   // Submit state
   const [submitting, setSubmitting] = useState(false);
@@ -345,6 +449,7 @@ export function JerseyShopWorkspace() {
         type: 'success',
         message: json.message || 'บันทึกการสั่งจองเสื้อเรียบร้อยแล้ว',
       });
+      firePinkConfetti(confettiCanvasRef.current);
       await handleLookupEmail(email);
     } catch {
       setFeedback({ type: 'error', message: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้' });
@@ -461,7 +566,12 @@ export function JerseyShopWorkspace() {
   );
 
   return (
-    <div className="min-h-dvh figma-pink-backdrop flex flex-col">
+    <div className="min-h-dvh figma-pink-backdrop flex flex-col relative">
+      <canvas
+        ref={confettiCanvasRef}
+        aria-hidden="true"
+        className="fixed inset-0 z-50 pointer-events-none w-full h-full"
+      />
       {/* ================= CENTERED TORN-STONE TOP HEADER (NO TOP/BOTTOM NAV) ================= */}
       <header className="relative w-full overflow-hidden pt-3 pb-7 sm:pt-4 sm:pb-9 lg:pb-10">
         <img
@@ -723,26 +833,102 @@ export function JerseyShopWorkspace() {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-medium text-pinkteam-secondary">
-                    เลือกไซส์เสื้อ
-                  </label>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-medium text-pinkteam-secondary">
+                      เลือกไซส์เสื้อ
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowSizeHelper((v) => !v)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-pinkteam-blush/70 hover:bg-pinkteam-blush text-pinkteam-magenta text-[11px] font-semibold cursor-pointer transition-colors"
+                    >
+                      <Ruler className="w-3 h-3" />
+                      <span>{showSizeHelper ? 'ซ่อนตัวช่วยไซส์' : 'แนะนำไซส์อัตโนมัติ'}</span>
+                    </button>
+                  </div>
                   <span className="text-xs font-semibold text-pinkteam-magenta tabular-nums">
                     ไซส์ {selectedSpec.size} · อก {selectedSpec.chest} · ยาว {selectedSpec.length}
                   </span>
                 </div>
+
+                {showSizeHelper && (
+                  <div className="mb-3 rounded-2xl editorial-raised p-3.5 space-y-3 border border-pinkteam-magenta/20">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-[11px] text-pinkteam-secondary mb-1">
+                          ส่วนสูง (ซม.)
+                        </label>
+                        <input
+                          type="number"
+                          min={120}
+                          max={220}
+                          value={helperHeight}
+                          onChange={(e) => setHelperHeight(e.target.value)}
+                          className="w-full min-h-[38px] px-2.5 py-1 rounded-lg border border-black/15 bg-white text-sm font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-pinkteam-secondary mb-1">
+                          น้ำหนัก (กก.)
+                        </label>
+                        <input
+                          type="number"
+                          min={25}
+                          max={180}
+                          value={helperWeight}
+                          onChange={(e) => setHelperWeight(e.target.value)}
+                          className="w-full min-h-[38px] px-2.5 py-1 rounded-lg border border-black/15 bg-white text-sm font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-pinkteam-secondary mb-1">
+                          ทรงที่ชอบ
+                        </label>
+                        <select
+                          value={helperFit}
+                          onChange={(e) =>
+                            setHelperFit(e.target.value as 'slim' | 'regular' | 'oversize')
+                          }
+                          className="w-full min-h-[38px] px-2 py-1 rounded-lg border border-black/15 bg-white text-xs"
+                        >
+                          <option value="slim">พอดีตัว</option>
+                          <option value="regular">ใส่สบาย</option>
+                          <option value="oversize">โอเวอร์ไซส์</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <span className="text-xs text-pinkteam-charcoal">
+                        แนะนำไซส์{' '}
+                        <strong className="text-pinkteam-magenta text-sm">{recommendedSize}</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSize(recommendedSize)}
+                        className="px-3 py-1.5 rounded-lg bg-pinkteam-magenta hover:bg-pinkteam-deep text-white text-xs font-semibold cursor-pointer transition-colors"
+                      >
+                        ใช้ไซส์ {recommendedSize} เลย
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2">
                   {SIZE_SPECS.map((spec) => {
                     const active = spec.size === size;
+                    const isRecommended = showSizeHelper && spec.size === recommendedSize;
                     return (
                       <button
                         key={spec.size}
                         type="button"
                         onClick={() => setSize(spec.size)}
-                        className={`py-2.5 px-2 rounded-xl text-center transition-all duration-150 cursor-pointer border ${
+                        className={`relative py-2.5 px-2 rounded-xl text-center transition-all duration-150 cursor-pointer border ${
                           active
                             ? 'bg-pinkteam-magenta text-white border-pinkteam-magenta shadow-md'
-                            : 'bg-white text-pinkteam-charcoal border-black/10 hover:border-pinkteam-magenta/50'
+                            : isRecommended
+                              ? 'bg-pinkteam-blush/50 text-pinkteam-charcoal border-pinkteam-magenta ring-1 ring-pinkteam-magenta/40'
+                              : 'bg-white text-pinkteam-charcoal border-black/10 hover:border-pinkteam-magenta/50'
                         }`}
                       >
                         <div className="font-display font-bold text-sm">{spec.size}</div>

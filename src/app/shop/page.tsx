@@ -1,5 +1,13 @@
 import type { Metadata } from 'next';
+import { Lobster } from 'next/font/google';
 import { JerseyShopWorkspace } from '@/components/shop/JerseyShopWorkspace';
+
+const lobster = Lobster({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-lobster',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'สั่งจองเสื้อคณะสีชมพู 2569 · AYUTTHAYA SPORTS DAY',
@@ -8,5 +16,13 @@ export const metadata: Metadata = {
 };
 
 export default function ShopPage() {
-  return <JerseyShopWorkspace />;
+  return (
+    <div className={lobster.variable}>
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/vsalvino/computer-modern@main/fonts/serif.css"
+      />
+      <JerseyShopWorkspace />
+    </div>
+  );
 }
