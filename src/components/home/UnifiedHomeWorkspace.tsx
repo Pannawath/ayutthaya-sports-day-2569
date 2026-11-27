@@ -128,7 +128,7 @@ export function UnifiedHomeWorkspace({
             <div className="lg:col-span-5 relative z-10 px-5 min-[390px]:px-7 sm:px-8 lg:px-0 mt-2.5 min-[390px]:mt-3 lg:mt-0">
               <a
                 href={SHOP_URL}
-                className="btn-animated block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[265px] min-[390px]:h-[305px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(31,18,22,0.42)] active:scale-[0.985] cursor-pointer"
+                className="btn-animated block group relative w-full max-w-[384px] mx-auto lg:max-w-none h-[265px] min-[390px]:h-[305px] sm:h-[365px] figma-card-arch figma-charcoal-surface overflow-hidden shadow-[0_14px_28px_rgba(31,18,22,0.35)] transition-[transform,box-shadow] duration-200 hover:shadow-[0_18px_32px_rgba(31,18,22,0.4)] active:scale-[0.985] cursor-pointer"
               >
                 <JerseyCardInner />
               </a>
@@ -155,7 +155,7 @@ function JerseyCardInner() {
         alt="เสื้อคณะสีชมพู อยุธยา 2569"
         loading="eager"
         decoding="async"
-        className="w-full h-[84%] object-cover object-top drop-shadow-[8px_14px_10px_rgba(0,0,0,0.3)] transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+        className="w-full h-[84%] object-cover object-top drop-shadow-[8px_14px_10px_rgba(0,0,0,0.3)]"
       />
       <div className="absolute inset-x-0 bottom-0 h-[82px] min-[390px]:h-[92px] sm:h-[103px] flex items-end px-5 min-[390px]:px-7 pb-4 min-[390px]:pb-5">
         <img
@@ -170,7 +170,7 @@ function JerseyCardInner() {
           <span className="font-display font-bold text-3xl min-[390px]:text-4xl sm:text-[42px] leading-none text-white figma-text-shadow">
             สั่งจองเสื้อ
           </span>
-          <span className="w-9 h-9 min-[390px]:w-10 min-[390px]:h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white transition-all duration-200 group-hover:bg-pinkteam-magenta group-hover:scale-110 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-active:scale-90">
+          <span className="w-9 h-9 min-[390px]:w-10 min-[390px]:h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white transition-colors duration-200 group-hover:bg-pinkteam-magenta group-active:scale-95">
             <ArrowUpRight className="w-4 h-4" strokeWidth={1.5} />
           </span>
         </div>

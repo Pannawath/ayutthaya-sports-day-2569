@@ -15,7 +15,6 @@ import {
   Ruler,
   Search,
   Shuffle,
-  Sparkles,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -486,8 +485,7 @@ export function JerseyShopWorkspace() {
           ))}
         </div>
 
-        <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-white/85 font-mono">
-          <Sparkles className="w-3.5 h-3.5 text-pink-300" />
+        <span className="hidden sm:inline-flex items-center text-xs text-white/80 font-mono tabular-nums">
           {size} · {(screenName || 'AYUTTHAYA').toUpperCase()} #{screenNumber || '69'}
         </span>
       </div>
@@ -606,7 +604,7 @@ export function JerseyShopWorkspace() {
               alt="คณะ อยุธยา"
               loading="eager"
               decoding="async"
-              className="h-9 sm:h-11 w-auto object-contain group-hover:scale-105 transition-transform duration-200"
+              className="h-9 sm:h-11 w-auto object-contain transition-opacity duration-150 group-hover:opacity-90"
             />
             <div className="leading-tight">
               <h1 className="font-display font-bold text-base sm:text-xl lg:text-2xl text-white figma-text-shadow">
@@ -843,10 +841,10 @@ export function JerseyShopWorkspace() {
                       type="button"
                       onClick={() => setShowSizeHelper((v) => !v)}
                       aria-expanded={showSizeHelper}
-                      className={`btn-animated inline-flex items-center gap-1.5 min-h-[34px] px-3.5 py-1.5 rounded-xl text-xs font-display font-semibold border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 ${
+                      className={`btn-animated inline-flex items-center gap-1.5 min-h-[34px] px-3.5 py-1.5 rounded-xl text-xs font-display font-semibold border shadow-sm transition-[background-color,border-color,color,transform] duration-150 cursor-pointer active:scale-95 ${
                         showSizeHelper
-                          ? 'bg-pinkteam-magenta text-white border-pinkteam-magenta shadow-md'
-                          : 'bg-white text-pinkteam-magenta border-pinkteam-magenta/40 hover:bg-pinkteam-blush/40 hover:border-pinkteam-magenta hover:-translate-y-0.5 hover:shadow'
+                          ? 'bg-pinkteam-magenta text-white border-pinkteam-magenta'
+                          : 'bg-white text-pinkteam-magenta border-pinkteam-magenta/40 hover:bg-pinkteam-blush/40 hover:border-pinkteam-magenta'
                       }`}
                     >
                       <Ruler className="w-3.5 h-3.5 shrink-0" />
@@ -934,7 +932,7 @@ export function JerseyShopWorkspace() {
                         key={spec.size}
                         type="button"
                         onClick={() => setSize(spec.size)}
-                        className={`relative py-2.5 px-2 rounded-xl text-center transition-all duration-150 cursor-pointer border ${
+                        className={`relative py-2.5 px-2 rounded-xl text-center transition-[background-color,border-color,color] duration-150 cursor-pointer border ${
                           active
                             ? 'bg-pinkteam-magenta text-white border-pinkteam-magenta shadow-md'
                             : isRecommended
@@ -978,7 +976,7 @@ export function JerseyShopWorkspace() {
                   <img
                     src="/assets/images/qr-code.png"
                     alt="QR PromptPay น.ส. ภัททิยา เมืองวงษ์"
-                    className={`${showQrModal ? 'w-52 h-52' : 'w-32 h-32'} object-contain bg-white rounded-xl p-2 shadow-sm transition-all`}
+                    className={`${showQrModal ? 'w-52 h-52' : 'w-32 h-32'} object-contain bg-white rounded-xl p-2 shadow-sm transition-[width,height] duration-200`}
                   />
                   <div className="text-center">
                     <div className="text-xs font-semibold text-pinkteam-charcoal">

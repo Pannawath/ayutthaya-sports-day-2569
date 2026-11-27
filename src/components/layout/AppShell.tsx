@@ -118,7 +118,7 @@ export function AppShell({ children }: AppShellProps) {
             <button
               type="button"
               onClick={() => handleSecretBrandTap(true)}
-              className="btn-animated flex items-center gap-3 shrink-0 rounded-lg px-1.5 py-1 transition-all duration-150 hover:opacity-90 cursor-pointer text-left"
+              className="btn-animated flex items-center gap-3 shrink-0 rounded-lg px-1.5 py-1 transition-opacity duration-150 hover:opacity-90 cursor-pointer text-left"
               title="อยุธยาสีชมพู 2569"
             >
               <img
@@ -187,7 +187,7 @@ export function AppShell({ children }: AppShellProps) {
             type="button"
             onClick={() => setDrawerOpen(true)}
             aria-label="เปิดเมนูทั้งหมด"
-            className="pointer-events-auto inline-flex items-center gap-2 min-h-[40px] px-3.5 py-1.5 rounded-xl bg-pinkteam-charcoal/95 text-white border border-white/15 text-xs font-medium active:scale-[0.96] transition-all duration-150 cursor-pointer shadow-lg"
+            className="pointer-events-auto inline-flex items-center gap-2 min-h-[40px] px-3.5 py-1.5 rounded-xl bg-pinkteam-charcoal/95 text-white border border-white/15 text-xs font-medium active:scale-[0.96] transition-transform duration-150 cursor-pointer shadow-lg"
           >
             <Menu className="w-4 h-4 text-white/90" strokeWidth={1.5} />
             <span>เมนู</span>
@@ -315,7 +315,7 @@ export function AppShell({ children }: AppShellProps) {
                 className="pointer-events-none absolute inset-y-0 left-0 w-1/3 flex items-end justify-center pb-1 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
                 style={{ transform: `translate3d(${activeSlot * 100}%, 0, 0)` }}
               >
-                <div className="relative w-[96px] min-[390px]:w-[104px] sm:w-[108px] max-w-[96%] h-[80px] min-[390px]:h-[88px] sm:h-[94px] rounded-t-[24px] sm:rounded-t-[26px] rounded-b-[14px] sm:rounded-b-[16px] overflow-hidden shadow-[0_-4px_16px_rgba(255,175,202,0.45)] ring-2 ring-white/80 transition-shadow duration-300">
+                <div className="relative w-[96px] min-[390px]:w-[104px] sm:w-[108px] max-w-[96%] h-[80px] min-[390px]:h-[88px] sm:h-[94px] rounded-t-[24px] sm:rounded-t-[26px] rounded-b-[14px] sm:rounded-b-[16px] overflow-hidden shadow-[0_-4px_14px_rgba(31,18,22,0.35)] ring-2 ring-white/80">
                   <img
                     src="/images/figma/home-pill-glow.webp"
                     alt=""
@@ -338,14 +338,14 @@ export function AppShell({ children }: AppShellProps) {
                       src={tab.icon}
                       alt={tab.label}
                       decoding="async"
-                      className={`${tab.iconClass} scale-90 min-[390px]:scale-100 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.4)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      className={`${tab.iconClass} scale-90 min-[390px]:scale-100 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.4)] transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                         isActive
                           ? '-translate-y-1 scale-95 min-[390px]:scale-105 opacity-100'
-                          : 'opacity-85 group-hover:opacity-100 group-hover:scale-110'
+                          : 'opacity-85 group-hover:opacity-100'
                       } ${tab.hoverRotate} group-active:scale-95`}
                     />
                     <span
-                      className={`font-display font-bold text-xs min-[390px]:text-sm text-white figma-text-shadow transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      className={`font-display font-bold text-xs min-[390px]:text-sm text-white figma-text-shadow transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                         isActive ? '-translate-y-0.5 opacity-100' : 'opacity-85 group-hover:opacity-100'
                       }`}
                     >

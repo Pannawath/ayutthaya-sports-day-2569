@@ -488,7 +488,7 @@ export function StandaloneAdminApp({
                 onChange={(e) => handlePinChange(idx, e.target.value)}
                 onKeyDown={(e) => handlePinKeyDown(idx, e)}
                 aria-label={`รหัส PIN หลักที่ ${idx + 1}`}
-                className="w-12 h-14 text-center text-xl font-semibold border border-zinc-200 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl bg-white text-zinc-900 outline-none transition-all"
+                className="w-12 h-14 text-center text-xl font-semibold border border-zinc-200 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl bg-white text-zinc-900 outline-none transition-[border-color,box-shadow] duration-150"
               />
             ))}
           </div>
