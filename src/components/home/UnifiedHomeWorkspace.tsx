@@ -35,7 +35,7 @@ export function UnifiedHomeWorkspace({
 
   if (activeView === 'departments') {
     return (
-      <div className="pb-6">
+      <div className="pb-6 motion-enter">
         <DepartmentsBrowser
           key={selectedDeptName || 'all-depts'}
           students={students}
@@ -49,7 +49,7 @@ export function UnifiedHomeWorkspace({
 
   if (activeView === 'classrooms') {
     return (
-      <div className="pb-6">
+      <div className="pb-6 motion-enter">
         <ClassroomsBrowser
           key={`${selectedGrade}-${selectedRoom}`}
           students={students}

@@ -129,6 +129,7 @@ function recommendJerseySize(
 
 function firePinkConfetti(canvas: HTMLCanvasElement | null) {
   if (!canvas || typeof window === 'undefined') return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
@@ -631,7 +632,7 @@ export function JerseyShopWorkspace() {
             className="lg:col-span-7 bg-pinkteam-paper rounded-3xl p-4 sm:p-6 shadow-[0_14px_36px_rgba(31,18,22,0.22)] space-y-4 sm:space-y-5"
           >
             {feedback && (
-              <div>
+              <div className="motion-enter">
                 {feedback.type === 'success' ? (
                   <SuccessBanner message={feedback.message} />
                 ) : (
@@ -862,7 +863,7 @@ export function JerseyShopWorkspace() {
                 </div>
 
                 {showSizeHelper && (
-                  <div className="mb-3 rounded-2xl editorial-raised p-3.5 space-y-3 border border-pinkteam-magenta/20">
+                  <div className="motion-enter mb-3 rounded-2xl editorial-raised p-3.5 space-y-3 border border-pinkteam-magenta/20">
                     <div className="grid grid-cols-3 gap-2">
                       <div>
                         <label className="block text-[11px] text-pinkteam-secondary mb-1">

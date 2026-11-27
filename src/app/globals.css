@@ -68,80 +68,42 @@ h4,
   border: 1px solid var(--hairline);
 }
 
+@keyframes motion-materialize {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0px);
+  }
+}
+
+.motion-enter {
+  animation: motion-materialize 280ms var(--ease-ui) backwards;
+}
+
 @layer components {
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   .btn-animated,
   a[class*="rounded-"] {
     transition:
-      transform 180ms var(--ease-ui),
-      box-shadow 180ms var(--ease-ui),
-      background-color 150ms ease,
-      border-color 150ms ease,
-      color 150ms ease,
-      opacity 150ms ease;
-    will-change: transform;
-  }
-
-  button:not(:disabled) svg,
-  [role="button"]:not([aria-disabled="true"]) svg,
-  .btn-animated svg,
-  a[class*="rounded-"] svg {
-    transition: transform 180ms var(--ease-ui);
-  }
-
-  @media (hover: hover) {
-    button:not(:disabled):hover,
-    [role="button"]:not([aria-disabled="true"]):hover,
-    .btn-animated:hover,
-    a[class*="rounded-"]:hover {
-      transform: translateY(-1.5px) scale(1.01);
-      box-shadow: 0 6px 14px rgba(31, 18, 22, 0.08);
-    }
-
-    button:not(:disabled):hover svg,
-    [role="button"]:not([aria-disabled="true"]):hover svg,
-    .btn-animated:hover svg,
-    a[class*="rounded-"]:hover svg {
-      transform: scale(1.08);
-    }
+      transform 140ms var(--ease-ui),
+      background-color 150ms var(--ease-ui),
+      border-color 150ms var(--ease-ui),
+      color 150ms var(--ease-ui),
+      opacity 150ms var(--ease-ui);
   }
 
   button:not(:disabled):active,
   [role="button"]:not([aria-disabled="true"]):active,
   .btn-animated:active,
   a[class*="rounded-"]:active {
-    transform: translateY(0.5px) scale(0.96);
+    transform: scale(0.975);
     transition-duration: 75ms;
-  }
-
-  button[class*="bg-pinkteam-magenta"]:not(:disabled):not(.absolute):not(.fixed),
-  a[class*="bg-pinkteam-magenta"]:not(.absolute):not(.fixed) {
-    position: relative;
-    overflow: hidden;
-  }
-
-  button[class*="bg-pinkteam-magenta"]:not(:disabled):not(.absolute):not(.fixed)::after,
-  a[class*="bg-pinkteam-magenta"]:not(.absolute):not(.fixed)::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      110deg,
-      transparent 25%,
-      rgba(255, 255, 255, 0.22) 50%,
-      transparent 75%
-    );
-    transform: translateX(-120%);
-    transition: transform 480ms var(--ease-ui);
-    pointer-events: none;
-  }
-
-  @media (hover: hover) {
-    button[class*="bg-pinkteam-magenta"]:not(:disabled):not(.absolute):not(.fixed):hover::after,
-    a[class*="bg-pinkteam-magenta"]:not(.absolute):not(.fixed):hover::after {
-      transform: translateX(120%);
-    }
   }
 }
 

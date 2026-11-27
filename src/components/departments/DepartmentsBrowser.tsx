@@ -202,7 +202,7 @@ export function DepartmentsBrowser({
               </button>
 
               {isOpen && (
-                <div className="px-5 pb-5 pt-2 border-t border-black/5 space-y-4">
+                <div className="px-5 pb-5 pt-2 border-t border-black/5 space-y-4 motion-enter">
                   {dept.hasSports ? (
                     <SportsDeptDetail members={filteredMembers} />
                   ) : dept.isStand ? (

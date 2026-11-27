@@ -148,7 +148,7 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
 
       {/* Sub-Tab 1: ห้องเรียนในสี */}
       {activeTab === 'overview' && (
-        <section className="space-y-4">
+        <section key="tab-overview" className="space-y-4 motion-enter">
           <div>
             <h2 className="font-display font-semibold text-lg text-pinkteam-charcoal">
               ห้องเรียนที่สังกัดคณะสีชมพู (ม.1 – ม.6 ทั้งหมด {allRoomsCount} ห้อง)
