@@ -6,7 +6,6 @@ import {
   Building2,
   Home,
   Menu,
-  RefreshCw,
   Shirt,
   Users,
   X,
@@ -34,7 +33,6 @@ export function AppShell({ children }: AppShellProps) {
   const router = useRouter();
   const { activeView, openView } = useHomeView();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -44,6 +42,7 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   const isHomeRoute = pathname === '/';
+  const showMobileMenuButton = !isHomeRoute || activeView !== 'home';
   const activeSlot =
     activeView === 'departments' ? 0 : activeView === 'classrooms' ? 2 : 1;
 
@@ -95,17 +94,6 @@ export function AppShell({ children }: AppShellProps) {
     }, 1200);
     if (goHomeIfNotHome && (!isHomeRoute || activeView !== 'home')) {
       openView('home');
-    }
-  }
-
-  async function handleRefresh() {
-    if (refreshing) return;
-    setRefreshing(true);
-    try {
-      await fetch('/api/sync', { method: 'POST' });
-      router.refresh();
-    } finally {
-      setTimeout(() => setRefreshing(false), 400);
     }
   }
 
@@ -183,47 +171,41 @@ export function AppShell({ children }: AppShellProps) {
                 );
               })}
             </nav>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={handleRefresh}
-                disabled={refreshing}
-                title="รีเฟรชข้อมูลสด"
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white border border-white/15 transition-colors duration-150 cursor-pointer disabled:opacity-60"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
-                  strokeWidth={1.5}
-                />
-                <span>{refreshing ? 'กำลังอัปเดต' : 'รีเฟรช'}</span>
-              </button>
-            </div>
           </div>
         </div>
       </header>
 
-      {/* Mobile Floating Top Bar / Drawer Trigger */}
-      <div className="no-print lg:hidden fixed top-3 right-3 left-3 z-40 flex items-center justify-end pointer-events-none">
-        <button
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-          aria-label="เปิดเมนูทั้งหมด"
-          className="pointer-events-auto inline-flex items-center gap-2 min-h-[40px] px-3.5 py-1.5 rounded-xl bg-pinkteam-charcoal/95 text-white border border-white/15 text-xs font-medium active:scale-[0.98] transition-transform duration-150 cursor-pointer"
-        >
-          <Menu className="w-4 h-4 text-white/90" strokeWidth={1.5} />
-          <span>เมนู</span>
-        </button>
-      </div>
+      {/* Mobile Floating Top Bar / Drawer Trigger (hidden on main Home view) */}
+      {showMobileMenuButton && (
+        <div className="no-print lg:hidden fixed top-3 right-3 left-3 z-40 flex items-center justify-end pointer-events-none">
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="เปิดเมนูทั้งหมด"
+            className="pointer-events-auto inline-flex items-center gap-2 min-h-[40px] px-3.5 py-1.5 rounded-xl bg-pinkteam-charcoal/95 text-white border border-white/15 text-xs font-medium active:scale-[0.96] transition-all duration-150 cursor-pointer shadow-lg"
+          >
+            <Menu className="w-4 h-4 text-white/90" strokeWidth={1.5} />
+            <span>เมนู</span>
+          </button>
+        </div>
+      )}
 
-      {/* Mobile Slide-Over Drawer (Student Navigation Only) */}
-      {drawerOpen && (
-        <div className="no-print fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/55"
-            onClick={() => setDrawerOpen(false)}
-          />
-          <aside className="absolute right-0 top-0 bottom-0 w-72 max-w-[85vw] bg-pinkteam-charcoal text-white p-5 flex flex-col justify-between shadow-2xl border-l border-white/10 overflow-hidden">
+      {/* Mobile Slide-Over Drawer with Open/Close Animation */}
+      <div
+        aria-hidden={!drawerOpen}
+        className={`no-print fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <div
+          className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
+          onClick={() => setDrawerOpen(false)}
+        />
+        <aside
+          className={`absolute right-0 top-0 bottom-0 w-72 max-w-[85vw] bg-pinkteam-charcoal text-white p-5 flex flex-col justify-between shadow-2xl border-l border-white/10 overflow-hidden transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            drawerOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
             <img
               src="/images/figma/torn-menu-paper.webp"
               alt=""
@@ -297,27 +279,8 @@ export function AppShell({ children }: AppShellProps) {
                 })}
               </nav>
             </div>
-
-            <div className="relative z-10 pt-4 border-t border-white/10">
-              <button
-                type="button"
-                onClick={async () => {
-                  await handleRefresh();
-                  setDrawerOpen(false);
-                }}
-                disabled={refreshing}
-                className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-medium text-sm transition-colors duration-150 cursor-pointer disabled:opacity-60"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
-                  strokeWidth={1.5}
-                />
-                <span>{refreshing ? 'กำลังอัปเดตข้อมูล' : 'รีเฟรชข้อมูลสด'}</span>
-              </button>
-            </div>
           </aside>
         </div>
-      )}
 
       {/* Page Body */}
       <main className="flex-1 pb-28 lg:pb-12">{children}</main>

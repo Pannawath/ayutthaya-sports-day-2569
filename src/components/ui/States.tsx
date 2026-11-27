@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AlertCircle, CheckCircle2, Database, Inbox, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Inbox, Loader2 } from 'lucide-react';
 
 export function LoadingState({ message = 'กำลังโหลดข้อมูล' }: { message?: string }) {
   return (
@@ -48,20 +48,8 @@ export function SuccessBanner({ message }: { message: string }) {
   );
 }
 
-export function SourceModeBanner({
-  sourceMode,
-}: {
+export function SourceModeBanner(_props: {
   sourceMode: 'supabase' | 'legacy-readonly';
 }) {
-  if (sourceMode === 'supabase') return null;
-
-  return (
-    <div className="no-print rounded-xl editorial-panel px-4 py-2.5 flex items-center gap-2.5 text-xs text-pinkteam-secondary">
-      <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
-      <Database className="w-4 h-4 text-pinkteam-muted shrink-0" strokeWidth={1.5} />
-      <span className="truncate sm:whitespace-normal">
-        เชื่อมต่อฐานข้อมูลจริงแล้ว · ซิงก์ข้อมูลรายชื่อคณะสีชมพู อยุธยา 2569 และพร้อมบันทึกเช็คชื่อ/ลงทะเบียนทันที
-      </span>
-    </div>
-  );
+  return null;
 }

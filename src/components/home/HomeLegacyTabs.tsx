@@ -109,7 +109,7 @@ export function HomeLegacyTabs({ students, departments }: HomeLegacyTabsProps) {
             <div className="mt-0.5 font-display font-semibold text-2xl sm:text-3xl text-pinkteam-magenta tabular-nums">
               {students.length}
             </div>
-            <div className="text-xs text-pinkteam-secondary mt-0.5">ข้อมูลสดจากฐานข้อมูลจริง</div>
+            <div className="text-xs text-pinkteam-secondary mt-0.5">สมาชิกคณะสีชมพูทั้งหมด</div>
           </div>
         </div>
       </section>
