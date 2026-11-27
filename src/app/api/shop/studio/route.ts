@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     if (fileId) {
       const resp = await fetch(
         `${gasUrl}?action=getImage&fileId=${encodeURIComponent(fileId)}`,
-        { cache: 'no-store' }
+        { cache: 'no-store', signal: AbortSignal.timeout(15000) }
       );
       const data = await resp.json();
       return NextResponse.json(data);
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
 
     const resp = await fetch(
       `${gasUrl}?action=search&email=${encodeURIComponent(email)}`,
-      { cache: 'no-store' }
+      { cache: 'no-store', signal: AbortSignal.timeout(15000) }
     );
     const text = await resp.text();
     try {
@@ -124,6 +124,7 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000),
     });
     const text = await resp.text().catch(() => '');
     return NextResponse.json({

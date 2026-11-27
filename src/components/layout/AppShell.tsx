@@ -36,8 +36,13 @@ export function AppShell({ children }: AppShellProps) {
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Separate standalone /admin website completely from the public student shell
-  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+  // Separate standalone /admin and /shop pages completely from the public student shell
+  if (
+    pathname === '/admin' ||
+    pathname.startsWith('/admin/') ||
+    pathname === '/shop' ||
+    pathname.startsWith('/shop/')
+  ) {
     return <>{children}</>;
   }
 
