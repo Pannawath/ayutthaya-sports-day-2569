@@ -4,7 +4,7 @@ import { getClientIp } from '@/lib/api-helpers';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 const DEFAULT_JERSEY_GAS_URL =
-  'https://script.google.com/macros/s/AKfycbwjtRpZPfi9ljLegbufqFciF04efGeI2vgm-oUwLHYxmpY_RHvS1X9U2oNh8O4IoHZ/exec';
+  'https://script.google.com/macros/s/AKfycbwjttRpZPfi9ljLegbufqFciF04efGeI2vgm-oUwLHYxmpY_RHvS1X9U2oNh8O4IoHZ/exec';
 
 function getJerseyGasUrl(): string {
   return process.env.JERSEY_GAS_API_URL || DEFAULT_JERSEY_GAS_URL;
@@ -124,11 +124,29 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(25000),
     });
     const text = await resp.text().catch(() => '');
+    let gasResult: { status?: string; message?: string } | null = null;
+    try {
+      gasResult = text ? JSON.parse(text) : null;
+    } catch {
+      gasResult = null;
+    }
+
+    if (!resp.ok || gasResult?.status === 'error') {
+      return NextResponse.json(
+        {
+          error:
+            gasResult?.message ||
+            'ไม่สามารถบันทึกข้อมูลเข้า Google Sheets ได้ กรุณาลองใหม่อีกครั้ง',
+        },
+        { status: 502 }
+      );
+    }
+
     return NextResponse.json({
-      ok: resp.ok || resp.status === 302,
+      ok: true,
       message:
         parsed.data.mode === 'edit'
           ? 'บันทึกการแก้ไขข้อมูลสั่งจองเรียบร้อยแล้ว'
