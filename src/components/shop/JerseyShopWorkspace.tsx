@@ -4,6 +4,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
+  ArrowRight,
   CheckCircle2,
   ChevronDown,
   Download,
@@ -28,6 +29,13 @@ const VIEW_TABS: Array<{ id: ViewSide; label: string }> = [
   { id: 'front', label: 'ด้านหน้า' },
   { id: 'back', label: 'ด้านหลัง' },
 ];
+
+const FORM_SECTIONS = [
+  { id: 0, short: '1. อีเมล', title: 'อีเมล & เช็กสถานะ' },
+  { id: 1, short: '2. ห้อง/เลขที่', title: 'ห้องเรียนและเลขที่' },
+  { id: 2, short: '3. สกรีน/ไซส์', title: 'สกรีนหลังเสื้อและไซส์' },
+  { id: 3, short: '4. จ่าย/สลิป', title: 'ชำระเงินและแนบสลิป' },
+] as const;
 
 const SIZE_SPECS = [
   { size: 'SS', chest: '34"', length: '25"' },
@@ -55,17 +63,34 @@ interface StudioOrderRecord {
   slipFileName?: string | null;
 }
 
+const STUDENT_NUMBER_REGEX = /^\d{1,2}[กข]$/;
+
+function sanitizeStudentNumberInput(raw: string): string {
+  // Allow only 1-2 ASCII digits followed by optional Thai ก or ข (no English letters)
+  let digits = '';
+  let suffix = '';
+  for (const ch of raw) {
+    if (ch >= '0' && ch <= '9') {
+      if (!suffix && digits.length < 2) digits += ch;
+    } else if ((ch === 'ก' || ch === 'ข') && digits.length > 0 && !suffix) {
+      suffix = ch;
+    }
+  }
+  return `${digits}${suffix}`;
+}
+
 function normalizeRawOrder(raw: Record<string, unknown>, fallbackEmail: string): StudioOrderRecord {
   const rawSize = String(raw.size || 'L').toUpperCase();
   const validSize = SIZE_SPECS.some((s) => s.size === rawSize)
     ? (rawSize as JerseySize)
     : 'L';
+  const rawNum = String(raw.number || raw.screenNumber || '69').replace(/[^0-9]/g, '').slice(0, 2);
   return {
     email: String(raw.email || fallbackEmail),
     classroom: String(raw.classroom || raw.classRoom || ALL_ROOMS[0]),
-    studentNumber: String(raw.studentNumber || raw.numberLabel || ''),
+    studentNumber: sanitizeStudentNumberInput(String(raw.studentNumber || raw.numberLabel || '')),
     name: String(raw.name || raw.screenName || 'AYUTTHAYA').toUpperCase(),
-    number: String(raw.number || raw.screenNumber || '69'),
+    number: rawNum || '69',
     size: validSize,
     status: String(raw.status || 'รอชำระเงิน'),
     slipUrl: raw.slipUrl ? String(raw.slipUrl) : null,
@@ -73,54 +98,21 @@ function normalizeRawOrder(raw: Record<string, unknown>, fallbackEmail: string):
   };
 }
 
-function compressImageToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('อ่านไฟล์ไม่สำเร็จ'));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('ไฟล์รูปภาพไม่ถูกต้อง'));
-      img.onload = () => {
-        const maxDim = 1280;
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          const ratio = Math.min(maxDim / width, maxDim / height);
-          width = Math.round(width * ratio);
-          height = Math.round(height * ratio);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(String(reader.result));
-          return;
-        }
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.82));
-      };
-      img.src = String(reader.result);
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
 function recommendJerseySize(
   heightCm: number,
   weightKg: number,
   fit: 'slim' | 'regular' | 'oversize'
 ): JerseySize {
-  // Estimate base index (0 = SS .. 8 = 5XL) from weight and height
-  let idx = 3; // L default
-  if (weightKg < 44 && heightCm < 156) idx = 0; // SS
-  else if (weightKg < 52 && heightCm < 164) idx = 1; // S
-  else if (weightKg < 60 && heightCm < 170) idx = 2; // M
-  else if (weightKg < 68 && heightCm < 176) idx = 3; // L
-  else if (weightKg < 78 && heightCm < 182) idx = 4; // XL
-  else if (weightKg < 88) idx = 5; // 2XL
-  else if (weightKg < 98) idx = 6; // 3XL
-  else if (weightKg < 110) idx = 7; // 4XL
-  else idx = 8; // 5XL
+  let idx = 3;
+  if (weightKg < 44 && heightCm < 156) idx = 0;
+  else if (weightKg < 52 && heightCm < 164) idx = 1;
+  else if (weightKg < 60 && heightCm < 170) idx = 2;
+  else if (weightKg < 68 && heightCm < 176) idx = 3;
+  else if (weightKg < 78 && heightCm < 182) idx = 4;
+  else if (weightKg < 88) idx = 5;
+  else if (weightKg < 98) idx = 6;
+  else if (weightKg < 110) idx = 7;
+  else idx = 8;
 
   if (fit === 'slim' && idx > 0) idx -= 1;
   if (fit === 'oversize' && idx < SIZE_SPECS.length - 1) idx += 1;
@@ -144,7 +136,7 @@ function firePinkConfetti(canvas: HTMLCanvasElement | null) {
   const particles = Array.from({ length: 85 }, (_, i) => {
     const fromLeft = i % 2 === 0;
     const angle = fromLeft
-      ? (-Math.PI / 4) + (Math.random() - 0.5) * 0.7
+      ? -Math.PI / 4 + (Math.random() - 0.5) * 0.7
       : (-3 * Math.PI) / 4 + (Math.random() - 0.5) * 0.7;
     const speed = 9 + Math.random() * 11;
     return {
@@ -195,6 +187,38 @@ function firePinkConfetti(canvas: HTMLCanvasElement | null) {
   }, 2800);
 }
 
+function compressImageToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('อ่านไฟล์ไม่สำเร็จ'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('ไฟล์รูปภาพไม่ถูกต้อง'));
+      img.onload = () => {
+        const maxDim = 1280;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(String(reader.result));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function BackJerseySvg({
   screenName,
   screenNumber,
@@ -207,7 +231,6 @@ function BackJerseySvg({
   const displayName = (screenName.trim() || 'AYUTTHAYA').toUpperCase();
   const displayNumber = screenNumber.trim() || '69';
   const nameFontSize = displayName.length > 13 ? 52 : displayName.length > 9 ? 60 : 70;
-  const numberFontSize = displayNumber.length >= 3 ? 280 : 380;
 
   return (
     <svg
@@ -235,7 +258,7 @@ function BackJerseySvg({
         y="505"
         fontFamily="var(--font-lobster), 'Lobster', cursive"
         fontWeight="normal"
-        fontSize={numberFontSize}
+        fontSize={380}
         fill="#5C3C2B"
         letterSpacing="0.02em"
         textAnchor="middle"
@@ -249,6 +272,7 @@ function BackJerseySvg({
 
 export function JerseyShopWorkspace() {
   const [viewSide, setViewSide] = useState<ViewSide>('both');
+  const [activeSection, setActiveSection] = useState(0);
 
   // Email & existing order lookup
   const [email, setEmail] = useState('');
@@ -266,6 +290,12 @@ export function JerseyShopWorkspace() {
   const [screenNumber, setScreenNumber] = useState('69');
   const [size, setSize] = useState<JerseySize>('L');
 
+  // Smart Size Helper
+  const [showSizeHelper, setShowSizeHelper] = useState(false);
+  const [helperHeight, setHelperHeight] = useState('165');
+  const [helperWeight, setHelperWeight] = useState('55');
+  const [helperFit, setHelperFit] = useState<'slim' | 'regular' | 'oversize'>('regular');
+
   // Slip upload & payment
   const [slipDataUrl, setSlipDataUrl] = useState<string | null>(null);
   const [slipFileName, setSlipFileName] = useState<string | null>(null);
@@ -273,18 +303,6 @@ export function JerseyShopWorkspace() {
   const [showQrModal, setShowQrModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const confettiCanvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // Smart Size Helper
-  const [showSizeHelper, setShowSizeHelper] = useState(false);
-  const [helperHeight, setHelperHeight] = useState('165');
-  const [helperWeight, setHelperWeight] = useState('55');
-  const [helperFit, setHelperFit] = useState<'slim' | 'regular' | 'oversize'>('regular');
-
-  const recommendedSize = useMemo(() => {
-    const h = Number(helperHeight) || 165;
-    const w = Number(helperWeight) || 55;
-    return recommendJerseySize(h, w, helperFit);
-  }, [helperHeight, helperWeight, helperFit]);
 
   // Submit state
   const [submitting, setSubmitting] = useState(false);
@@ -297,6 +315,12 @@ export function JerseyShopWorkspace() {
     () => SIZE_SPECS.find((s) => s.size === size) ?? SIZE_SPECS[3],
     [size]
   );
+
+  const recommendedSize = useMemo(() => {
+    const h = Number(helperHeight) || 165;
+    const w = Number(helperWeight) || 55;
+    return recommendJerseySize(h, w, helperFit);
+  }, [helperHeight, helperWeight, helperFit]);
 
   const viewIndex = VIEW_TABS.findIndex((t) => t.id === viewSide);
 
@@ -391,28 +415,53 @@ export function JerseyShopWorkspace() {
     }
   }
 
+  function validateStep(step: number): string | null {
+    if (step === 0) {
+      if (!email.trim() || !email.includes('@')) return 'กรุณากรอกอีเมลให้ถูกต้อง';
+    }
+    if (step === 1) {
+      if (classroomType === 'OTHER_STUDENT' && !customClassroom.trim()) {
+        return 'กรุณาระบุห้องเรียนของนักเรียน';
+      }
+      if (needsStudentNumber && !STUDENT_NUMBER_REGEX.test(studentNumber.trim())) {
+        return 'เลขที่ต้องเป็นตัวเลข 1-2 หลัก ตามด้วย ก หรือ ข ภาษาไทยเท่านั้น (เช่น 1ก, 15ข)';
+      }
+    }
+    if (step === 2) {
+      if (!screenName.trim()) return 'กรุณากรอกชื่อสกรีนหลังเสื้อ';
+      if (!/^\d{1,2}$/.test(screenNumber.trim())) {
+        return 'เบอร์สกรีนต้องเป็นตัวเลข 1-2 หลัก (00-99)';
+      }
+    }
+    return null;
+  }
+
+  function handleNextSection() {
+    const err = validateStep(activeSection);
+    if (err) {
+      setFeedback({ type: 'error', message: err });
+      return;
+    }
+    setFeedback(null);
+    setActiveSection((s) => Math.min(FORM_SECTIONS.length - 1, s + 1));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (submitting) return;
     setFeedback(null);
 
-    if (!email.trim() || !email.includes('@')) {
-      setFeedback({ type: 'error', message: 'กรุณากรอกอีเมลให้ถูกต้อง' });
-      return;
+    for (let step = 0; step <= 2; step++) {
+      const err = validateStep(step);
+      if (err) {
+        setActiveSection(step);
+        setFeedback({ type: 'error', message: err });
+        return;
+      }
     }
-    if (needsStudentNumber && !studentNumber.trim()) {
-      setFeedback({ type: 'error', message: 'กรุณากรอกเลขที่ (เช่น 15ก, 22ข)' });
-      return;
-    }
-    if (!screenName.trim()) {
-      setFeedback({ type: 'error', message: 'กรุณากรอกชื่อสกรีนหลังเสื้อ' });
-      return;
-    }
-    if (!screenNumber.trim()) {
-      setFeedback({ type: 'error', message: 'กรุณากรอกเบอร์สกรีน' });
-      return;
-    }
+
     if (mode === 'new' && !slipDataUrl) {
+      setActiveSection(3);
       setFeedback({ type: 'error', message: 'กรุณาแนบสลิปการโอนเงินก่อนกดยืนยัน' });
       return;
     }
@@ -463,10 +512,9 @@ export function JerseyShopWorkspace() {
     selectedOrderIdx !== null ? existingOrders[selectedOrderIdx] ?? null : null;
 
   const previewCard = (
-    <div className="figma-charcoal-surface rounded-3xl p-4 sm:p-5 lg:p-6 relative overflow-hidden shadow-[0_14px_32px_rgba(31,18,22,0.34)] border border-white/10">
-      {/* Animated Sliding Tab Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <div className="relative grid grid-cols-3 rounded-xl bg-black/40 p-1 border border-white/10 w-full sm:w-auto sm:min-w-[270px]">
+    <div className="figma-charcoal-surface rounded-2xl sm:rounded-3xl p-3 sm:p-5 lg:p-6 relative overflow-hidden shadow-[0_12px_28px_rgba(31,18,22,0.34)] border border-white/10">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5 sm:mb-4">
+        <div className="relative grid grid-cols-3 rounded-xl bg-black/40 p-1 border border-white/10 w-full sm:w-auto sm:min-w-[260px]">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute top-1 bottom-1 left-1 w-[calc((100%-8px)/3)] rounded-lg bg-pinkteam-magenta shadow transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
@@ -477,7 +525,7 @@ export function JerseyShopWorkspace() {
               key={tab.id}
               type="button"
               onClick={() => setViewSide(tab.id)}
-              className={`relative z-10 py-1.5 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-display font-medium transition-colors duration-200 cursor-pointer text-center ${
+              className={`relative z-10 py-1 sm:py-1.5 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-display font-medium transition-colors duration-200 cursor-pointer text-center ${
                 viewSide === tab.id ? 'text-white' : 'text-white/70 hover:text-white'
               }`}
             >
@@ -498,8 +546,8 @@ export function JerseyShopWorkspace() {
           style={{ transform: `translate3d(-${viewIndex * 33.333333}%, 0, 0)` }}
         >
           {/* Slide 0: Both Front & Back */}
-          <div className="w-1/3 shrink-0 grid grid-cols-2 gap-2.5 sm:gap-5 items-center px-1">
-            <div className="relative aspect-[780/1019] w-full max-w-[220px] md:max-w-[240px] lg:max-w-[210px] mx-auto">
+          <div className="w-1/3 shrink-0 grid grid-cols-2 gap-2 sm:gap-5 items-center px-1">
+            <div className="relative aspect-[780/1019] w-full max-w-[125px] min-[390px]:max-w-[140px] md:max-w-[180px] lg:max-w-[210px] mx-auto">
               <img
                 src="/assets/images/jersey_clean_front_preview.webp"
                 alt="ตัวอย่างเสื้อด้านหน้า"
@@ -507,11 +555,11 @@ export function JerseyShopWorkspace() {
                 decoding="async"
                 className="w-full h-full object-contain"
               />
-              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-black/55 text-[10px] text-white/90">
+              <span className="hidden sm:inline-block absolute bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-black/55 text-[10px] text-white/90">
                 ด้านหน้า
               </span>
             </div>
-            <div className="relative aspect-[780/1019] w-full max-w-[220px] md:max-w-[240px] lg:max-w-[210px] mx-auto">
+            <div className="relative aspect-[780/1019] w-full max-w-[125px] min-[390px]:max-w-[140px] md:max-w-[180px] lg:max-w-[210px] mx-auto">
               <img
                 src="/assets/images/jersey_clean_back_preview.webp"
                 alt="ตัวอย่างเสื้อด้านหลัง"
@@ -520,7 +568,7 @@ export function JerseyShopWorkspace() {
                 className="w-full h-full object-contain"
               />
               <BackJerseySvg screenName={screenName} screenNumber={screenNumber} uid="both" />
-              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-black/55 text-[10px] text-white/90">
+              <span className="hidden sm:inline-block absolute bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-black/55 text-[10px] text-white/90">
                 ด้านหลัง
               </span>
             </div>
@@ -528,7 +576,7 @@ export function JerseyShopWorkspace() {
 
           {/* Slide 1: Front Only */}
           <div className="w-1/3 shrink-0 flex items-center justify-center px-1">
-            <div className="relative aspect-[780/1019] w-full max-w-[240px] md:max-w-[270px] lg:max-w-[280px]">
+            <div className="relative aspect-[780/1019] w-full max-w-[145px] sm:max-w-[220px] lg:max-w-[280px]">
               <img
                 src="/assets/images/jersey_clean_front_preview.webp"
                 alt="ตัวอย่างเสื้อด้านหน้า"
@@ -541,7 +589,7 @@ export function JerseyShopWorkspace() {
 
           {/* Slide 2: Back Only */}
           <div className="w-1/3 shrink-0 flex items-center justify-center px-1">
-            <div className="relative aspect-[780/1019] w-full max-w-[240px] md:max-w-[270px] lg:max-w-[280px]">
+            <div className="relative aspect-[780/1019] w-full max-w-[145px] sm:max-w-[220px] lg:max-w-[280px]">
               <img
                 src="/assets/images/jersey_clean_back_preview.webp"
                 alt="ตัวอย่างเสื้อด้านหลัง"
@@ -555,7 +603,7 @@ export function JerseyShopWorkspace() {
         </div>
       </div>
 
-      {/* Desktop Live Summary Footer inside Preview Card */}
+      {/* Desktop Live Summary Footer */}
       <div className="hidden lg:flex mt-4 pt-3.5 border-t border-white/10 items-center justify-between text-xs text-white/85">
         <span>
           ไซส์ <strong className="text-white">{selectedSpec.size}</strong> (อก {selectedSpec.chest} · ยาว {selectedSpec.length})
@@ -566,14 +614,15 @@ export function JerseyShopWorkspace() {
   );
 
   return (
-    <div className="min-h-dvh figma-pink-backdrop flex flex-col relative">
+    <div className="h-dvh overflow-hidden figma-pink-backdrop flex flex-col relative">
       <canvas
         ref={confettiCanvasRef}
         aria-hidden="true"
         className="fixed inset-0 z-50 pointer-events-none w-full h-full"
       />
-      {/* ================= CENTERED TORN-STONE TOP HEADER (NO TOP/BOTTOM NAV) ================= */}
-      <header className="relative w-full overflow-hidden pt-3 pb-7 sm:pt-4 sm:pb-9 lg:pb-10">
+
+      {/* ================= LOCKED TORN-STONE TOP HEADER ================= */}
+      <header className="shrink-0 relative w-full overflow-hidden pt-2.5 pb-5 sm:pt-3.5 sm:pb-7">
         <img
           src="/images/figma/torn-stone.webp"
           alt=""
@@ -587,10 +636,10 @@ export function JerseyShopWorkspace() {
           className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-transparent pointer-events-none"
         />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-2">
+        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 flex items-center justify-between gap-2">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/55 text-white border border-white/15 text-xs font-medium transition-colors shrink-0"
+            className="inline-flex items-center gap-1 min-h-[34px] px-2.5 py-1 rounded-full bg-black/45 hover:bg-black/60 text-white border border-white/15 text-xs font-medium transition-colors shrink-0"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>หน้าหลัก</span>
@@ -598,41 +647,66 @@ export function JerseyShopWorkspace() {
 
           <Link
             href="/"
-            className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 text-center group"
+            className="flex items-center justify-center gap-2 sm:gap-3 text-center group min-w-0"
           >
             <img
               src="/images/figma/calligraphy-ayutthaya.webp"
               alt="คณะ อยุธยา"
               loading="eager"
               decoding="async"
-              className="h-9 sm:h-11 w-auto object-contain transition-opacity duration-150 group-hover:opacity-90"
+              className="h-7 sm:h-10 w-auto object-contain transition-opacity duration-150 group-hover:opacity-90 shrink-0"
             />
-            <div className="leading-tight">
-              <h1 className="font-display font-bold text-base sm:text-xl lg:text-2xl text-white figma-text-shadow">
-                สั่งจองเสื้อสีชมพู 2569
-              </h1>
-            </div>
+            <h1 className="font-display font-bold text-sm sm:text-lg lg:text-xl text-white figma-text-shadow truncate">
+              สั่งจองเสื้อสีชมพู 2569
+            </h1>
           </Link>
 
-          <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-pinkteam-magenta text-white font-mono font-bold text-xs sm:text-sm shadow border border-white/20 shrink-0">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-pinkteam-magenta text-white font-mono font-bold text-xs sm:text-sm shadow border border-white/20 shrink-0">
             ฿285
           </span>
         </div>
       </header>
 
-      {/* ================= RESPONSIVE STUDIO BODY (MOBILE / IPAD / DESKTOP) ================= */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 pb-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-start">
-          {/* LEFT / TOP: Preview Card (Normal scroll on Mobile/iPad for 60fps, Sticky on Desktop) */}
-          <div className="lg:col-span-5 lg:sticky lg:top-5">{previewCard}</div>
+      {/* ================= LOCKED PREVIEW + MOVABLE 4-SECTION ORDER SHEET ================= */}
+      <main className="flex-1 min-h-0 w-full max-w-7xl mx-auto px-2.5 sm:px-6 pb-2.5 sm:pb-5 flex flex-col lg:grid lg:grid-cols-12 lg:gap-6">
+        {/* LOCKED JERSEY PREVIEW */}
+        <div className="shrink-0 mb-2.5 lg:mb-0 lg:col-span-5">{previewCard}</div>
 
-          {/* RIGHT / BOTTOM: Order Form Sheet (1-col Mobile, 2-col iPad, 1-col Right Panel Desktop) */}
-          <form
-            onSubmit={handleSubmit}
-            className="lg:col-span-7 bg-pinkteam-paper rounded-3xl p-4 sm:p-6 shadow-[0_14px_36px_rgba(31,18,22,0.22)] space-y-4 sm:space-y-5"
-          >
+        {/* MOVABLE 4-SECTION FORM SHEET */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 min-h-0 lg:col-span-7 bg-pinkteam-paper rounded-2xl sm:rounded-3xl shadow-[0_-10px_30px_rgba(31,18,22,0.22)] flex flex-col overflow-hidden"
+        >
+          {/* 4-Section Switcher Bar */}
+          <div className="shrink-0 px-3 sm:px-5 pt-3 pb-2.5 border-b border-black/8 bg-white/70">
+            <div className="relative grid grid-cols-4 rounded-xl bg-pinkteam-raised p-1">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute top-1 bottom-1 left-1 w-[calc((100%-8px)/4)] rounded-lg bg-pinkteam-magenta shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                style={{ transform: `translate3d(${activeSection * 100}%, 0, 0)` }}
+              />
+              {FORM_SECTIONS.map((sec) => {
+                const isActive = activeSection === sec.id;
+                return (
+                  <button
+                    key={sec.id}
+                    type="button"
+                    onClick={() => {
+                      setFeedback(null);
+                      setActiveSection(sec.id);
+                    }}
+                    className={`relative z-10 py-1.5 px-1 rounded-lg text-[11px] sm:text-xs font-display font-medium text-center transition-colors duration-150 cursor-pointer truncate ${
+                      isActive ? 'text-white' : 'text-pinkteam-secondary hover:text-pinkteam-charcoal'
+                    }`}
+                  >
+                    {sec.short}
+                  </button>
+                );
+              })}
+            </div>
+
             {feedback && (
-              <div className="motion-enter">
+              <div className="mt-2.5 motion-enter">
                 {feedback.type === 'success' ? (
                   <SuccessBanner message={feedback.message} />
                 ) : (
@@ -640,15 +714,20 @@ export function JerseyShopWorkspace() {
                 )}
               </div>
             )}
+          </div>
 
-            {/* iPad (md) 2-column grid for Step 1 & Step 2; 1-column on Mobile & Desktop */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
-              {/* Step 1: Email & Order Lookup */}
-              <section className="editorial-panel rounded-2xl p-4 sm:p-5 space-y-3">
+          {/* Horizontal Sliding 4-Section Track */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <div
+              className="h-full w-[400%] flex transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+              style={{ transform: `translate3d(-${activeSection * 25}%, 0, 0)` }}
+            >
+              {/* SECTION 1: EMAIL & ORDER LOOKUP */}
+              <div className="w-1/4 shrink-0 h-full overflow-y-auto p-4 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="font-display font-semibold text-base text-pinkteam-charcoal flex items-center gap-2">
+                  <h2 className="font-display font-semibold text-base sm:text-lg text-pinkteam-charcoal flex items-center gap-2">
                     <Mail className="w-4 h-4 text-pinkteam-magenta" />
-                    <span>1. อีเมล &amp; เช็กสถานะ</span>
+                    <span>1. อีเมลผู้สั่งจอง &amp; เช็กสถานะ</span>
                   </h2>
                   {activeExisting && (
                     <span className="px-2.5 py-1 rounded-full bg-pinkteam-blush text-pinkteam-magenta text-xs font-semibold">
@@ -656,6 +735,10 @@ export function JerseyShopWorkspace() {
                     </span>
                   )}
                 </div>
+
+                <p className="text-xs text-pinkteam-secondary">
+                  กรอกอีเมลเพื่อเริ่มสั่งจอง หรือตรวจสอบ/แก้ไขคำสั่งซื้อเดิมที่เคยจองไว้
+                </p>
 
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
@@ -688,8 +771,8 @@ export function JerseyShopWorkspace() {
                 </div>
 
                 {existingOrders.length > 0 && (
-                  <div className="pt-2 border-t border-black/5 space-y-2">
-                    <div className="text-xs text-pinkteam-secondary">
+                  <div className="rounded-2xl editorial-panel p-4 space-y-2.5">
+                    <div className="text-xs text-pinkteam-secondary font-medium">
                       พบคำสั่งซื้อเดิม {existingOrders.length} รายการ (แตะเพื่อแก้ไข หรือสั่งตัวใหม่เพิ่ม)
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -722,14 +805,15 @@ export function JerseyShopWorkspace() {
                     </div>
                   </div>
                 )}
-              </section>
+              </div>
 
-              {/* Step 2: Classroom & Student Number */}
-              <section className="editorial-panel rounded-2xl p-4 sm:p-5 space-y-3">
-                <h2 className="font-display font-semibold text-base text-pinkteam-charcoal">
+              {/* SECTION 2: CLASSROOM & STUDENT NUMBER (2 DIGITS + ก/ข ONLY) */}
+              <div className="w-1/4 shrink-0 h-full overflow-y-auto p-4 sm:p-6 space-y-4">
+                <h2 className="font-display font-semibold text-base sm:text-lg text-pinkteam-charcoal">
                   2. ห้องเรียนและเลขที่
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="block text-xs font-medium text-pinkteam-secondary mb-1.5">
                       ห้องเรียน / สังกัด
@@ -768,341 +852,380 @@ export function JerseyShopWorkspace() {
                   {needsStudentNumber && (
                     <div>
                       <label className="block text-xs font-medium text-pinkteam-secondary mb-1.5">
-                        เลขที่ (ระบุ ก หรือ ข)
+                        เลขที่ (ตัวเลข 1-2 หลัก + ก หรือ ข เท่านั้น)
                       </label>
                       <input
                         type="text"
-                        required
+                        maxLength={3}
                         value={studentNumber}
-                        onChange={(e) => setStudentNumber(e.target.value)}
-                        placeholder="เช่น 15ก, 22ข"
+                        onChange={(e) =>
+                          setStudentNumber(sanitizeStudentNumberInput(e.target.value))
+                        }
+                        placeholder="เช่น 1ก, 15ข (ห้ามใส่ A-Z)"
                         className="w-full min-h-[44px] px-3 py-2 rounded-xl border border-black/15 bg-white text-sm"
                       />
+                      <p className="mt-1 text-[11px] text-pinkteam-magenta">
+                        บังคับใส่เลขที่ 1-2 หลัก ตามด้วยภาษาไทย ก หรือ ข เท่านั้น
+                      </p>
                     </div>
                   )}
                 </div>
-              </section>
-            </div>
+              </div>
 
-            {/* Step 3: Screen Name, Number & Size */}
-            <section className="editorial-panel rounded-2xl p-4 sm:p-5 space-y-4">
-              <h2 className="font-display font-semibold text-base text-pinkteam-charcoal">
-                3. สกรีนหลังเสื้อและไซส์
-              </h2>
+              {/* SECTION 3: SCREEN NAME, 2-DIGIT NUMBER & SIZE */}
+              <div className="w-1/4 shrink-0 h-full overflow-y-auto p-4 sm:p-6 space-y-4">
+                <h2 className="font-display font-semibold text-base sm:text-lg text-pinkteam-charcoal">
+                  3. สกรีนหลังเสื้อและไซส์
+                </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block text-xs font-medium text-pinkteam-secondary mb-1.5">
-                    ชื่อสกรีนด้านหลัง (อังกฤษพิมพ์ใหญ่)
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={20}
-                    value={screenName}
-                    onChange={(e) => setScreenName(e.target.value.toUpperCase())}
-                    placeholder="AYUTTHAYA"
-                    className="w-full min-h-[44px] px-3 py-2 rounded-xl border border-black/15 bg-white text-sm font-mono uppercase"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-pinkteam-secondary mb-1.5">
-                    เบอร์สกรีน (1–4 หลัก)
-                  </label>
-                  <div className="flex gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-medium text-pinkteam-secondary mb-1.5">
+                      ชื่อสกรีนด้านหลัง (อังกฤษพิมพ์ใหญ่)
+                    </label>
                     <input
                       type="text"
-                      maxLength={4}
-                      value={screenNumber}
-                      onChange={(e) => setScreenNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="69"
-                      className="flex-1 min-h-[44px] px-3 py-2 rounded-xl border border-black/15 bg-white text-sm font-mono"
+                      maxLength={20}
+                      value={screenName}
+                      onChange={(e) => setScreenName(e.target.value.toUpperCase())}
+                      placeholder="AYUTTHAYA"
+                      className="w-full min-h-[44px] px-3 py-2 rounded-xl border border-black/15 bg-white text-sm font-mono uppercase"
                     />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setScreenNumber(String(Math.floor(Math.random() * 99) + 1).padStart(2, '0'))
-                      }
-                      className="min-h-[44px] px-3.5 rounded-xl editorial-raised hover:bg-black/5 text-xs font-medium text-pinkteam-charcoal inline-flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Shuffle className="w-3.5 h-3.5" />
-                      <span>สุ่ม</span>
-                    </button>
                   </div>
-                </div>
-              </div>
 
-              <div>
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-medium text-pinkteam-secondary">
-                      เลือกไซส์เสื้อ
+                  <div>
+                    <label className="block text-xs font-medium text-pinkteam-secondary mb-1.5">
+                      เบอร์สกรีน (สูงสุด 2 หลัก: 00–99)
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowSizeHelper((v) => !v)}
-                      aria-expanded={showSizeHelper}
-                      className={`btn-animated inline-flex items-center gap-1.5 min-h-[34px] px-3.5 py-1.5 rounded-xl text-xs font-display font-semibold border shadow-sm transition-[background-color,border-color,color,transform] duration-150 cursor-pointer active:scale-95 ${
-                        showSizeHelper
-                          ? 'bg-pinkteam-magenta text-white border-pinkteam-magenta'
-                          : 'bg-white text-pinkteam-magenta border-pinkteam-magenta/40 hover:bg-pinkteam-blush/40 hover:border-pinkteam-magenta'
-                      }`}
-                    >
-                      <Ruler className="w-3.5 h-3.5 shrink-0" />
-                      <span>{showSizeHelper ? 'ซ่อนตัวช่วยไซส์' : 'ช่วยคำนวณไซส์'}</span>
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
-                          showSizeHelper ? 'rotate-180' : ''
-                        }`}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={2}
+                        value={screenNumber}
+                        onChange={(e) =>
+                          setScreenNumber(e.target.value.replace(/[^0-9]/g, '').slice(0, 2))
+                        }
+                        placeholder="69"
+                        className="flex-1 min-h-[44px] px-3 py-2 rounded-xl border border-black/15 bg-white text-sm font-mono"
                       />
-                    </button>
-                  </div>
-                  <span className="text-xs font-semibold text-pinkteam-magenta tabular-nums">
-                    ไซส์ {selectedSpec.size} · อก {selectedSpec.chest} · ยาว {selectedSpec.length}
-                  </span>
-                </div>
-
-                {showSizeHelper && (
-                  <div className="motion-enter mb-3 rounded-2xl editorial-raised p-3.5 space-y-3 border border-pinkteam-magenta/20">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <label className="block text-[11px] text-pinkteam-secondary mb-1">
-                          ส่วนสูง (ซม.)
-                        </label>
-                        <input
-                          type="number"
-                          min={120}
-                          max={220}
-                          value={helperHeight}
-                          onChange={(e) => setHelperHeight(e.target.value)}
-                          className="w-full min-h-[38px] px-2.5 py-1 rounded-lg border border-black/15 bg-white text-sm font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] text-pinkteam-secondary mb-1">
-                          น้ำหนัก (กก.)
-                        </label>
-                        <input
-                          type="number"
-                          min={25}
-                          max={180}
-                          value={helperWeight}
-                          onChange={(e) => setHelperWeight(e.target.value)}
-                          className="w-full min-h-[38px] px-2.5 py-1 rounded-lg border border-black/15 bg-white text-sm font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] text-pinkteam-secondary mb-1">
-                          ทรงที่ชอบ
-                        </label>
-                        <select
-                          value={helperFit}
-                          onChange={(e) =>
-                            setHelperFit(e.target.value as 'slim' | 'regular' | 'oversize')
-                          }
-                          className="w-full min-h-[38px] px-2 py-1 rounded-lg border border-black/15 bg-white text-xs"
-                        >
-                          <option value="slim">พอดีตัว</option>
-                          <option value="regular">ใส่สบาย</option>
-                          <option value="oversize">โอเวอร์ไซส์</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <span className="text-xs text-pinkteam-charcoal">
-                        แนะนำไซส์{' '}
-                        <strong className="text-pinkteam-magenta text-sm">{recommendedSize}</strong>
-                      </span>
                       <button
                         type="button"
-                        onClick={() => setSize(recommendedSize)}
-                        className="px-3 py-1.5 rounded-lg bg-pinkteam-magenta hover:bg-pinkteam-deep text-white text-xs font-semibold cursor-pointer transition-colors"
+                        onClick={() =>
+                          setScreenNumber(String(Math.floor(Math.random() * 99) + 1).padStart(2, '0'))
+                        }
+                        className="min-h-[44px] px-3.5 rounded-xl editorial-raised hover:bg-black/5 text-xs font-medium text-pinkteam-charcoal inline-flex items-center gap-1.5 cursor-pointer"
                       >
-                        ใช้ไซส์ {recommendedSize} เลย
+                        <Shuffle className="w-3.5 h-3.5" />
+                        <span>สุ่ม</span>
                       </button>
                     </div>
                   </div>
-                )}
+                </div>
 
-                <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2">
-                  {SIZE_SPECS.map((spec) => {
-                    const active = spec.size === size;
-                    const isRecommended = showSizeHelper && spec.size === recommendedSize;
-                    return (
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-pinkteam-secondary">
+                        เลือกไซส์เสื้อ
+                      </label>
                       <button
-                        key={spec.size}
                         type="button"
-                        onClick={() => setSize(spec.size)}
-                        className={`relative py-2.5 px-2 rounded-xl text-center transition-[background-color,border-color,color] duration-150 cursor-pointer border ${
-                          active
-                            ? 'bg-pinkteam-magenta text-white border-pinkteam-magenta shadow-md'
-                            : isRecommended
-                              ? 'bg-pinkteam-blush/50 text-pinkteam-charcoal border-pinkteam-magenta ring-1 ring-pinkteam-magenta/40'
-                              : 'bg-white text-pinkteam-charcoal border-black/10 hover:border-pinkteam-magenta/50'
+                        onClick={() => setShowSizeHelper((v) => !v)}
+                        aria-expanded={showSizeHelper}
+                        className={`btn-animated inline-flex items-center gap-1.5 min-h-[34px] px-3 py-1 rounded-xl text-xs font-display font-semibold border shadow-sm transition-[background-color,border-color,color,transform] duration-150 cursor-pointer active:scale-95 ${
+                          showSizeHelper
+                            ? 'bg-pinkteam-magenta text-white border-pinkteam-magenta'
+                            : 'bg-white text-pinkteam-magenta border-pinkteam-magenta/40 hover:bg-pinkteam-blush/40 hover:border-pinkteam-magenta'
                         }`}
                       >
-                        <div className="font-display font-bold text-sm">{spec.size}</div>
-                        <div
-                          className={`text-[10px] tabular-nums ${
-                            active ? 'text-white/90' : 'text-pinkteam-muted'
+                        <Ruler className="w-3.5 h-3.5 shrink-0" />
+                        <span>{showSizeHelper ? 'ซ่อนตัวช่วยไซส์' : 'ช่วยคำนวณไซส์'}</span>
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
+                            showSizeHelper ? 'rotate-180' : ''
                           }`}
-                        >
-                          อก {spec.chest}
-                        </div>
+                        />
                       </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
-
-            {/* Step 4: Payment & Slip Upload */}
-            <section className="editorial-panel rounded-2xl p-4 sm:p-5 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="font-display font-semibold text-base text-pinkteam-charcoal flex items-center gap-2">
-                  <QrCode className="w-4 h-4 text-pinkteam-magenta" />
-                  <span>4. ชำระเงิน PromptPay &amp; แนบสลิป</span>
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setShowQrModal((v) => !v)}
-                  className="text-xs font-medium text-pinkteam-magenta hover:underline cursor-pointer"
-                >
-                  {showQrModal ? 'ย่อ QR Code' : 'ขยาย QR Code'}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                <div className="md:col-span-5 flex flex-col items-center gap-2 rounded-2xl editorial-raised p-4">
-                  <img
-                    src="/assets/images/qr-code.png"
-                    alt="QR PromptPay น.ส. ภัททิยา เมืองวงษ์"
-                    className={`w-44 h-44 object-contain bg-white rounded-xl p-2 shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                      showQrModal ? 'scale-110' : 'scale-100'
-                    }`}
-                  />
-                  <div className="text-center">
-                    <div className="text-xs font-semibold text-pinkteam-charcoal">
-                      น.ส. ภัททิยา เมืองวงษ์
                     </div>
-                    <div className="text-[11px] text-pinkteam-secondary">
-                      ธนาคารกสิกรไทย · ยอดโอน ฿285
-                    </div>
+                    <span className="text-xs font-semibold text-pinkteam-magenta tabular-nums">
+                      ไซส์ {selectedSpec.size} · อก {selectedSpec.chest} · ยาว {selectedSpec.length}
+                    </span>
                   </div>
-                  <a
-                    href="/assets/images/qr-code.png"
-                    download="PromptPay_QR_Ayutthaya_2569.png"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-black/10 text-xs font-medium text-pinkteam-charcoal hover:bg-black/5"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>บันทึกรูป QR</span>
-                  </a>
-                </div>
 
-                <div className="md:col-span-7 space-y-3">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleSlipChange}
-                    className="hidden"
-                  />
-                  {slipDataUrl || existingSlipUrl ? (
-                    <div className="rounded-2xl editorial-raised p-3 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {slipDataUrl ? (
-                          <img
-                            src={slipDataUrl}
-                            alt="ตัวอย่างสลิป"
-                            className="w-12 h-14 rounded-lg object-cover border border-black/10 shrink-0"
+                  {showSizeHelper && (
+                    <div className="motion-enter mb-3 rounded-2xl editorial-raised p-3 space-y-2.5 border border-pinkteam-magenta/20">
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-[11px] text-pinkteam-secondary mb-1">
+                            ส่วนสูง (ซม.)
+                          </label>
+                          <input
+                            type="number"
+                            min={120}
+                            max={220}
+                            value={helperHeight}
+                            onChange={(e) => setHelperHeight(e.target.value)}
+                            className="w-full min-h-[36px] px-2.5 py-1 rounded-lg border border-black/15 bg-white text-sm font-mono"
                           />
-                        ) : (
-                          <div className="w-12 h-14 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
-                            <CheckCircle2 className="w-5 h-5" />
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <div className="text-xs font-semibold text-emerald-700">
-                            แนบสลิปเรียบร้อยแล้ว
-                          </div>
-                          <div className="text-xs text-pinkteam-secondary truncate">
-                            {slipFileName || 'สลิปในระบบ'}
-                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-pinkteam-secondary mb-1">
+                            น้ำหนัก (กก.)
+                          </label>
+                          <input
+                            type="number"
+                            min={25}
+                            max={180}
+                            value={helperWeight}
+                            onChange={(e) => setHelperWeight(e.target.value)}
+                            className="w-full min-h-[36px] px-2.5 py-1 rounded-lg border border-black/15 bg-white text-sm font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-pinkteam-secondary mb-1">
+                            ทรงที่ชอบ
+                          </label>
+                          <select
+                            value={helperFit}
+                            onChange={(e) =>
+                              setHelperFit(e.target.value as 'slim' | 'regular' | 'oversize')
+                            }
+                            className="w-full min-h-[36px] px-2 py-1 rounded-lg border border-black/15 bg-white text-xs"
+                          >
+                            <option value="slim">พอดีตัว</option>
+                            <option value="regular">ใส่สบาย</option>
+                            <option value="oversize">โอเวอร์ไซส์</option>
+                          </select>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-pinkteam-charcoal">
+                          แนะนำไซส์{' '}
+                          <strong className="text-pinkteam-magenta text-sm">{recommendedSize}</strong>
+                        </span>
                         <button
                           type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="p-2 rounded-lg hover:bg-black/5 text-pinkteam-charcoal cursor-pointer"
-                          title="เปลี่ยนสลิป"
+                          onClick={() => setSize(recommendedSize)}
+                          className="px-3 py-1.5 rounded-lg bg-pinkteam-magenta hover:bg-pinkteam-deep text-white text-xs font-semibold cursor-pointer transition-colors"
                         >
-                          <RefreshCw className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSlipDataUrl(null);
-                            setSlipFileName(null);
-                            setExistingSlipUrl(null);
-                          }}
-                          className="p-2 rounded-lg hover:bg-red-50 text-red-600 cursor-pointer"
-                          title="ลบสลิป"
-                        >
-                          <Trash2 className="w-4 h-4" />
+                          ใช้ไซส์ {recommendedSize} เลย
                         </button>
                       </div>
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full rounded-2xl border-2 border-dashed border-pinkteam-magenta/35 bg-pinkteam-blush/25 hover:bg-pinkteam-blush/45 p-5 text-center transition-colors cursor-pointer space-y-1.5"
-                    >
-                      <Upload className="w-6 h-6 text-pinkteam-magenta mx-auto" />
-                      <div className="text-sm font-semibold text-pinkteam-charcoal">
-                        แตะเพื่อแนบสลิปการโอนเงิน (฿285)
-                      </div>
-                      <div className="text-xs text-pinkteam-secondary">
-                        รองรับไฟล์ JPG, PNG, WEBP
-                      </div>
-                    </button>
                   )}
 
-                  {/* Summary & Submit CTA */}
-                  <div className="rounded-xl bg-pinkteam-charcoal text-white p-3.5 flex items-center justify-between gap-2 text-xs">
-                    <div className="truncate">
-                      <span className="text-white/70 block text-[10px]">สรุปรายการ</span>
-                      <span className="font-semibold">
-                        ไซส์ {size} · {(screenName || 'AYUTTHAYA').toUpperCase()} #{screenNumber || '69'}
-                      </span>
-                    </div>
-                    <span className="font-mono font-bold text-base text-pink-300 shrink-0">฿285</span>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2">
+                    {SIZE_SPECS.map((spec) => {
+                      const active = spec.size === size;
+                      const isRecommended = showSizeHelper && spec.size === recommendedSize;
+                      return (
+                        <button
+                          key={spec.size}
+                          type="button"
+                          onClick={() => setSize(spec.size)}
+                          className={`relative py-2 px-1.5 rounded-xl text-center transition-[background-color,border-color,color] duration-150 cursor-pointer border ${
+                            active
+                              ? 'bg-pinkteam-magenta text-white border-pinkteam-magenta shadow-md'
+                              : isRecommended
+                                ? 'bg-pinkteam-blush/50 text-pinkteam-charcoal border-pinkteam-magenta ring-1 ring-pinkteam-magenta/40'
+                                : 'bg-white text-pinkteam-charcoal border-black/10 hover:border-pinkteam-magenta/50'
+                          }`}
+                        >
+                          <div className="font-display font-bold text-sm">{spec.size}</div>
+                          <div
+                            className={`text-[10px] tabular-nums ${
+                              active ? 'text-white/90' : 'text-pinkteam-muted'
+                            }`}
+                          >
+                            อก {spec.chest}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="btn-animated w-full min-h-[48px] rounded-xl bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-display font-semibold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-60"
-                  >
-                    {submitting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <CheckCircle2 className="w-4 h-4" />
-                    )}
-                    <span>
-                      {submitting
-                        ? 'กำลังบันทึกคำสั่งจอง...'
-                        : mode === 'edit'
-                          ? 'บันทึกการแก้ไขข้อมูล'
-                          : 'ยืนยันการสั่งจองและส่งสลิป'}
-                    </span>
-                  </button>
                 </div>
               </div>
-            </section>
-          </form>
-        </div>
+
+              {/* SECTION 4: PROMPTPAY & SLIP UPLOAD */}
+              <div className="w-1/4 shrink-0 h-full overflow-y-auto p-4 sm:p-6 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="font-display font-semibold text-base sm:text-lg text-pinkteam-charcoal flex items-center gap-2">
+                    <QrCode className="w-4 h-4 text-pinkteam-magenta" />
+                    <span>4. ชำระเงิน PromptPay &amp; แนบสลิป</span>
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowQrModal((v) => !v)}
+                    className="text-xs font-medium text-pinkteam-magenta hover:underline cursor-pointer"
+                  >
+                    {showQrModal ? 'ย่อ QR Code' : 'ขยาย QR Code'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  <div className="md:col-span-5 flex flex-col items-center gap-2 rounded-2xl editorial-raised p-3.5">
+                    <img
+                      src="/assets/images/qr-code.png"
+                      alt="QR PromptPay น.ส. ภัททิยา เมืองวงษ์"
+                      className={`w-36 h-36 sm:w-40 sm:h-40 object-contain bg-white rounded-xl p-2 shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                        showQrModal ? 'scale-110' : 'scale-100'
+                      }`}
+                    />
+                    <div className="text-center">
+                      <div className="text-xs font-semibold text-pinkteam-charcoal">
+                        น.ส. ภัททิยา เมืองวงษ์
+                      </div>
+                      <div className="text-[11px] text-pinkteam-secondary">
+                        ธนาคารกสิกรไทย · ยอดโอน ฿285
+                      </div>
+                    </div>
+                    <a
+                      href="/assets/images/qr-code.png"
+                      download="PromptPay_QR_Ayutthaya_2569.png"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-black/10 text-xs font-medium text-pinkteam-charcoal hover:bg-black/5"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>บันทึกรูป QR</span>
+                    </a>
+                  </div>
+
+                  <div className="md:col-span-7 space-y-3">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleSlipChange}
+                      className="hidden"
+                    />
+                    {slipDataUrl || existingSlipUrl ? (
+                      <div className="rounded-2xl editorial-raised p-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {slipDataUrl ? (
+                            <img
+                              src={slipDataUrl}
+                              alt="ตัวอย่างสลิป"
+                              className="w-12 h-14 rounded-lg object-cover border border-black/10 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-14 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+                              <CheckCircle2 className="w-5 h-5" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold text-emerald-700">
+                              แนบสลิปเรียบร้อยแล้ว
+                            </div>
+                            <div className="text-xs text-pinkteam-secondary truncate">
+                              {slipFileName || 'สลิปในระบบ'}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="p-2 rounded-lg hover:bg-black/5 text-pinkteam-charcoal cursor-pointer"
+                            title="เปลี่ยนสลิป"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSlipDataUrl(null);
+                              setSlipFileName(null);
+                              setExistingSlipUrl(null);
+                            }}
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 cursor-pointer"
+                            title="ลบสลิป"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full rounded-2xl border-2 border-dashed border-pinkteam-magenta/35 bg-pinkteam-blush/25 hover:bg-pinkteam-blush/45 p-5 text-center transition-colors cursor-pointer space-y-1.5"
+                      >
+                        <Upload className="w-6 h-6 text-pinkteam-magenta mx-auto" />
+                        <div className="text-sm font-semibold text-pinkteam-charcoal">
+                          แตะเพื่อแนบสลิปการโอนเงิน (฿285)
+                        </div>
+                        <div className="text-xs text-pinkteam-secondary">
+                          รองรับไฟล์ JPG, PNG, WEBP
+                        </div>
+                      </button>
+                    )}
+
+                    <div className="rounded-xl bg-pinkteam-charcoal text-white p-3 flex items-center justify-between gap-2 text-xs">
+                      <div className="truncate">
+                        <span className="text-white/70 block text-[10px]">สรุปรายการ</span>
+                        <span className="font-semibold">
+                          {resolvedClassroom}
+                          {needsStudentNumber && studentNumber ? ` (${studentNumber})` : ''} · ไซส์ {size} ·{' '}
+                          {(screenName || 'AYUTTHAYA').toUpperCase()} #{screenNumber || '69'}
+                        </span>
+                      </div>
+                      <span className="font-mono font-bold text-base text-pink-300 shrink-0">฿285</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sticky Bottom Navigation / Submit Bar inside the Sheet */}
+          <div className="shrink-0 px-4 sm:px-6 py-3 border-t border-black/8 bg-white/85 flex items-center justify-between gap-2.5">
+            {activeSection > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setFeedback(null);
+                  setActiveSection((s) => Math.max(0, s - 1));
+                }}
+                className="min-h-[44px] px-4 rounded-xl editorial-raised hover:bg-black/5 text-pinkteam-charcoal text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>ย้อนกลับ</span>
+              </button>
+            ) : (
+              <div className="text-xs text-pinkteam-muted">ขั้นตอนที่ 1 จาก 4</div>
+            )}
+
+            {activeSection < FORM_SECTIONS.length - 1 ? (
+              <button
+                type="button"
+                onClick={handleNextSection}
+                className="btn-animated min-h-[44px] px-5 rounded-xl bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-display font-semibold text-sm inline-flex items-center gap-1.5 shadow cursor-pointer ml-auto"
+              >
+                <span>ถัดไป</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={submitting}
+                className="btn-animated flex-1 sm:flex-none sm:min-w-[230px] min-h-[44px] px-5 rounded-xl bg-pinkteam-magenta hover:bg-pinkteam-deep text-white font-display font-semibold text-sm inline-flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-60 ml-auto"
+              >
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                <span>
+                  {submitting
+                    ? 'กำลังบันทึกคำสั่งจอง...'
+                    : mode === 'edit'
+                      ? 'บันทึกการแก้ไขข้อมูล'
+                      : 'ยืนยันการสั่งจองและส่งสลิป'}
+                </span>
+              </button>
+            )}
+          </div>
+        </form>
       </main>
     </div>
   );

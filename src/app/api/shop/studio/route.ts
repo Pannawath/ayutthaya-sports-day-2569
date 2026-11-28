@@ -15,7 +15,7 @@ const submitStudioSchema = z.object({
   classroom: z.string().trim().min(1, 'กรุณาเลือกห้องเรียน/สังกัด').max(80),
   studentNumber: z.string().trim().max(30).optional().default(''),
   name: z.string().trim().min(1, 'กรุณากรอกชื่อสกรีน').max(20),
-  number: z.string().trim().min(1, 'กรุณากรอกเบอร์สกรีน').max(4),
+  number: z.string().trim().regex(/^\d{1,2}$/, 'เบอร์สกรีนต้องเป็นตัวเลข 1-2 หลัก (00-99)'),
   size: z.enum(['SS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL']),
   action: z.enum(['create', 'update']).default('create'),
   mode: z.enum(['new', 'edit']).default('new'),
